@@ -33,7 +33,7 @@ export function ProjectForm({ onSubmit, onCancel, initialData }: ProjectFormProp
     });
 
     const [customers, setCustomers] = useState<Customer[]>([]);
-    const [loadingCustomers, setLoadingCustomers] = useState(false);
+
 
     useEffect(() => {
         // Correct issues with null values from initialData which might cause uncontrolled input warnings
@@ -51,14 +51,11 @@ export function ProjectForm({ onSubmit, onCancel, initialData }: ProjectFormProp
 
     useEffect(() => {
         const fetchCustomers = async () => {
-            setLoadingCustomers(true);
             try {
                 const data = await customerService.getCustomers();
                 setCustomers(data);
             } catch (error) {
                 console.error("Failed to fetch customers", error);
-            } finally {
-                setLoadingCustomers(false);
             }
         };
         fetchCustomers();
@@ -168,7 +165,7 @@ export function ProjectForm({ onSubmit, onCancel, initialData }: ProjectFormProp
                     value={formData.budget}
                     onChange={(e) => {
                         const value = e.target.value;
-                        setFormData({ ...formData, budget: value === "" ? "" : Number(value) });
+                        setFormData({ ...formData, budget: value === "" ? 0 : Number(value) });
                     }}
                 />
             </div>

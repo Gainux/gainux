@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import type { Project, ProjectMember, Task, ProjectStatus, TaskStatus } from "../types";
+import type { Project, ProjectMember, Task } from "../types";
 
 // --- Helpers ---
 

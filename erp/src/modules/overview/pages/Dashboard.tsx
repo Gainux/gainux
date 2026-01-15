@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { dashboardService, type DashboardMetrics } from "../services/dashboardService";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, DollarSign, Briefcase, Users, TrendingUp, Activity, CheckCircle2 } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { Loader2, DollarSign, Briefcase, Users, TrendingUp, Activity } from "lucide-react";
+
 
 export default function Dashboard() {
     const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);

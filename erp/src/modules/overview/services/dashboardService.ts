@@ -54,7 +54,7 @@ export const dashboardService = {
         const recentDeals = deals.slice(0, 5);
 
         // Project Metrics
-        const activeProjects = projects.filter(p => p.status === 'in_progress' || p.status === 'planning');
+        const activeProjects = projects.filter(p => p.status === 'active' || p.status === 'planning');
         const completedProjects = projects.filter(p => p.status === 'completed');
         const recentProjects = projects.slice(0, 5);
 
@@ -132,7 +132,7 @@ export const dashboardService = {
         const dealsByStageData = Object.entries(dealsByStage).map(([name, value]) => ({ name, value }));
 
         // 3. Expense Categories
-        const expensesByCategory = allExpenses.reduce((acc: any, exp: any) => {
+        const expensesByCategory = allExpenses.reduce((acc: Record<string, number>, exp: any) => {
             const cat = exp.category || 'Uncategorized';
             acc[cat] = (acc[cat] || 0) + (Number(exp.amount) || 0);
             return acc;

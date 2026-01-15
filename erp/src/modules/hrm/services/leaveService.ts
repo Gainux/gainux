@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import { LeaveRequest } from "../types";
+import type { LeaveRequest } from "../types";
 
 // Helper to map DB snake_case to CamelCase
 const mapToLeaveRequest = (data: any): LeaveRequest => ({

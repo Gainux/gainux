@@ -12,7 +12,6 @@ import {
     type DragEndEvent,
 } from "@dnd-kit/core";
 import {
-    arrayMove,
     SortableContext,
     sortableKeyboardCoordinates,
     verticalListSortingStrategy,
@@ -23,7 +22,6 @@ import {
     Card,
     CardContent,
     CardHeader,
-    CardTitle,
     CardFooter
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -212,25 +210,8 @@ export default function TaskBoard({ tasks: initialTasks, onTaskMove, onTaskEdit 
 
         // Optimistic UI update during drag
         setTasks((prev) => {
-            const activeItems = prev.filter(t => t.status === activeContainer);
-            const overItems = prev.filter(t => t.status === overContainer);
 
-            const activeIndex = prev.findIndex(t => t.id === active.id);
-            const overIndex = prev.findIndex(t => t.id === overId);
 
-            let newIndex;
-            if (COLUMNS.find(c => c.id === overId)) {
-                newIndex = overItems.length + 1;
-            } else {
-                const isBelowOverItem =
-                    over &&
-                    active.rect.current.translated &&
-                    active.rect.current.translated.top >
-                    over.rect.top + over.rect.height;
-
-                const modifier = isBelowOverItem ? 1 : 0;
-                newIndex = overIndex >= 0 ? overIndex + modifier : overItems.length + 1;
-            }
 
             return prev.map(t => {
                 if (t.id === active.id) {

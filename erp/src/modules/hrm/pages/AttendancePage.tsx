@@ -31,10 +31,10 @@ import {
 } from "@/components/ui/select";
 import { attendanceService } from "../services/attendanceService";
 import { employeeService } from "../services/employeeService";
-import type { Attendance } from "../types";
+
 
 export default function AttendancePage() {
-    const [attendance, setAttendance] = useState<Attendance[]>([]);
+
     const [employees, setEmployees] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -294,7 +294,7 @@ export default function AttendancePage() {
                                         {record.employee.firstName} {record.employee.lastName}
                                     </TableCell>
                                     <TableCell>{record.employee.jobTitle}</TableCell>
-                                    <TableCell>{getStatusBadge(record.attendance?.status, record.leave)}</TableCell>
+                                    <TableCell>{getStatusBadge(record.attendance?.status)}</TableCell>
                                     <TableCell>
                                         {record.attendance?.clockIn ? format(new Date(record.attendance.clockIn), 'h:mm a') : '-'}
                                     </TableCell>

@@ -90,5 +90,43 @@ export const attendanceService = {
 
         if (error) throw error;
         return mapToAttendance(data);
+    },
+
+    async clockIn(employeeId: string) {
+        const today = new Date().toISOString().split('T')[0];
+        const now = new Date().toLocaleTimeString('en-US', { hour12: false });
+
+        const { data, error } = await supabase
+            .from('attendance')
+            .upsert({
+                employee_id: employeeId,
+                date: today,
+                clock_in: now,
+                status: 'present'
+            }, { onConflict: 'employee_id, date' })
+            .select()
+            .single();
+
+        if (error) throw error;
+        return mapToAttendance(data);
+    },
+
+    async clockOut(employeeId: string) {
+        const today = new Date().toISOString().split('T')[0];
+        const now = new Date().toLocaleTimeString('en-US', { hour12: false });
+
+        // Update only if clock_out is null or explicitly requested
+        // Using upsert with existing data is tricky without fetching first, 
+        // but update is safer for clock-out to ensure record exists.
+        const { data, error } = await supabase
+            .from('attendance')
+            .update({ clock_out: now })
+            .eq('employee_id', employeeId)
+            .eq('date', today)
+            .select()
+            .single();
+
+        if (error) throw error;
+        return mapToAttendance(data);
     }
 };

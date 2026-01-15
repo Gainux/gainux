@@ -11,12 +11,9 @@ import {
 } from "@/components/ui/dialog";
 import {
     Card,
-    CardContent,
-    CardHeader,
-    CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, ArrowLeft, Loader2, Calendar, DollarSign, ListTodo, CheckCircle2, Clock } from "lucide-react";
+import { Plus, ArrowLeft, Loader2, ListTodo, CheckCircle2, Clock } from "lucide-react";
 import { projectService } from "../services/projectService";
 import type { Project, Task, TaskStatus } from "../types";
 import TaskBoard from "../components/TaskBoard";
