@@ -6,6 +6,9 @@ import DealsPage from "@/modules/crm/pages/DealsPage";
 
 import EmployeeList from "./modules/hrm/pages/EmployeeList";
 import InvoiceList from "./modules/finance/pages/InvoiceList";
+import CreateInvoice from "./modules/finance/pages/CreateInvoice";
+import InvoiceDetails from "./modules/finance/pages/InvoiceDetails";
+import EditInvoice from "./modules/finance/pages/EditInvoice";
 
 import LeadDetailsPage from "@/modules/crm/pages/LeadDetailsPage";
 
@@ -17,36 +20,43 @@ import CustomersPage from "@/modules/crm/pages/CustomersPage";
 import CustomerDetailsPage from "@/modules/crm/pages/CustomerDetailsPage";
 
 import { AuthProvider } from "@/context/AuthContext";
+import { ThemeProvider } from "@/context/ThemeContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import LoginPage from "@/pages/auth/LoginPage";
 import ProfilePage from "@/pages/auth/ProfilePage";
+import SettingsPage from "@/pages/SettingsPage";
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route element={<ProtectedRoute />}>
-            <Route element={<AppLayout />}>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/crm/leads" element={<LeadsPage />} />
-              <Route path="/crm/leads/:id" element={<LeadDetailsPage />} />
-              <Route path="/crm/customers" element={<CustomersPage />} />
-              <Route path="/crm/customers/:id" element={<CustomerDetailsPage />} />
-              <Route path="/crm/deals" element={<DealsPage />} />
-              <Route path="/crm/deals/:id" element={<DealDetailsPage />} />
-              <Route path="/hrm/employees" element={<EmployeeList />} />
-              <Route path="/finance/invoices" element={<InvoiceList />} />
-              <Route path="/users" element={<div>Users Page (Placeholder)</div>} />
-              <Route path="/settings" element={<div>Settings Page (Placeholder)</div>} />
-              <Route path="/profile" element={<ProfilePage />} />
+    <ThemeProvider>
+      <AuthProvider>
+        <Router>
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route element={<ProtectedRoute />}>
+              <Route element={<AppLayout />}>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/crm/leads" element={<LeadsPage />} />
+                <Route path="/crm/leads/:id" element={<LeadDetailsPage />} />
+                <Route path="/crm/customers" element={<CustomersPage />} />
+                <Route path="/crm/customers/:id" element={<CustomerDetailsPage />} />
+                <Route path="/crm/deals" element={<DealsPage />} />
+                <Route path="/crm/deals/:id" element={<DealDetailsPage />} />
+                <Route path="/hrm/employees" element={<EmployeeList />} />
+                <Route path="/finance/invoices/create" element={<CreateInvoice />} />
+                <Route path="/finance/invoices/:id/edit" element={<EditInvoice />} />
+                <Route path="/finance/invoices/:id" element={<InvoiceDetails />} />
+                <Route path="/finance/invoices" element={<InvoiceList />} />
+                <Route path="/users" element={<div>Users Page (Placeholder)</div>} />
+                <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/profile" element={<ProfilePage />} />
+              </Route>
             </Route>
-          </Route>
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Router>
-    </AuthProvider>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Router>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 
