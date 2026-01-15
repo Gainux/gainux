@@ -22,6 +22,11 @@ import DealDetailsPage from "@/modules/crm/pages/DealDetailsPage";
 import CustomersPage from "@/modules/crm/pages/CustomersPage";
 import CustomerDetailsPage from "@/modules/crm/pages/CustomerDetailsPage";
 
+import ProjectsListPage from "@/modules/project-management/pages/ProjectsListPage";
+import ProjectDetailsPage from "@/modules/project-management/pages/ProjectDetailsPage";
+
+import UsersListPage from "@/modules/system/pages/UsersListPage";
+
 import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
@@ -53,7 +58,9 @@ function App() {
                 <Route path="/finance/invoices/:id" element={<InvoiceDetails />} />
                 <Route path="/finance/invoices" element={<InvoiceList />} />
                 <Route path="/finance/expenses" element={<ExpenseList />} />
-                <Route path="/users" element={<div>Users Page (Placeholder)</div>} />
+                <Route path="/projects" element={<ProjectsListPage />} />
+                <Route path="/projects/:id" element={<ProjectDetailsPage />} />
+                <Route path="/users" element={<UsersListPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
               </Route>

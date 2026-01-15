@@ -8,7 +8,8 @@ import {
     ShoppingCart,
     BarChart,
     Briefcase,
-    CreditCard
+    CreditCard,
+    FolderKanban
 } from "lucide-react";
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> { }
@@ -90,6 +91,17 @@ export function Sidebar({ className }: SidebarProps) {
                     icon: ShoppingCart,
                     active: pathname.startsWith("/finance/expenses"),
                 },
+            ]
+        },
+        {
+            title: "Projects",
+            routes: [
+                {
+                    href: "/projects",
+                    label: "All Projects",
+                    icon: FolderKanban,
+                    active: pathname.startsWith("/projects"),
+                }
             ]
         },
         {
