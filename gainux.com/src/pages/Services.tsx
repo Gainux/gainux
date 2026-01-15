@@ -1,10 +1,16 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Code, Briefcase, MessageSquare, Globe, Smartphone, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
+import { SEO } from "@/components/SEO";
 
 export function Services() {
     return (
         <div className="container py-12 md:py-24">
+            <SEO
+                title="Our Services"
+                description="Explore Gainux's comprehensive software services: Web Development, Mobile Apps, ERP, HRMS, and Automation. We build scalable solutions for modern businesses."
+                canonical="/services"
+            />
             <div className="text-center mb-12">
                 <h1 className="text-4xl font-bold mb-4">Our Services</h1>
                 <p className="text-xl text-muted-foreground max-w-2xl mx-auto">

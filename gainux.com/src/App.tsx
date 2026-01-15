@@ -11,6 +11,8 @@ import { ManagementSoftware } from "./pages/services/ManagementSoftware";
 import { HRSoftware } from "./pages/services/HRSoftware";
 import { WhatsappAutomation } from "./pages/services/WhatsappAutomation";
 import { BusinessAutomation } from "./pages/services/BusinessAutomation";
+import { Privacy } from "./pages/Privacy";
+import { Terms } from "./pages/Terms";
 
 function App() {
   return (
@@ -27,6 +29,8 @@ function App() {
         <Route path="/services/business-automation" element={<BusinessAutomation />} />
         <Route path="/request-service" element={<RequestService />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/terms" element={<Terms />} />
       </Route>
     </Routes>
   );

@@ -1,12 +1,56 @@
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle2 } from "lucide-react";
+import { toast } from "sonner";
 
 export function RequestService() {
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        const form = e.currentTarget;
+        setIsSubmitting(true);
+
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+
+        // Prepare payload for FormSubmit.co
+        const payload = {
+            ...data,
+            _subject: `New Service Request: ${data.service_type}`,
+            _template: "table",
+            _captcha: "false"
+        };
+
+        try {
+            const response = await fetch("https://formsubmit.co/ajax/help@gainux.com", {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (response.ok) {
+                toast.success("Request received! We'll get back to you shortly.");
+                form.reset();
+            } else {
+                toast.error("Something went wrong. Please try again or email us directly.");
+            }
+        } catch (error) {
+            toast.error("Network error. Please contact us directly.");
+            console.error("Form error:", error);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     return (
         <div className="container py-12 md:py-24 max-w-5xl">
             <div className="grid md:grid-cols-2 gap-12">
@@ -60,29 +104,31 @@ export function RequestService() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <form className="space-y-6">
+                        <form className="space-y-6" onSubmit={handleSubmit}>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="name">Full Name</Label>
-                                    <Input id="name" placeholder="John Doe" required />
+                                    <Input id="name" name="name" placeholder="John Doe" required disabled={isSubmitting} />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="email">Email Address</Label>
-                                    <Input id="email" type="email" placeholder="john@company.com" required />
+                                    <Input id="email" name="email" type="email" placeholder="john@company.com" required disabled={isSubmitting} />
                                 </div>
                             </div>
 
                             <div className="space-y-2">
                                 <Label htmlFor="phone">Phone Number</Label>
-                                <Input id="phone" type="tel" placeholder="+1 (555) 000-0000" />
+                                <Input id="phone" name="phone" type="tel" placeholder="+1 (555) 000-0000" disabled={isSubmitting} />
                             </div>
 
                             <div className="space-y-2">
                                 <Label htmlFor="service-type">Service Type</Label>
                                 <select
                                     id="service-type"
+                                    name="service_type"
                                     className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                     required
+                                    disabled={isSubmitting}
                                 >
                                     <option value="">Select a service...</option>
                                     <option value="web-development">Website Development</option>
@@ -99,14 +145,16 @@ export function RequestService() {
                                 <Label htmlFor="details">Project Details</Label>
                                 <Textarea
                                     id="details"
+                                    name="details"
                                     placeholder="Tell us about your project goals, features, and timeline..."
                                     className="min-h-[120px]"
                                     required
+                                    disabled={isSubmitting}
                                 />
                             </div>
 
-                            <Button type="submit" className="w-full" size="lg">
-                                Submit Request
+                            <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
+                                {isSubmitting ? "Sending Request..." : "Submit Request"}
                             </Button>
                         </form>
                     </CardContent>

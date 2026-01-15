@@ -23,7 +23,6 @@ export function Footer() {
                         <ul className="space-y-2 text-sm text-muted-foreground">
                             <li><Link to="/about" className="hover:text-primary">About Us</Link></li>
                             <li><Link to="/services" className="hover:text-primary">Services</Link></li>
-                            <li><Link to="/careers" className="hover:text-primary">Careers</Link></li>
                         </ul>
                     </div>
 
@@ -36,16 +35,22 @@ export function Footer() {
                     </div>
 
                     <div>
-                        <h3 className="font-semibold mb-4">Connect</h3>
+                        <h3 className="font-semibold mb-4">Contact Us</h3>
                         <ul className="space-y-2 text-sm text-muted-foreground">
-                            <li><a href="#" className="hover:text-primary">Twitter</a></li>
-                            <li><a href="#" className="hover:text-primary">LinkedIn</a></li>
-                            <li><a href="#" className="hover:text-primary">Instagram</a></li>
+                            <li>Old Market Road</li>
+                            <li>Angamaly, Kerala</li>
+                            <li className="pt-2">
+                                <a href="tel:+918075107480" className="hover:text-primary">+91 80751 07480</a>
+                            </li>
+                            <li>
+                                <a href="mailto:info@gainux.com" className="hover:text-primary">info@gainux.com</a>
+                            </li>
                         </ul>
                     </div>
                 </div>
                 <div className="mt-10 pt-8 border-t text-center text-sm text-muted-foreground">
-                    © {new Date().getFullYear()} Gainux. All rights reserved.
+                    <p>© {new Date().getFullYear()} Gainux. All rights reserved.</p>
+                    <p className="mt-2 text-xs opacity-70">Operated by BigBurry Hypersystems LLP</p>
                 </div>
             </div>
         </footer>
