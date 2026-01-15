@@ -33,7 +33,7 @@ export function Home() {
                         </div>
                         <div className="flex flex-col sm:flex-row gap-4 pt-4">
                             <Button asChild size="lg" className="h-12 px-8 text-lg w-full sm:w-auto">
-                                <Link to="/contact">
+                                <Link to="/request-service">
                                     Start Your Project <ArrowRight className="ml-2 h-5 w-5" />
                                 </Link>
                             </Button>
@@ -387,14 +387,14 @@ export function Home() {
                         </p>
                         <div className="flex flex-col sm:flex-row gap-4 mt-8">
                             <Button asChild size="lg" variant="secondary" className="h-12 px-8 text-lg font-semibold">
-                                <Link to="/contact">
+                                <Link to="/request-service">
                                     Get a Free Consultation
                                 </Link>
                             </Button>
                         </div>
                     </div>
                 </div>
-            </section>
-        </div>
+            </section >
+        </div >
     );
 }
