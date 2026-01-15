@@ -1,38 +1,173 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Overview } from "@/components/Overview" // Placeholder
-import { RecentSales } from "@/components/RecentSales" // Placeholder
-import { Button } from "@/components/ui/button"
+import { useEffect, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { dashboardService, type DashboardMetrics } from "../services/dashboardService";
+import { Badge } from "@/components/ui/badge";
+import { Loader2, DollarSign, Briefcase, Users, TrendingUp, Activity, CheckCircle2 } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
 
 export default function Dashboard() {
+    const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        loadMetrics();
+    }, []);
+
+    const loadMetrics = async () => {
+        try {
+            const data = await dashboardService.getDashboardMetrics();
+            setMetrics(data);
+        } catch (error) {
+            console.error("Failed to load dashboard metrics", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        );
+    }
+
+    if (!metrics) return null;
+
+    const formatCurrency = (amount: number) => {
+        return new Intl.NumberFormat('en-IN', {
+            style: 'currency',
+            currency: 'INR',
+            maximumFractionDigits: 0
+        }).format(amount);
+    };
+
     return (
-        <div className="flex-1 space-y-4 p-8 pt-6">
+        <div className="flex-1 space-y-8 p-8 pt-6">
             <div className="flex items-center justify-between space-y-2">
-                <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
-                <div className="flex items-center space-x-2">
-                    <Button>Download</Button>
+                <div>
+                    <h2 className="text-3xl font-bold tracking-tight">Overview</h2>
+                    <p className="text-muted-foreground">
+                        Here's what's happening across your business today.
+                    </p>
                 </div>
             </div>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-                <Card className="col-span-4">
-                    <CardHeader>
-                        <CardTitle>Overview</CardTitle>
-                    </CardHeader>
-                    <CardContent className="pl-2">
-                        <Overview />
-                    </CardContent>
-                </Card>
-                <Card className="col-span-3">
-                    <CardHeader>
-                        <CardTitle>Recent Sales</CardTitle>
-                        <div className="text-sm text-muted-foreground">
-                            You made 265 sales this month.
-                        </div>
+
+            {/* Key Metrics Grid */}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+                        <DollarSign className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <RecentSales />
+                        <div className="text-2xl font-bold">{formatCurrency(metrics.financial.revenue)}</div>
+                        <p className="text-xs text-muted-foreground">
+                            +20.1% from last month
+                        </p>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Active Projects</CardTitle>
+                        <Briefcase className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{metrics.projects.activeProjects}</div>
+                        <p className="text-xs text-muted-foreground">
+                            {metrics.projects.completedProjects} completed projects
+                        </p>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Pipeline Value</CardTitle>
+                        <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{formatCurrency(metrics.crm.pipelineValue)}</div>
+                        <p className="text-xs text-muted-foreground">
+                            {metrics.crm.activeDeals} active opportunities
+                        </p>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Total Employees</CardTitle>
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{metrics.hrm.totalEmployees}</div>
+                        <p className="text-xs text-muted-foreground">
+                            Across {Object.keys(metrics.hrm.byDepartment).length} departments
+                        </p>
+                    </CardContent>
+                </Card>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+                {/* Recent Projects */}
+                <Card className="col-span-4">
+                    <CardHeader>
+                        <CardTitle>Recent Projects</CardTitle>
+                        <CardDescription>
+                            Your latest active and planned projects.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-8">
+                            {metrics.projects.recentProjects.map((project) => (
+                                <div key={project.id} className="flex items-center">
+                                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
+                                        <Activity className="h-5 w-5 text-primary" />
+                                    </div>
+                                    <div className="ml-4 space-y-1">
+                                        <p className="text-sm font-medium leading-none">{project.name}</p>
+                                        <p className="text-sm text-muted-foreground">
+                                            Client: {project.client?.name || 'Internal'}
+                                        </p>
+                                    </div>
+                                    <div className="ml-auto font-medium">
+                                        <Badge variant={
+                                            project.status === 'completed' ? 'secondary' :
+                                                project.status === 'in_progress' ? 'default' : 'outline'
+                                        }>
+                                            {project.status.replace('_', ' ')}
+                                        </Badge>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Recent Deals */}
+                <Card className="col-span-3">
+                    <CardHeader>
+                        <CardTitle>Recent Opportunities</CardTitle>
+                        <CardDescription>
+                            Latest deals from the pipeline.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-8">
+                            {metrics.crm.recentDeals.map((deal) => (
+                                <div key={deal.id} className="flex items-center">
+                                    <div className="ml-4 space-y-1">
+                                        <p className="text-sm font-medium leading-none">{deal.title}</p>
+                                        <p className="text-sm text-muted-foreground">
+                                            {deal.company}
+                                        </p>
+                                    </div>
+                                    <div className="ml-auto font-medium">
+                                        {deal.formattedValue}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </CardContent>
                 </Card>
             </div>
         </div>
-    )
+    );
 }
