@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
     Table,
@@ -70,6 +70,17 @@ export default function ExpenseList() {
     const handleCreate = () => {
         setEditingExpense(null);
         setIsFormOpen(true);
+    };
+
+    const handleDelete = async (id: string) => {
+        if (confirm("Are you sure you want to delete this expense?")) {
+            try {
+                await expenseService.deleteExpense(id);
+                fetchData();
+            } catch (error) {
+                console.error("Failed to delete expense", error);
+            }
+        }
     };
 
     const getStatusBadge = (status: string) => {
@@ -172,17 +183,29 @@ export default function ExpenseList() {
                                         {formatCurrency(expense.amount)}
                                     </TableCell>
                                     <TableCell>
-                                        {expense.receiptUrl && (
-                                            <a
-                                                href={expense.receiptUrl}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                                className="text-blue-600 hover:underline text-sm"
-                                                onClick={(e) => e.stopPropagation()}
+                                        <div className="flex items-center gap-2">
+                                            {expense.receiptUrl && (
+                                                <a
+                                                    href={expense.receiptUrl}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="text-blue-600 hover:underline text-sm mr-2"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    Receipt
+                                                </a>
+                                            )}
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDelete(expense.id);
+                                                }}
                                             >
-                                                Receipt
-                                            </a>
-                                        )}
+                                                <Trash2 className="h-4 w-4 text-red-500" />
+                                            </Button>
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                             ))

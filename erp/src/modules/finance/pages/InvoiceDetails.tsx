@@ -4,19 +4,9 @@ import { ArrowLeft, Edit, Trash2, Download } from "lucide-react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2 } from "lucide-react";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
 import { invoiceService } from "../services/invoiceService";
 import InvoicePreview from "../components/InvoicePreview";
 
@@ -136,22 +126,6 @@ export default function InvoiceDetails() {
         } finally {
             setDownloading(false);
         }
-    };
-
-    const getStatusBadge = (status: string) => {
-        const variants: Record<string, any> = {
-            draft: 'secondary',
-            sent: 'default',
-            paid: 'default',
-            overdue: 'destructive',
-            cancelled: 'secondary'
-        };
-
-        return <Badge variant={variants[status]} className="capitalize">{status}</Badge>;
-    };
-
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(amount);
     };
 
     if (loading) {

@@ -5,6 +5,8 @@ import LeadsPage from "@/modules/crm/pages/LeadsPage";
 import DealsPage from "@/modules/crm/pages/DealsPage";
 
 import EmployeeList from "./modules/hrm/pages/EmployeeList";
+import EmployeeDetailsPage from "./modules/hrm/pages/EmployeeDetailsPage";
+import AttendancePage from "./modules/hrm/pages/AttendancePage";
 import InvoiceList from "./modules/finance/pages/InvoiceList";
 import CreateInvoice from "./modules/finance/pages/CreateInvoice";
 import InvoiceDetails from "./modules/finance/pages/InvoiceDetails";
@@ -43,7 +45,9 @@ function App() {
                 <Route path="/crm/customers/:id" element={<CustomerDetailsPage />} />
                 <Route path="/crm/deals" element={<DealsPage />} />
                 <Route path="/crm/deals/:id" element={<DealDetailsPage />} />
+                <Route path="/hrm/attendance" element={<AttendancePage />} />
                 <Route path="/hrm/employees" element={<EmployeeList />} />
+                <Route path="/hrm/employees/:id" element={<EmployeeDetailsPage />} />
                 <Route path="/finance/invoices/create" element={<CreateInvoice />} />
                 <Route path="/finance/invoices/:id/edit" element={<EditInvoice />} />
                 <Route path="/finance/invoices/:id" element={<InvoiceDetails />} />
