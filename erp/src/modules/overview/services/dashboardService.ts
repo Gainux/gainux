@@ -3,6 +3,7 @@ import { dealService } from "@/modules/crm/services/dealService";
 import { projectService } from "@/modules/project-management/services/projectService";
 import { employeeService } from "@/modules/hrm/services/employeeService";
 import { userService } from "@/modules/system/services/userService";
+import { supabase } from "@/lib/supabase";
 
 export interface DashboardMetrics {
     financial: {
@@ -88,6 +89,60 @@ export const dashboardService = {
             system: {
                 totalUsers: users.length
             }
+        };
+    },
+
+    async getAnalyticsData() {
+        // Fetch data
+        const [invoices, expenses, deals] = await Promise.all([
+            invoiceService.getInvoices(),
+            supabase.from("expenses").select("*"),
+            dealService.getDeals()
+        ]);
+
+        const allInvoices = invoices;
+        const allExpenses = expenses.data || [];
+        const allDeals = deals;
+
+        // 1. Revenue & Expenses Over Time (Last 6 Months)
+        const months = Array.from({ length: 6 }, (_, i) => {
+            const d = new Date();
+            d.setMonth(d.getMonth() - i);
+            return d.toLocaleString('default', { month: 'short' });
+        }).reverse();
+
+        const financialsOverTime = months.map(month => {
+            const revenue = allInvoices
+                .filter(inv => inv.issueDate && new Date(inv.issueDate).toLocaleString('default', { month: 'short' }) === month)
+                .reduce((sum, inv) => sum + (inv.total || 0), 0);
+
+            const expense = allExpenses
+                .filter((exp: any) => exp.date && new Date(exp.date).toLocaleString('default', { month: 'short' }) === month)
+                .reduce((sum: number, exp: any) => sum + (Number(exp.amount) || 0), 0);
+
+            return { name: month, revenue, expense };
+        });
+
+        // 2. Deals by Stage
+        const dealsByStage = allDeals.reduce((acc, deal) => {
+            const stage = deal.stage || 'Unknown';
+            acc[stage] = (acc[stage] || 0) + 1;
+            return acc;
+        }, {} as Record<string, number>);
+        const dealsByStageData = Object.entries(dealsByStage).map(([name, value]) => ({ name, value }));
+
+        // 3. Expense Categories
+        const expensesByCategory = allExpenses.reduce((acc: any, exp: any) => {
+            const cat = exp.category || 'Uncategorized';
+            acc[cat] = (acc[cat] || 0) + (Number(exp.amount) || 0);
+            return acc;
+        }, {});
+        const expensesByCategoryData = Object.entries(expensesByCategory).map(([name, value]) => ({ name, value }));
+
+        return {
+            financialsOverTime,
+            dealsByStageData,
+            expensesByCategoryData
         };
     }
 };

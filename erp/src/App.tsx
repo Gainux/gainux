@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import AppLayout from "./components/layout/AppLayout";
 import Dashboard from "@/modules/overview/pages/Dashboard";
+import AnalyticsPage from "@/modules/overview/pages/AnalyticsPage";
 import LeadsPage from "@/modules/crm/pages/LeadsPage";
 import DealsPage from "@/modules/crm/pages/DealsPage";
 
@@ -44,6 +45,7 @@ function App() {
             <Route element={<ProtectedRoute />}>
               <Route element={<AppLayout />}>
                 <Route path="/" element={<Dashboard />} />
+                <Route path="/analytics" element={<AnalyticsPage />} />
                 <Route path="/crm/leads" element={<LeadsPage />} />
                 <Route path="/crm/leads/:id" element={<LeadDetailsPage />} />
                 <Route path="/crm/customers" element={<CustomersPage />} />
