@@ -9,6 +9,7 @@ import InvoiceList from "./modules/finance/pages/InvoiceList";
 import CreateInvoice from "./modules/finance/pages/CreateInvoice";
 import InvoiceDetails from "./modules/finance/pages/InvoiceDetails";
 import EditInvoice from "./modules/finance/pages/EditInvoice";
+import ExpenseList from "./modules/finance/pages/ExpenseList";
 
 import LeadDetailsPage from "@/modules/crm/pages/LeadDetailsPage";
 
@@ -47,6 +48,7 @@ function App() {
                 <Route path="/finance/invoices/:id/edit" element={<EditInvoice />} />
                 <Route path="/finance/invoices/:id" element={<InvoiceDetails />} />
                 <Route path="/finance/invoices" element={<InvoiceList />} />
+                <Route path="/finance/expenses" element={<ExpenseList />} />
                 <Route path="/users" element={<div>Users Page (Placeholder)</div>} />
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/profile" element={<ProfilePage />} />

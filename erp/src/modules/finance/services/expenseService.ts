@@ -2,126 +2,165 @@ import { supabase } from "@/lib/supabase";
 import type { Expense } from "../types";
 
 export const expenseService = {
-    async getExpenses() {
-        const { data, error } = await supabase
-            .from("expenses")
-            .select("*")
-            .order("expense_date", { ascending: false });
+    async getExpenses(filters?: {
+        category?: string;
+        status?: string;
+        startDate?: Date;
+        endDate?: Date;
+    }) {
+        let query = supabase
+            .from('expenses')
+            .select(`
+                *,
+                customer:customers(name)
+            `)
+            .order('expense_date', { ascending: false });
 
+        if (filters?.category && filters.category !== 'all') {
+            query = query.eq('category', filters.category);
+        }
+
+        if (filters?.status && filters.status !== 'all') {
+            query = query.eq('status', filters.status);
+        }
+
+        if (filters?.startDate) {
+            query = query.gte('expense_date', filters.startDate.toISOString());
+        }
+
+        if (filters?.endDate) {
+            query = query.lte('expense_date', filters.endDate.toISOString());
+        }
+
+        const { data, error } = await query;
         if (error) throw error;
-
-        return data.map((expense: any) => ({
-            ...expense,
-            amount: parseFloat(expense.amount),
-            expenseDate: expense.expense_date,
-            customerId: expense.customer_id,
-            receiptUrl: expense.receipt_url,
-            createdBy: expense.created_by,
-            createdAt: expense.created_at,
-            updatedAt: expense.updated_at,
-        })) as Expense[];
+        return data;
     },
 
     async getExpenseById(id: string) {
         const { data, error } = await supabase
-            .from("expenses")
-            .select("*")
-            .eq("id", id)
+            .from('expenses')
+            .select(`
+                *,
+                customer:customers(name)
+            `)
+            .eq('id', id)
             .single();
 
         if (error) throw error;
-
-        return {
-            ...data,
-            amount: parseFloat(data.amount),
-            expenseDate: data.expense_date,
-            customerId: data.customer_id,
-            receiptUrl: data.receipt_url,
-            createdBy: data.created_by,
-            createdAt: data.created_at,
-            updatedAt: data.updated_at,
-        } as Expense;
+        return data;
     },
 
-    async createExpense(expenseData: Partial<Expense>) {
+    async createExpense(expense: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>) {
+        // Map camelCase to snake_case for DB
+        const dbExpense = {
+            title: expense.title,
+            description: expense.description,
+            category: expense.category,
+            amount: expense.amount,
+            expense_date: expense.expenseDate,
+            vendor: expense.vendor,
+            customer_id: expense.customerId,
+            receipt_url: expense.receiptUrl,
+            status: expense.status,
+        };
+
         const { data, error } = await supabase
-            .from("expenses")
-            .insert([{
-                title: expenseData.title,
-                description: expenseData.description,
-                category: expenseData.category,
-                amount: expenseData.amount,
-                expense_date: expenseData.expenseDate,
-                vendor: expenseData.vendor,
-                customer_id: expenseData.customerId,
-                receipt_url: expenseData.receiptUrl,
-                status: expenseData.status || 'pending',
-                created_by: expenseData.createdBy,
-            }])
+            .from('expenses')
+            .insert(dbExpense)
             .select()
             .single();
 
         if (error) throw error;
-
-        return this.getExpenseById(data.id);
+        return data;
     },
 
-    async updateExpense(id: string, updates: Partial<Expense>) {
-        const dbUpdates: any = {};
+    async updateExpense(id: string, expense: Partial<Expense>) {
+        const dbExpense: any = {};
+        if (expense.title) dbExpense.title = expense.title;
+        if (expense.description) dbExpense.description = expense.description;
+        if (expense.category) dbExpense.category = expense.category;
+        if (expense.amount) dbExpense.amount = expense.amount;
+        if (expense.expenseDate) dbExpense.expense_date = expense.expenseDate;
+        if (expense.vendor) dbExpense.vendor = expense.vendor;
+        if (expense.customerId) dbExpense.customer_id = expense.customerId;
+        if (expense.receiptUrl) dbExpense.receipt_url = expense.receiptUrl;
+        if (expense.status) dbExpense.status = expense.status;
 
-        if (updates.title) dbUpdates.title = updates.title;
-        if (updates.description !== undefined) dbUpdates.description = updates.description;
-        if (updates.category) dbUpdates.category = updates.category;
-        if (updates.amount !== undefined) dbUpdates.amount = updates.amount;
-        if (updates.expenseDate) dbUpdates.expense_date = updates.expenseDate;
-        if (updates.vendor) dbUpdates.vendor = updates.vendor;
-        if (updates.customerId !== undefined) dbUpdates.customer_id = updates.customerId;
-        if (updates.receiptUrl !== undefined) dbUpdates.receipt_url = updates.receiptUrl;
-        if (updates.status) dbUpdates.status = updates.status;
-
-        const { error } = await supabase
-            .from("expenses")
-            .update(dbUpdates)
-            .eq("id", id);
+        const { data, error } = await supabase
+            .from('expenses')
+            .update(dbExpense)
+            .eq('id', id)
+            .select()
+            .single();
 
         if (error) throw error;
-
-        return this.getExpenseById(id);
+        return data;
     },
 
     async deleteExpense(id: string) {
         const { error } = await supabase
-            .from("expenses")
+            .from('expenses')
             .delete()
-            .eq("id", id);
+            .eq('id', id);
 
         if (error) throw error;
     },
 
-    async approveExpense(id: string) {
-        return this.updateExpense(id, { status: 'approved' });
+    async uploadReceipt(file: File) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
+        const filePath = `${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+            .from('receipts')
+            .upload(filePath, file);
+
+        if (uploadError) throw uploadError;
+
+        const { data } = supabase.storage
+            .from('receipts')
+            .getPublicUrl(filePath);
+
+        return data.publicUrl;
     },
 
-    async rejectExpense(id: string) {
-        return this.updateExpense(id, { status: 'rejected' });
-    },
+    async getExpenseMetrics() {
+        const now = new Date();
+        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
-    async getExpensesByCategory() {
-        const { data, error } = await supabase
-            .from("expenses")
-            .select("category, amount")
-            .eq("status", "approved");
+        // Parallel fetching for dashboard metrics
+        const [totalResult, pendingResult, categoryResult] = await Promise.all([
+            // Total this month
+            supabase
+                .from('expenses')
+                .select('amount')
+                .gte('expense_date', firstDayOfMonth),
 
-        if (error) throw error;
+            // Total pending
+            supabase
+                .from('expenses')
+                .select('amount')
+                .eq('status', 'pending'),
 
-        const summary: Record<string, number> = {};
-        data.forEach((expense: any) => {
-            if (!summary[expense.category]) {
-                summary[expense.category] = 0;
-            }
-            summary[expense.category] += parseFloat(expense.amount);
-        });
+            // All expenses for breakdown (could be optimized)
+            supabase
+                .from('expenses')
+                .select('category, amount')
+        ]);
 
-        return summary;
+        const totalThisMonth = totalResult.data?.reduce((sum, item) => sum + (Number(item.amount) || 0), 0) || 0;
+        const totalPending = pendingResult.data?.reduce((sum, item) => sum + (Number(item.amount) || 0), 0) || 0;
+
+        const categoryBreakdown = categoryResult.data?.reduce((acc: any, item) => {
+            acc[item.category] = (acc[item.category] || 0) + (Number(item.amount) || 0);
+            return acc;
+        }, {}) || {};
+
+        return {
+            totalThisMonth,
+            totalPending,
+            categoryBreakdown
+        };
     }
 };

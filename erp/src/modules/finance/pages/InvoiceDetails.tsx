@@ -111,7 +111,7 @@ export default function InvoiceDetails() {
                 window: iframe.contentWindow as Window, // Vital: Force html2canvas to use the iframe's window context
                 logging: false,
                 backgroundColor: '#ffffff'
-            });
+            } as any);
 
             // Create PDF
             const imgData = canvas.toDataURL('image/jpeg', 1.0);
