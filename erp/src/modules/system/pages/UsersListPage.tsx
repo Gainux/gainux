@@ -26,8 +26,9 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Search, UserCog, Plus, Trash2 } from "lucide-react";
+import { Loader2, Search, UserCog, Plus, Trash2, Users } from "lucide-react";
 import { userService } from "../services/userService";
 import { UserDialog } from "../components/UserDialog";
 import type { SystemUser } from "../types";
@@ -67,7 +68,6 @@ export default function UsersListPage() {
                 if (editingUser?.status !== data.status) {
                     await userService.updateUserStatus(data.id, data.status as string);
                 }
-                // Also could update name/email if service supported it, but we focused on role/status
 
                 setUsers(users.map(u => u.id === data.id ? { ...u, ...data } as SystemUser : u));
             } else {
@@ -82,8 +82,6 @@ export default function UsersListPage() {
             console.error("Failed to save user", error);
         }
     };
-
-
 
     const confirmDeleteUser = (user: SystemUser) => {
         setUserToDelete(user);
@@ -116,12 +114,12 @@ export default function UsersListPage() {
     };
 
     return (
-        <div className="flex-1 h-[calc(100vh-4rem)] p-8 pt-6 flex flex-col space-y-6">
+        <div className="flex-1 space-y-6 p-8 pt-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight">System Users</h2>
-                    <p className="text-muted-foreground">
-                        Manage user access and roles.
+                    <h1 className="text-3xl font-bold tracking-tight">System Users</h1>
+                    <p className="text-muted-foreground mt-1">
+                        Manage user accounts, roles, and access permissions.
                     </p>
                 </div>
                 <Button onClick={() => {
@@ -132,89 +130,107 @@ export default function UsersListPage() {
                 </Button>
             </div>
 
-            <div className="flex items-center space-x-2">
-                <Search className="h-4 w-4 text-muted-foreground" />
-                <Input
-                    placeholder="Search users..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="h-8 w-[150px] lg:w-[250px]"
-                />
-            </div>
-
-            <div className="border rounded-md">
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>User</TableHead>
-                            <TableHead>Email</TableHead>
-                            <TableHead>Role</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {loading ? (
-                            <TableRow>
-                                <TableCell colSpan={5} className="h-24 text-center">
-                                    <Loader2 className="h-6 w-6 animate-spin mx-auto" />
-                                </TableCell>
-                            </TableRow>
-                        ) : filteredUsers.length === 0 ? (
-                            <TableRow>
-                                <TableCell colSpan={5} className="h-24 text-center">
-                                    No users found.
-                                </TableCell>
-                            </TableRow>
-                        ) : (
-                            filteredUsers.map((user) => (
-                                <TableRow key={user.id}>
-                                    <TableCell className="font-medium">{user.fullName || "N/A"}</TableCell>
-                                    <TableCell>{user.email}</TableCell>
-                                    <TableCell>
-                                        <Badge variant={getRoleBadgeColor(user.role) as any}>
-                                            {user.role}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Badge variant="outline" className={user.status === 'active' ? 'bg-green-100 text-green-800 hover:bg-green-100' : ''}>
-                                            {user.status}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => {
-                                                setEditingUser(user);
-                                                setDialogOpen(true);
-                                            }}
-                                        >
-                                            <UserCog className="h-4 w-4 mr-2" />
-                                            Manage
-                                        </Button>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                            onClick={() => confirmDeleteUser(user)}
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                    </TableCell>
+            <Card className="border-border/50 shadow-sm">
+                <CardHeader className="pb-4">
+                    <div className="flex items-center justify-between">
+                        <div className="relative w-full sm:w-72">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                placeholder="Search by name or email..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="pl-9"
+                            />
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <div className="rounded-md border">
+                        <Table>
+                            <TableHeader>
+                                <TableRow className="bg-muted/50 hover:bg-muted/50">
+                                    <TableHead>User</TableHead>
+                                    <TableHead>Email</TableHead>
+                                    <TableHead>Role</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
-                            ))
-                        )}
-                    </TableBody>
-                </Table>
-            </div>
+                            </TableHeader>
+                            <TableBody>
+                                {loading ? (
+                                    <TableRow>
+                                        <TableCell colSpan={5} className="h-64 text-center">
+                                            <div className="flex h-full w-full items-center justify-center">
+                                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ) : filteredUsers.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={5} className="h-64 text-center">
+                                            <div className="flex flex-col items-center justify-center text-muted-foreground">
+                                                <div className="bg-muted/50 p-4 rounded-full mb-4">
+                                                    <Users className="h-8 w-8" />
+                                                </div>
+                                                <p className="text-lg font-medium">No users found</p>
+                                                <p className="text-sm">Try adding a new user or adjusting your search.</p>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ) : (
+                                    filteredUsers.map((user) => (
+                                        <TableRow key={user.id}>
+                                            <TableCell className="font-medium">{user.fullName || "N/A"}</TableCell>
+                                            <TableCell className="text-muted-foreground">{user.email}</TableCell>
+                                            <TableCell>
+                                                <Badge variant={getRoleBadgeColor(user.role) as any} className="capitalize">
+                                                    {user.role}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge variant="outline" className={user.status === 'active' ? 'bg-green-50 text-green-700 border-green-200 capitalize' : 'capitalize'}>
+                                                    {user.status}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-8 px-2 lg:px-3"
+                                                        onClick={() => {
+                                                            setEditingUser(user);
+                                                            setDialogOpen(true);
+                                                        }}
+                                                    >
+                                                        <UserCog className="h-4 w-4 mr-2" />
+                                                        Edit
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                        onClick={() => confirmDeleteUser(user)}
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
+                </CardContent>
+            </Card>
 
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>{editingUser ? 'Edit User' : 'Add User'}</DialogTitle>
                         <DialogDescription>
-                            {editingUser ? 'Update user details and role.' : 'Create a new system user.'}
+                            {editingUser ? 'Update user details and access role.' : 'Create a new user account.'}
                         </DialogDescription>
                     </DialogHeader>
                     <UserDialog
@@ -229,16 +245,16 @@ export default function UsersListPage() {
             <AlertDialog open={deleteUserOpen} onOpenChange={setDeleteUserOpen}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogTitle>Delete User Account?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            This action cannot be undone. This will permanently remove the user
-                            from the system listings.
+                            This will permanently delete the user <span className="font-medium text-foreground">{userToDelete?.email}</span>.
+                            This action cannot be undone.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel onClick={() => setDeleteUserOpen(false)}>Cancel</AlertDialogCancel>
                         <AlertDialogAction onClick={handleDeleteUser} className="bg-destructive hover:bg-destructive/90">
-                            Delete
+                            Delete User
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

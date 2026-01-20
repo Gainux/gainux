@@ -1,0 +1,391 @@
+import { useState, useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { companyService } from "../services/companyService";
+import type { Organization, Branch } from "../types";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Loader2, Plus, Building, MapPin, Globe, CreditCard, Mail, Phone, Save } from "lucide-react";
+
+export default function CompanySettingsPage() {
+    const { profile } = useAuth();
+    const [org, setOrg] = useState<Organization | null>(null);
+    const [branches, setBranches] = useState<Branch[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+
+    // Editable fields
+    const [orgName, setOrgName] = useState("");
+    const [email, setEmail] = useState("");
+    const [phone, setPhone] = useState("");
+    const [address, setAddress] = useState("");
+    const [city, setCity] = useState("");
+    const [state, setState] = useState("");
+    const [pincode, setPincode] = useState("");
+    const [gstin, setGstin] = useState("");
+    const [currency, setCurrency] = useState("USD");
+    const [taxId, setTaxId] = useState("");
+
+    useEffect(() => {
+        if (profile?.org_id) {
+            loadData(profile.org_id);
+        } else {
+            setLoading(false);
+        }
+    }, [profile]);
+
+    const loadData = async (orgId: string) => {
+        setLoading(true);
+        try {
+            const orgData = await companyService.getOrganization(orgId);
+            setOrg(orgData);
+
+            // Populate form fields
+            setOrgName(orgData.name || "");
+            setCurrency(orgData.currency || "USD");
+            setTaxId(orgData.tax_id || "");
+
+            // Extract from address JSONB if exists
+            if (orgData.address) {
+                setEmail(orgData.address.email || "");
+                setPhone(orgData.address.phone || "");
+                setAddress(orgData.address.street || "");
+                setCity(orgData.address.city || "");
+                setState(orgData.address.state || "");
+                setPincode(orgData.address.pincode || "");
+                setGstin(orgData.address.gstin || "");
+            }
+
+            const branchData = await companyService.getBranches(orgId);
+            setBranches(branchData);
+        } catch (error) {
+            console.error("Failed to load company data", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSaveOrganization = async () => {
+        if (!org) return;
+
+        setSaving(true);
+        try {
+            await companyService.updateOrganization(org.id, {
+                name: orgName,
+                currency,
+                tax_id: taxId,
+                address: {
+                    email,
+                    phone,
+                    street: address,
+                    city,
+                    state,
+                    pincode,
+                    gstin
+                }
+            });
+
+            alert("Organization settings saved successfully!");
+            if (profile?.org_id) {
+                loadData(profile.org_id); // Reload to get updated data
+            }
+        } catch (error) {
+            console.error("Failed to save organization", error);
+            alert("Failed to save organization settings. Please try again.");
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleCreateOrganization = async () => {
+        if (!orgName) {
+            alert("Please enter an organization name.");
+            return;
+        }
+
+        setSaving(true);
+        try {
+            // 1. Create Organization
+            const newOrg = await companyService.createOrganization({
+                name: orgName,
+                currency: currency || "USD",
+                settings: {}
+            });
+
+            // 2. Reload to reflect changes (Profile is already updated by RPC)
+            window.location.reload();
+        } catch (error: any) {
+            console.error("Failed to create organization", error);
+            alert("Failed to create organization: " + error.message);
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    if (loading) return (
+        <div className="flex h-[50vh] w-full items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+    );
+
+    if (!org) return (
+        <div className="flex flex-col items-center justify-center min-h-[80vh] bg-muted/30 p-4">
+            <Card className="max-w-md w-full border-border/50 shadow-lg">
+                <CardHeader className="text-center pb-2">
+                    <div className="mx-auto bg-primary/10 p-3 rounded-full w-fit mb-4">
+                        <Building className="h-8 w-8 text-primary" />
+                    </div>
+                    <CardTitle className="text-xl">Welcome to ERP</CardTitle>
+                    <CardDescription>
+                        Let's set up your organization to get started.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4 pt-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="createOrgName">Organization Name</Label>
+                        <Input
+                            id="createOrgName"
+                            placeholder="e.g. Acme Corp"
+                            value={orgName}
+                            onChange={(e) => setOrgName(e.target.value)}
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="createCurrency">Base Currency</Label>
+                        <div className="relative">
+                            <CreditCard className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                id="createCurrency"
+                                placeholder="USD, EUR, INR..."
+                                value={currency}
+                                onChange={(e) => setCurrency(e.target.value.toUpperCase())}
+                                className="pl-9"
+                                maxLength={3}
+                            />
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                            You can add more currencies later (Multi-currency support).
+                        </p>
+                    </div>
+                    <Button
+                        className="w-full mt-4"
+                        onClick={handleCreateOrganization}
+                        disabled={saving}
+                    >
+                        {saving ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Setting up...
+                            </>
+                        ) : (
+                            "Create Organization"
+                        )}
+                    </Button>
+                </CardContent>
+            </Card>
+        </div>
+    );
+
+    return (
+        <div className="space-y-6 p-6 pb-8">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight">Company Settings</h1>
+                    <p className="text-muted-foreground mt-1">
+                        Manage your organization details and branch locations.
+                    </p>
+                </div>
+            </div>
+
+            <div className="grid gap-6">
+                {/* Organization Details */}
+                <Card className="border-border/50 shadow-sm">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <Building className="h-5 w-5 text-primary" />
+                            Organization Information
+                        </CardTitle>
+                        <CardDescription>Update your company details that appear on documents and invoices</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        <div className="space-y-2">
+                            <Label htmlFor="orgName">Company Name *</Label>
+                            <Input
+                                id="orgName"
+                                value={orgName}
+                                onChange={(e) => setOrgName(e.target.value)}
+                                placeholder="Enter company name"
+                            />
+                        </div>
+
+                        <Separator />
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="email">Email</Label>
+                                <div className="relative">
+                                    <Mail className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                    <Input
+                                        id="email"
+                                        type="email"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        placeholder="contact@company.com"
+                                        className="pl-9"
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="phone">Phone</Label>
+                                <div className="relative">
+                                    <Phone className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                    <Input
+                                        id="phone"
+                                        value={phone}
+                                        onChange={(e) => setPhone(e.target.value)}
+                                        placeholder="+91 1234567890"
+                                        className="pl-9"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="address">Address</Label>
+                            <Input
+                                id="address"
+                                value={address}
+                                onChange={(e) => setAddress(e.target.value)}
+                                placeholder="Street address"
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="city">City</Label>
+                                <Input
+                                    id="city"
+                                    value={city}
+                                    onChange={(e) => setCity(e.target.value)}
+                                    placeholder="City"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="state">State</Label>
+                                <Input
+                                    id="state"
+                                    value={state}
+                                    onChange={(e) => setState(e.target.value)}
+                                    placeholder="State"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="pincode">Pincode</Label>
+                                <Input
+                                    id="pincode"
+                                    value={pincode}
+                                    onChange={(e) => setPincode(e.target.value)}
+                                    placeholder="123456"
+                                />
+                            </div>
+                        </div>
+
+                        <Separator />
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="currency">Currency</Label>
+                                <div className="relative">
+                                    <CreditCard className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                    <Input
+                                        id="currency"
+                                        value={currency}
+                                        onChange={(e) => setCurrency(e.target.value)}
+                                        className="pl-9"
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="taxId">Tax ID</Label>
+                                <div className="relative">
+                                    <Globe className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                    <Input
+                                        id="taxId"
+                                        value={taxId}
+                                        onChange={(e) => setTaxId(e.target.value)}
+                                        placeholder="Tax ID"
+                                        className="pl-9"
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="gstin">GSTIN</Label>
+                                <Input
+                                    id="gstin"
+                                    value={gstin}
+                                    onChange={(e) => setGstin(e.target.value)}
+                                    placeholder="GSTIN"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end">
+                            <Button onClick={handleSaveOrganization} disabled={saving}>
+                                {saving ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Saving...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Save className="mr-2 h-4 w-4" />
+                                        Save Changes
+                                    </>
+                                )}
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Branches */}
+                <Card className="border-border/50 shadow-sm">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <div className="space-y-1">
+                            <CardTitle className="flex items-center gap-2">
+                                <MapPin className="h-5 w-5 text-primary" />
+                                Branches
+                            </CardTitle>
+                            <CardDescription>Manage office locations</CardDescription>
+                        </div>
+                        <Button size="sm" variant="outline"><Plus className="h-4 w-4 mr-2" /> Add Branch</Button>
+                    </CardHeader>
+                    <CardContent className="pt-4">
+                        <div className="space-y-3">
+                            {branches.map(branch => (
+                                <div key={branch.id} className="flex items-center justify-between p-3 border rounded-lg bg-card hover:bg-muted/50 transition-colors">
+                                    <div className="space-y-1">
+                                        <div className="font-medium flex items-center gap-2">
+                                            {branch.name}
+                                            {branch.is_main && <Badge variant="secondary" className="text-[10px] h-5 px-1.5">HQ</Badge>}
+                                        </div>
+                                        <div className="text-xs text-muted-foreground font-mono">{branch.code || 'NO-CODE'}</div>
+                                    </div>
+                                    <Button variant="ghost" size="sm" className="h-8 text-xs">Edit</Button>
+                                </div>
+                            ))}
+                            {branches.length === 0 && (
+                                <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
+                                    <MapPin className="h-8 w-8 mb-2 opacity-20" />
+                                    <p className="text-sm">No branches found.</p>
+                                </div>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+        </div>
+    );
+}

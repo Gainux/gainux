@@ -1,72 +1,147 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
+import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
-import type { User, Session } from "@supabase/supabase-js";
+import type { SystemUser } from "@/modules/system/types";
 
+// Extends Auth Context to include Profile Data
 interface AuthContextType {
+    session: any;
     user: User | null;
-    session: Session | null;
-    logout: () => Promise<void>;
-    updateProfile: (data: { full_name?: string; avatar_url?: string }) => Promise<void>;
+    profile: SystemUser | null;
+    loading: boolean;
     isAuthenticated: boolean;
+    isAdmin: boolean;
+    updateProfile: (data: Partial<SystemUser>) => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType>({
+    session: null,
+    user: null,
+    profile: null,
+    loading: true,
+    isAuthenticated: false,
+    isAdmin: false,
+    updateProfile: async () => { },
+});
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+    const [session, setSession] = useState<any>(null);
     const [user, setUser] = useState<User | null>(null);
-    const [session, setSession] = useState<Session | null>(null);
+    const [profile, setProfile] = useState<SystemUser | null>(null);
     const [loading, setLoading] = useState(true);
 
+    const fetchProfile = async (userId: string) => {
+        try {
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('auth_id', userId)
+                .maybeSingle();
+
+            if (!error && data) {
+                setProfile(data);
+            }
+        } catch (error) {
+            console.error('Error fetching profile:', error);
+        }
+    };
+
     useEffect(() => {
-        // Get initial session
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setSession(session);
-            setUser(session?.user ?? null);
-            setLoading(false);
+        let mounted = true;
+
+        const initializeAuth = async () => {
+            // 1. Get initial session
+            const { data: { session: initialSession } } = await supabase.auth.getSession();
+
+            if (mounted) {
+                setSession(initialSession);
+                setUser(initialSession?.user ?? null);
+
+                if (initialSession?.user) {
+                    await fetchProfile(initialSession.user.id);
+                } else {
+                    setProfile(null);
+                }
+                setLoading(false);
+            }
+        };
+
+        initializeAuth();
+
+        // 2. Listen for changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
+            if (mounted) {
+                // If the session is the same, don't trigger a full reload of profile unless user changed
+                // But simplified: just set everything
+                setSession(newSession);
+                setUser(newSession?.user ?? null);
+
+                if (newSession?.user) {
+                    // Only fetch profile if it's a different user or we don't have one
+                    // For simplicity in this fix, we await it to ensure consistency
+                    await fetchProfile(newSession.user.id);
+                } else {
+                    setProfile(null);
+                }
+                setLoading(false);
+            }
         });
 
-        // Listen for changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-            setSession(session);
-            setUser(session?.user ?? null);
-            setLoading(false);
-        });
-
-        return () => subscription.unsubscribe();
+        return () => {
+            mounted = false;
+            subscription.unsubscribe();
+        };
     }, []);
 
-    const logout = async () => {
-        await supabase.auth.signOut();
-    };
+    // Real-time profile updates
+    useEffect(() => {
+        if (!user) return;
 
-    const updateProfile = async (data: { full_name?: string; avatar_url?: string }) => {
-        const { data: { user }, error } = await supabase.auth.updateUser({
-            data: data
-        });
+        const channel = supabase
+            .channel(`profile:${user.id}`)
+            .on('postgres_changes', {
+                event: 'UPDATE',
+                schema: 'public',
+                table: 'profiles',
+                filter: `auth_id=eq.${user.id}`
+            }, (payload) => {
+                console.log("Profile updated:", payload.new);
+                setProfile(payload.new as any);
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [user]);
+
+    const updateProfile = async (data: Partial<SystemUser>) => {
+        if (!user) return;
+
+        const { error } = await supabase
+            .from('profiles')
+            .update(data)
+            .eq('auth_id', user.id);
 
         if (error) throw error;
-        if (user) setUser(user);
-    };
 
-    const value = {
-        user,
-        session,
-        logout,
-        updateProfile,
-        isAuthenticated: !!user,
+        // Optimistic update
+        setProfile(prev => prev ? { ...prev, ...data } : null);
     };
 
     return (
-        <AuthContext.Provider value={value}>
-            {!loading && children}
+        <AuthContext.Provider value={{
+            session,
+            user,
+            profile,
+            loading,
+            isAuthenticated: !!session,
+            isAdmin: profile?.role === 'admin',
+            updateProfile
+        }}>
+            {children}
         </AuthContext.Provider>
     );
-}
+};
 
-export function useAuth() {
-    const context = useContext(AuthContext);
-    if (context === undefined) {
-        throw new Error("useAuth must be used within an AuthProvider");
-    }
-    return context;
-}
+export const useAuth = () => useContext(AuthContext);

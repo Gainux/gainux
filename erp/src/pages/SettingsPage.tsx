@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Building2, Palette, Bell, Loader2 } from "lucide-react";
+import { Building2, Palette, Bell, Loader2, Blocks } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -10,9 +10,12 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { settingsService } from "@/services/settingsService";
 import { useTheme } from "@/context/ThemeContext";
+import { useModules } from "@/context/ModuleContext";
+import { MODULES } from "@/config/modules";
 
 export default function SettingsPage() {
     const { theme, setTheme } = useTheme();
+    const { enabledModules, toggleModule } = useModules();
     const [loading, setLoading] = useState(true);
     const [organizationName, setOrganizationName] = useState("Gainux");
     const [address, setAddress] = useState("");
@@ -52,7 +55,7 @@ export default function SettingsPage() {
             setNotifyNewLead(settings.notifyNewLead);
         } catch (err: any) {
             console.error("Error loading settings:", err);
-            alert("Failed to load settings: " + err.message);
+            // alert("Failed to load settings: " + err.message);
         } finally {
             setLoading(false);
         }
@@ -70,6 +73,7 @@ export default function SettingsPage() {
                 state,
                 pincode,
                 gstin,
+
             });
             alert("Organization settings saved successfully!");
         } catch (err: any) {
@@ -132,12 +136,8 @@ export default function SettingsPage() {
                 </p>
             </div>
 
-            <Tabs defaultValue="organization" className="space-y-4">
+            <Tabs defaultValue="appearance" className="space-y-4">
                 <TabsList>
-                    <TabsTrigger value="organization" className="flex items-center gap-2">
-                        <Building2 className="h-4 w-4" />
-                        Organization
-                    </TabsTrigger>
                     <TabsTrigger value="appearance" className="flex items-center gap-2">
                         <Palette className="h-4 w-4" />
                         Appearance
@@ -145,6 +145,10 @@ export default function SettingsPage() {
                     <TabsTrigger value="notifications" className="flex items-center gap-2">
                         <Bell className="h-4 w-4" />
                         Notifications
+                    </TabsTrigger>
+                    <TabsTrigger value="modules" className="flex items-center gap-2">
+                        <Blocks className="h-4 w-4" />
+                        Modules
                     </TabsTrigger>
                 </TabsList>
 
@@ -378,6 +382,35 @@ export default function SettingsPage() {
                                     {saving ? "Saving..." : "Save Changes"}
                                 </Button>
                             </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                {/* Module Settings */}
+                <TabsContent value="modules" className="space-y-4">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Module Management</CardTitle>
+                            <CardDescription>
+                                Enable or disable modules to customize your workspace
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            {MODULES.map((module) => (
+                                <div key={module.id} className="flex items-center justify-between">
+                                    <div className="space-y-0.5">
+                                        <Label className="text-base">{module.name}</Label>
+                                        <p className="text-sm text-muted-foreground">
+                                            {module.description}
+                                        </p>
+                                    </div>
+                                    <Switch
+                                        checked={enabledModules.includes(module.id)}
+                                        onCheckedChange={() => toggleModule(module.id)}
+                                        disabled={module.required}
+                                    />
+                                </div>
+                            ))}
                         </CardContent>
                     </Card>
                 </TabsContent>

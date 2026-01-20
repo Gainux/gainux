@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2 } from "lucide-react";
 
 export default function ProfilePage() {
-    const { user, updateProfile } = useAuth();
+    const { user, profile, updateProfile } = useAuth();
     const [fullName, setFullName] = useState("");
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
@@ -102,6 +102,14 @@ export default function ProfilePage() {
                         <div className="space-y-1">
                             <Label className="text-xs text-muted-foreground">Provider</Label>
                             <p className="text-sm capitalize">{user.app_metadata.provider || "Email"}</p>
+                        </div>
+                        <div className="space-y-1">
+                            <Label className="text-xs text-muted-foreground">Role</Label>
+                            <p className="text-sm capitalize font-medium">{profile?.role || "User"}</p>
+                        </div>
+                        <div className="space-y-1">
+                            <Label className="text-xs text-muted-foreground">Organization ID</Label>
+                            <p className="text-sm font-mono text-muted-foreground">{profile?.org_id || "None"}</p>
                         </div>
                     </CardContent>
                 </Card>
