@@ -28,6 +28,10 @@ import ProjectDetailsPage from "@/modules/project-management/pages/ProjectDetail
 
 import UsersListPage from "@/modules/system/pages/UsersListPage";
 
+import ProductListPage from "@/modules/marketplace/pages/ProductListPage";
+import ProductDetailsPage from "@/modules/marketplace/pages/ProductDetailsPage";
+import OrderListPage from "@/modules/marketplace/pages/OrderListPage";
+
 import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
@@ -62,6 +66,13 @@ function App() {
                 <Route path="/finance/expenses" element={<ExpenseList />} />
                 <Route path="/projects" element={<ProjectsListPage />} />
                 <Route path="/projects/:id" element={<ProjectDetailsPage />} />
+
+                {/* Marketplace Routes */}
+                <Route path="/marketplace/products" element={<ProductListPage />} />
+                <Route path="/marketplace/products/new" element={<ProductDetailsPage />} />
+                <Route path="/marketplace/products/:id" element={<ProductDetailsPage />} />
+                <Route path="/marketplace/orders" element={<OrderListPage />} />
+
                 <Route path="/users" element={<UsersListPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/profile" element={<ProfilePage />} />

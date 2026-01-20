@@ -27,17 +27,30 @@ export function RequestService() {
             _captcha: "false"
         };
 
-        try {
-            const response = await fetch("https://formsubmit.co/ajax/help@gainux.com", {
-                method: "POST",
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify(payload)
-            });
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby48qHhS0sN_fyTDwvu1MkKKfIgV3cpj0VxyRw-w1Kf36FiIlDfDbbM-zOv-vpXPtp8/exec";
 
-            if (response.ok) {
+        try {
+            // Send to both services in parallel
+            const [emailResponse] = await Promise.all([
+                fetch("https://formsubmit.co/ajax/help@gainux.com", {
+                    method: "POST",
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                }),
+                fetch(GOOGLE_SCRIPT_URL, {
+                    method: "POST",
+                    mode: "no-cors",
+                    headers: {
+                        'Content-Type': 'text/plain', // Avoids CORS preflight
+                    },
+                    body: JSON.stringify(data)
+                })
+            ]);
+
+            if (emailResponse.ok) {
                 toast.success("Request received! We'll get back to you shortly.");
                 form.reset();
             } else {
@@ -118,7 +131,40 @@ export function RequestService() {
 
                             <div className="space-y-2">
                                 <Label htmlFor="phone">Phone Number</Label>
-                                <Input id="phone" name="phone" type="tel" placeholder="+1 (555) 000-0000" disabled={isSubmitting} />
+                                <div className="flex gap-2">
+                                    <select
+                                        id="country-code"
+                                        name="country_code"
+                                        className="flex h-10 w-[150px] items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                        required
+                                        disabled={isSubmitting}
+                                        defaultValue=""
+                                    >
+                                        <option value="" disabled>Code</option>
+                                        <option value="+91">India (+91)</option>
+                                        <option value="+1">US/CA (+1)</option>
+                                        <option value="+44">UK (+44)</option>
+                                        <option value="+971">UAE (+971)</option>
+                                        <option value="+966">KSA (+966)</option>
+                                        <option value="+974">Qatar (+974)</option>
+                                        <option value="+968">Oman (+968)</option>
+                                        <option value="+965">Kuwait (+965)</option>
+                                        <option value="+61">Australia (+61)</option>
+                                        <option value="+49">Germany (+49)</option>
+                                        <option value="+33">France (+33)</option>
+                                        <option value="+65">Singapore (+65)</option>
+                                        <option value="+60">Malaysia (+60)</option>
+                                    </select>
+                                    <Input
+                                        id="phone"
+                                        name="phone"
+                                        type="tel"
+                                        placeholder="Phone Number"
+                                        className="flex-1"
+                                        required
+                                        disabled={isSubmitting}
+                                    />
+                                </div>
                             </div>
 
                             <div className="space-y-2">
@@ -156,6 +202,9 @@ export function RequestService() {
                             <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
                                 {isSubmitting ? "Sending Request..." : "Submit Request"}
                             </Button>
+                            <p className="text-xs text-muted-foreground text-center">
+                                By submitting this form, you agree to being contacted for business and marketing purposes.
+                            </p>
                         </form>
                     </CardContent>
                 </Card>

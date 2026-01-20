@@ -1,0 +1,67 @@
+function doPost(e) {
+  // 1. Open the sheet - CHANGE 'Sheet1' if your tab has a different name
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Sheet1');
+  
+  // 2. Parse the incoming JSON data
+  var data = JSON.parse(e.postData.contents);
+  
+  // 3. Helper to split full name if needed
+  var firstName = data.first_name;
+  var lastName = data.last_name;
+  
+  // If only 'name' is provided (like in RequestService), split it
+  if (!firstName && data.name) {
+    var parts = data.name.trim().split(' ');
+    firstName = parts[0];
+    lastName = parts.slice(1).join(' ') || '';
+  }
+
+  // 4. Map the data to your specific CSV columns
+  // Columns: email,phone,add_to_messaging_customer_base_for_whatsapp,madid,fn,ln,zip,ct,st,country,dob,doby,gen,age,uid,value
+  
+  var rowData = [
+    data.email || '',                                   // email
+    (data.country_code || '') + (data.phone || ''),     // phone (combine code + number)
+    'Yes',                                              // add_to_messaging_... (Defaulting to Yes for new leads)
+    Utilities.getUuid(),                                // madid (Generating a unique ID)
+    firstName || '',                                    // fn
+    lastName || '',                                     // ln
+    '',                                                 // zip (Not collected)
+    '',                                                 // ct (City - not collected)
+    '',                                                 // st (State - not collected)
+    data.country_code ? getCountryName(data.country_code) : '', // country (Derived from code if possible)
+    '',                                                 // dob
+    '',                                                 // doby
+    '',                                                 // gen
+    '',                                                 // age
+    data.email,                                         // uid (Using email as unique ID for now, or generate another UUID)
+    '0'                                                 // value (Default 0)
+  ];
+
+  // 5. Append the row
+  sheet.appendRow(rowData);
+  
+  // 6. Return success
+  return ContentService.createTextOutput(JSON.stringify({ 'result': 'success' }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+// Helper to map country codes to names (Optional, extends as needed)
+function getCountryName(code) {
+  var countries = {
+    '+91': 'India',
+    '+1': 'USA/Canada',
+    '+44': 'UK',
+    '+971': 'UAE',
+    '+966': 'Saudi Arabia',
+    '+974': 'Qatar',
+    '+968': 'Oman',
+    '+965': 'Kuwait',
+    '+61': 'Australia',
+    '+49': 'Germany',
+    '+33': 'France',
+    '+65': 'Singapore',
+    '+60': 'Malaysia'
+  };
+  return countries[code] || code;
+}

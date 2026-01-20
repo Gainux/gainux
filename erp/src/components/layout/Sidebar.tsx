@@ -105,6 +105,23 @@ export function Sidebar({ className }: SidebarProps) {
             ]
         },
         {
+            title: "Marketplace",
+            routes: [
+                {
+                    href: "/marketplace/products",
+                    label: "Products",
+                    icon: ShoppingCart,
+                    active: pathname.startsWith("/marketplace/products"),
+                },
+                {
+                    href: "/marketplace/orders",
+                    label: "Orders",
+                    icon: Briefcase,
+                    active: pathname.startsWith("/marketplace/orders"),
+                },
+            ]
+        },
+        {
             title: "System",
             routes: [
                 {

@@ -28,17 +28,30 @@ export function Contact() {
             _captcha: "false"
         };
 
-        try {
-            const response = await fetch("https://formsubmit.co/ajax/help@gainux.com", {
-                method: "POST",
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify(payload)
-            });
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby48qHhS0sN_fyTDwvu1MkKKfIgV3cpj0VxyRw-w1Kf36FiIlDfDbbM-zOv-vpXPtp8/exec";
 
-            if (response.ok) {
+        try {
+            // Send to both services in parallel
+            const [emailResponse] = await Promise.all([
+                fetch("https://formsubmit.co/ajax/help@gainux.com", {
+                    method: "POST",
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                }),
+                fetch(GOOGLE_SCRIPT_URL, {
+                    method: "POST",
+                    mode: "no-cors",
+                    headers: {
+                        'Content-Type': 'text/plain', // Avoids CORS preflight
+                    },
+                    body: JSON.stringify(data)
+                })
+            ]);
+
+            if (emailResponse.ok) {
                 toast.success("Message sent successfully! We'll be in touch soon.");
                 form.reset();
             } else {
@@ -194,6 +207,9 @@ export function Contact() {
                                     <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
                                         {isSubmitting ? "Sending..." : "Send Message"}
                                     </Button>
+                                    <p className="text-xs text-muted-foreground text-center">
+                                        By submitting this form, you agree to being contacted for business and marketing purposes.
+                                    </p>
                                 </form>
                             </CardContent>
                         </Card>
