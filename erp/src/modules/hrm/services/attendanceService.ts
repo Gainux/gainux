@@ -1,132 +1,146 @@
-import { supabase } from "@/lib/supabase";
-import type { Attendance } from "../types";
+import { supabase } from '@/lib/supabase';
+import type { AttendanceLog } from '../types';
 
-// Helper to map DB snake_case to CamelCase
-const mapToAttendance = (data: any): Attendance => ({
-    id: data.id,
-    employeeId: data.employee_id,
-    date: data.date,
-    clockIn: data.clock_in,
-    clockOut: data.clock_out,
-    status: data.status,
-    notes: data.notes,
-    createdAt: data.created_at
+const mapDbToAttendance = (row: any): AttendanceLog => ({
+    id: row.id,
+    orgId: row.org_id,
+    employeeId: row.employee_id,
+    date: row.date,
+    checkIn: row.check_in,
+    checkOut: row.check_out,
+    status: row.status,
+    notes: row.notes,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
 });
 
-// Helper to map CamelCase to DB snake_case
-const mapToDbAttendance = (data: Partial<Attendance>) => {
-    const dbData: any = {};
-    if (data.id) dbData.id = data.id;
-    if (data.employeeId) dbData.employee_id = data.employeeId;
-    if (data.date) dbData.date = data.date;
-    if (data.clockIn !== undefined) dbData.clock_in = data.clockIn;
-    if (data.clockOut !== undefined) dbData.clock_out = data.clockOut;
-    if (data.status) dbData.status = data.status;
-    if (data.notes !== undefined) dbData.notes = data.notes;
-    return dbData;
-};
+const mapAttendanceToDb = (attendance: Partial<AttendanceLog>) => ({
+    org_id: attendance.orgId,
+    employee_id: attendance.employeeId,
+    date: attendance.date,
+    check_in: attendance.checkIn,
+    check_out: attendance.checkOut,
+    status: attendance.status,
+    notes: attendance.notes
+});
 
 export const attendanceService = {
-    async getAttendance(date: string) {
-        const { data, error } = await supabase
-            .from('attendance')
+    async getAttendanceLogs(orgId: string, date?: string): Promise<AttendanceLog[]> {
+        let query = supabase
+            .from('attendance_logs')
             .select('*')
-            .eq('date', date);
+            .eq('org_id', orgId);
+
+        if (date) {
+            query = query.eq('date', date);
+        }
+
+        const { data, error } = await query.order('date', { ascending: false });
 
         if (error) throw error;
-        return data.map(mapToAttendance);
+        return (data || []).map(mapDbToAttendance);
     },
 
-    async getTodayStats() {
-        // 1. Get today's date YYYY-MM-DD
-        const today = new Date().toISOString().split('T')[0];
+    async getEmployeeAttendance(employeeId: string, startDate?: string, endDate?: string): Promise<AttendanceLog[]> {
+        let query = supabase
+            .from('attendance_logs')
+            .select('*')
+            .eq('employee_id', employeeId);
 
-        // 2. Count total active employees
-        const { count: total, error: empError } = await supabase
-            .from('employees')
-            .select('*', { count: 'exact', head: true })
-            .eq('status', 'active');
+        if (startDate) query = query.gte('date', startDate);
+        if (endDate) query = query.lte('date', endDate);
 
-        if (empError) throw empError;
-
-        // 3. Count present/absent for today
-        const { data: attendance, error: attError } = await supabase
-            .from('attendance')
-            .select('status')
-            .eq('date', today);
-
-        if (attError) throw attError;
-
-        const present = attendance?.filter(a => ['present', 'late', 'half_day'].includes(a.status)).length || 0;
-        const absent = attendance?.filter(a => a.status === 'absent').length || 0;
-
-        return {
-            total: total || 0,
-            present,
-            absent
-        };
-    },
-
-    async bulkUpsertAttendance(records: Partial<Attendance>[]) {
-        const dbRecords = records.map(mapToDbAttendance);
-
-        const { data, error } = await supabase
-            .from('attendance')
-            .upsert(dbRecords, { onConflict: 'employee_id, date' })
-            .select();
+        const { data, error } = await query.order('date', { ascending: false });
 
         if (error) throw error;
-        return data.map(mapToAttendance);
+        return (data || []).map(mapDbToAttendance);
     },
 
-    async upsertAttendance(record: Partial<Attendance>) {
-        const dbRecord = mapToDbAttendance(record);
-
-        const { data, error } = await supabase
-            .from('attendance')
-            .upsert(dbRecord, { onConflict: 'employee_id, date' })
-            .select()
-            .single();
-
-        if (error) throw error;
-        return mapToAttendance(data);
-    },
-
-    async clockIn(employeeId: string) {
-        const today = new Date().toISOString().split('T')[0];
-        const now = new Date().toLocaleTimeString('en-US', { hour12: false });
-
-        const { data, error } = await supabase
-            .from('attendance')
-            .upsert({
-                employee_id: employeeId,
-                date: today,
-                clock_in: now,
-                status: 'present'
-            }, { onConflict: 'employee_id, date' })
-            .select()
-            .single();
-
-        if (error) throw error;
-        return mapToAttendance(data);
-    },
-
-    async clockOut(employeeId: string) {
-        const today = new Date().toISOString().split('T')[0];
-        const now = new Date().toLocaleTimeString('en-US', { hour12: false });
-
-        // Update only if clock_out is null or explicitly requested
-        // Using upsert with existing data is tricky without fetching first, 
-        // but update is safer for clock-out to ensure record exists.
-        const { data, error } = await supabase
-            .from('attendance')
-            .update({ clock_out: now })
+    async checkIn(employeeId: string, orgId: string, date: string): Promise<AttendanceLog> {
+        // Check if already checked in today
+        const { data: existing } = await supabase
+            .from('attendance_logs')
+            .select('*')
             .eq('employee_id', employeeId)
-            .eq('date', today)
+            .eq('date', date)
+            .single();
+
+        if (existing) {
+            throw new Error('Already checked in for today');
+        }
+
+        const { data, error } = await supabase
+            .from('attendance_logs')
+            .insert({
+                org_id: orgId,
+                employee_id: employeeId,
+                date,
+                check_in: new Date().toISOString(),
+                status: 'present'
+            })
             .select()
             .single();
 
         if (error) throw error;
-        return mapToAttendance(data);
+        return mapDbToAttendance(data);
+    },
+
+    async checkOut(employeeId: string, date: string): Promise<AttendanceLog> {
+        const { data: existing } = await supabase
+            .from('attendance_logs')
+            .select('*')
+            .eq('employee_id', employeeId)
+            .eq('date', date)
+            .single();
+
+        if (!existing) {
+            throw new Error('No check-in record found for today');
+        }
+
+        if (existing.check_out) {
+            throw new Error('Already checked out for today');
+        }
+
+        const { data, error } = await supabase
+            .from('attendance_logs')
+            .update({ check_out: new Date().toISOString() })
+            .eq('id', existing.id)
+            .select()
+            .single();
+
+        if (error) throw error;
+        return mapDbToAttendance(data);
+    },
+
+    async markAttendance(attendance: Omit<AttendanceLog, 'id' | 'createdAt' | 'updatedAt'>): Promise<AttendanceLog> {
+        const { data, error } = await supabase
+            .from('attendance_logs')
+            .insert(mapAttendanceToDb(attendance))
+            .select()
+            .single();
+
+        if (error) throw error;
+        return mapDbToAttendance(data);
+    },
+
+    async updateAttendance(id: string, updates: Partial<AttendanceLog>): Promise<AttendanceLog> {
+        const { data, error } = await supabase
+            .from('attendance_logs')
+            .update(mapAttendanceToDb(updates))
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) throw error;
+        return mapDbToAttendance(data);
+    },
+
+    async deleteAttendance(id: string): Promise<void> {
+        const { error } = await supabase
+            .from('attendance_logs')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
     }
 };

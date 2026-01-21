@@ -1,102 +1,194 @@
-import { supabase } from "@/lib/supabase";
-import type { Payroll } from "../types";
+import { supabase } from '@/lib/supabase';
+import type { SalaryStructure, PayrollRun, Payslip } from '../types';
 
-// Helper to map DB snake_case to CamelCase
-const mapToPayroll = (data: any): Payroll => ({
-    id: data.id,
-    employeeId: data.employee_id,
-    employee: data.employee ? {
-        id: data.employee.id,
-        firstName: data.employee.first_name,
-        lastName: data.employee.last_name,
-        email: "",
-        hireDate: "",
-        jobTitle: "",
-        departmentId: "",
-        salary: 0,
-        status: "active",
-        department: data.employee.department ? {
-            id: "",
-            name: data.employee.department.name,
-            createdAt: ""
-        } : undefined
-    } : undefined,
-    payPeriodStart: data.pay_period_start,
-    payPeriodEnd: data.pay_period_end,
-    paymentDate: data.payment_date,
-    baseSalary: Number(data.base_salary),
-    deductions: Number(data.deductions),
-    bonuses: Number(data.bonuses),
-    netPay: Number(data.net_pay),
-    status: data.status,
-    createdAt: data.created_at
+const mapDbToSalaryStructure = (row: any): SalaryStructure => ({
+    id: row.id,
+    orgId: row.org_id,
+    employeeId: row.employee_id,
+    basicSalary: row.basic_salary,
+    hra: row.hra,
+    allowances: row.allowances,
+    deductions: row.deductions,
+    effectiveFrom: row.effective_from,
+    effectiveTo: row.effective_to,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+});
+
+const mapDbToPayrollRun = (row: any): PayrollRun => ({
+    id: row.id,
+    orgId: row.org_id,
+    month: row.month,
+    year: row.year,
+    status: row.status,
+    totalAmount: row.total_amount,
+    createdBy: row.created_by,
+    createdAt: row.created_at,
+    processedAt: row.processed_at
+});
+
+const mapDbToPayslip = (row: any): Payslip => ({
+    id: row.id,
+    orgId: row.org_id,
+    payrollRunId: row.payroll_run_id,
+    employeeId: row.employee_id,
+    basicSalary: row.basic_salary,
+    hra: row.hra,
+    allowances: row.allowances,
+    grossSalary: row.gross_salary,
+    deductions: row.deductions,
+    tax: row.tax,
+    netSalary: row.net_salary,
+    status: row.status,
+    createdAt: row.created_at
 });
 
 export const payrollService = {
-    async getPayrollRecords(month: string) { // Format: YYYY-MM
-        const startOfMonth = `${month}-01`;
-
-        // Calculate end of month roughly or use date-fns in UI to pass exact dates
-        // Here we just filter by pay_period_start being in the month
-
+    // Salary Structures
+    async getSalaryStructure(employeeId: string): Promise<SalaryStructure | null> {
         const { data, error } = await supabase
-            .from('payroll')
-            .select(`
-                *,
-                employee:employees(id, first_name, last_name, department:departments(name))
-            `)
-            .gte('pay_period_start', startOfMonth)
-            .lte('pay_period_start', `${month}-31`) // Simple rough check
-            .order('payment_date', { ascending: false });
-
-        if (error) throw error;
-        return data.map(mapToPayroll);
-    },
-
-    async generatePayroll(employeeId: string, payPeriodStart: string, payPeriodEnd: string) {
-        // Fetch employee salary info
-        const { data: employee } = await supabase
-            .from('employees')
-            .select('salary')
-            .eq('id', employeeId)
+            .from('salary_structures')
+            .select('*')
+            .eq('employee_id', employeeId)
+            .is('effective_to', null) // Get current active salary
             .single();
 
-        if (!employee) throw new Error("Employee not found");
+        if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows
+        return data ? mapDbToSalaryStructure(data) : null;
+    },
 
-        const baseSalary = employee.salary;
-        const deductions = 0; // Logic for tax/deductions can be added here
-        const bonuses = 0;
-        const netPay = baseSalary - deductions + bonuses;
+    async setSalaryStructure(structure: Omit<SalaryStructure, 'id' | 'createdAt' | 'updatedAt'>): Promise<SalaryStructure> {
+        // Close any existing active salary structure
+        await supabase
+            .from('salary_structures')
+            .update({ effective_to: new Date().toISOString() })
+            .eq('employee_id', structure.employeeId)
+            .is('effective_to', null);
 
         const { data, error } = await supabase
-            .from('payroll')
+            .from('salary_structures')
             .insert({
-                employee_id: employeeId,
-                pay_period_start: payPeriodStart,
-                pay_period_end: payPeriodEnd,
-                payment_date: new Date().toISOString().split('T')[0],
-                base_salary: baseSalary,
-                deductions,
-                bonuses,
-                net_pay: netPay,
-                status: 'draft'
+                org_id: structure.orgId,
+                employee_id: structure.employeeId,
+                basic_salary: structure.basicSalary,
+                hra: structure.hra,
+                allowances: structure.allowances,
+                deductions: structure.deductions,
+                effective_from: structure.effectiveFrom
             })
             .select()
             .single();
 
         if (error) throw error;
-        return mapToPayroll(data);
+        return mapDbToSalaryStructure(data);
     },
 
-    async markAsPaid(id: string) {
+    // Payroll Runs
+    async getPayrollRuns(orgId: string): Promise<PayrollRun[]> {
         const { data, error } = await supabase
-            .from('payroll')
-            .update({ status: 'paid' })
-            .eq('id', id)
+            .from('payroll_runs')
+            .select('*')
+            .eq('org_id', orgId)
+            .order('year', { ascending: false })
+            .order('month', { ascending: false });
+
+        if (error) throw error;
+        return (data || []).map(mapDbToPayrollRun);
+    },
+
+    async createPayrollRun(orgId: string, month: number, year: number, userId: string): Promise<PayrollRun> {
+        const { data, error } = await supabase
+            .from('payroll_runs')
+            .insert({
+                org_id: orgId,
+                month,
+                year,
+                status: 'draft',
+                total_amount: 0,
+                created_by: userId
+            })
             .select()
             .single();
 
         if (error) throw error;
-        return mapToPayroll(data);
+        return mapDbToPayrollRun(data);
+    },
+
+    async generatePayslips(payrollRunId: string, orgId: string): Promise<Payslip[]> {
+        // Get all active employees
+        const { data: employees, error: empError } = await supabase
+            .from('employees')
+            .select('id')
+            .eq('org_id', orgId)
+            .eq('status', 'active');
+
+        if (empError) throw empError;
+
+        const payslips: Payslip[] = [];
+
+        for (const emp of employees || []) {
+            const salary = await this.getSalaryStructure(emp.id);
+
+            if (salary) {
+                const grossSalary = salary.basicSalary + salary.hra + salary.allowances;
+                const netSalary = grossSalary - salary.deductions;
+
+                const { data, error } = await supabase
+                    .from('payslips')
+                    .insert({
+                        org_id: orgId,
+                        payroll_run_id: payrollRunId,
+                        employee_id: emp.id,
+                        basic_salary: salary.basicSalary,
+                        hra: salary.hra,
+                        allowances: salary.allowances,
+                        gross_salary: grossSalary,
+                        deductions: salary.deductions,
+                        tax: 0, // Simplified for MVP
+                        net_salary: netSalary,
+                        status: 'generated'
+                    })
+                    .select()
+                    .single();
+
+                if (!error && data) {
+                    payslips.push(mapDbToPayslip(data));
+                }
+            }
+        }
+
+        // Update total amount in payroll run
+        const totalAmount = payslips.reduce((sum, p) => sum + p.netSalary, 0);
+        await supabase
+            .from('payroll_runs')
+            .update({
+                total_amount: totalAmount,
+                status: 'completed',
+                processed_at: new Date().toISOString()
+            })
+            .eq('id', payrollRunId);
+
+        return payslips;
+    },
+
+    async getPayslips(payrollRunId: string): Promise<Payslip[]> {
+        const { data, error } = await supabase
+            .from('payslips')
+            .select('*')
+            .eq('payroll_run_id', payrollRunId);
+
+        if (error) throw error;
+        return (data || []).map(mapDbToPayslip);
+    },
+
+    async getEmployeePayslips(employeeId: string): Promise<Payslip[]> {
+        const { data, error } = await supabase
+            .from('payslips')
+            .select('*')
+            .eq('employee_id', employeeId)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        return (data || []).map(mapDbToPayslip);
     }
 };

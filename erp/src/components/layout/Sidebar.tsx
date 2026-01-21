@@ -163,7 +163,7 @@ export function Sidebar({ className, isCollapsed = false, onToggle }: SidebarPro
                     active: pathname.startsWith("/hrm/employees"),
                 },
                 {
-                    href: "/hrm/org",
+                    href: "/hrm/org-structure",
                     label: "Org Structure",
                     icon: Building,
                     active: pathname.startsWith("/hrm/org"),
@@ -557,6 +557,12 @@ export function Sidebar({ className, isCollapsed = false, onToggle }: SidebarPro
                     label: "Security & Access",
                     icon: ShieldAlert,
                     active: pathname.startsWith("/system/security"),
+                },
+                {
+                    href: "/system/department-access",
+                    label: "Department Access",
+                    icon: Users,
+                    active: pathname.startsWith("/system/department"),
                 },
                 {
                     href: "/system/audit",

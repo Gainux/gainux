@@ -1,86 +1,192 @@
-import { supabase } from "@/lib/supabase";
-import type { LeaveRequest } from "../types";
+import { supabase } from '@/lib/supabase';
+import type { LeaveType, LeaveRequest, LeaveBalance } from '../types';
 
-// Helper to map DB snake_case to CamelCase
-const mapToLeaveRequest = (data: any): LeaveRequest => ({
-    id: data.id,
-    employeeId: data.employee_id,
-    employee: data.employee ? {
-        id: data.employee.id,
-        firstName: data.employee.first_name,
-        lastName: data.employee.last_name,
-        email: "",
-        hireDate: "",
-        jobTitle: "",
-        departmentId: "",
-        salary: 0,
-        status: "active",
-        department: data.employee.department ? {
-            id: "", // partial
-            name: data.employee.department.name,
-            createdAt: ""
-        } : undefined
-    } : undefined,
-    leaveType: data.leave_type,
-    startDate: data.start_date,
-    endDate: data.end_date,
-    reason: data.reason,
-    status: data.status,
-    approvedBy: data.approved_by,
-    createdAt: data.created_at
+const mapDbToLeaveType = (row: any): LeaveType => ({
+    id: row.id,
+    orgId: row.org_id,
+    name: row.name,
+    daysAllowedPerYear: row.days_allowed_per_year,
+    isPaid: row.is_paid,
+    createdAt: row.created_at
+});
+
+const mapDbToLeaveRequest = (row: any): LeaveRequest => ({
+    id: row.id,
+    orgId: row.org_id,
+    employeeId: row.employee_id,
+    leaveTypeId: row.leave_type_id,
+    startDate: row.start_date,
+    endDate: row.end_date,
+    daysCount: row.days_count,
+    reason: row.reason,
+    status: row.status,
+    approvedBy: row.approved_by,
+    approvedAt: row.approved_at,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+});
+
+const mapDbToLeaveBalance = (row: any): LeaveBalance => ({
+    id: row.id,
+    orgId: row.org_id,
+    employeeId: row.employee_id,
+    leaveTypeId: row.leave_type_id,
+    year: row.year,
+    daysTaken: row.days_taken,
+    daysRemaining: row.days_remaining,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
 });
 
 export const leaveService = {
-    async getLeaveRequests(status?: string) {
-        let query = supabase
-            .from('leave_requests')
-            .select(`
-                *,
-                employee:employees(id, first_name, last_name, department:departments(name))
-            `)
-            .order('start_date', { ascending: false });
+    // Leave Types
+    async getLeaveTypes(orgId: string): Promise<LeaveType[]> {
+        const { data, error } = await supabase
+            .from('leave_types')
+            .select('*')
+            .eq('org_id', orgId)
+            .order('name');
 
-        if (status && status !== 'all') {
-            query = query.eq('status', status);
-        }
-
-        const { data, error } = await query;
         if (error) throw error;
-        return data.map(mapToLeaveRequest);
+        return (data || []).map(mapDbToLeaveType);
     },
 
-    async requestLeave(request: Omit<LeaveRequest, 'id' | 'status' | 'createdAt' | 'approvedBy'>) {
-        const dbRequest = {
-            employee_id: request.employeeId,
-            leave_type: request.leaveType,
-            start_date: request.startDate,
-            end_date: request.endDate,
-            reason: request.reason,
-            status: 'pending'
-        };
-
+    async createLeaveType(orgId: string, name: string, daysAllowedPerYear: number, isPaid: boolean = true): Promise<LeaveType> {
         const { data, error } = await supabase
-            .from('leave_requests')
-            .insert(dbRequest)
+            .from('leave_types')
+            .insert({
+                org_id: orgId,
+                name,
+                days_allowed_per_year: daysAllowedPerYear,
+                is_paid: isPaid
+            })
             .select()
             .single();
 
         if (error) throw error;
-        return mapToLeaveRequest(data);
+        return mapDbToLeaveType(data);
     },
 
-    async updateLeaveStatus(id: string, status: 'approved' | 'rejected', approverId: string) {
+    // Leave Requests
+    async getLeaveRequests(orgId: string, employeeId?: string): Promise<LeaveRequest[]> {
+        let query = supabase
+            .from('leave_requests')
+            .select('*')
+            .eq('org_id', orgId);
+
+        if (employeeId) {
+            query = query.eq('employee_id', employeeId);
+        }
+
+        const { data, error } = await query.order('created_at', { ascending: false });
+
+        if (error) throw error;
+        return (data || []).map(mapDbToLeaveRequest);
+    },
+
+    async applyLeave(request: Omit<LeaveRequest, 'id' | 'status' | 'approvedBy' | 'approvedAt' | 'createdAt' | 'updatedAt'>): Promise<LeaveRequest> {
+        const { data, error } = await supabase
+            .from('leave_requests')
+            .insert({
+                org_id: request.orgId,
+                employee_id: request.employeeId,
+                leave_type_id: request.leaveTypeId,
+                start_date: request.startDate,
+                end_date: request.endDate,
+                days_count: request.daysCount,
+                reason: request.reason,
+                status: 'pending'
+            })
+            .select()
+            .single();
+
+        if (error) throw error;
+        return mapDbToLeaveRequest(data);
+    },
+
+    async approveLeave(requestId: string, approverId: string): Promise<LeaveRequest> {
         const { data, error } = await supabase
             .from('leave_requests')
             .update({
-                status: status,
-                approved_by: approverId
+                status: 'approved',
+                approved_by: approverId,
+                approved_at: new Date().toISOString()
             })
-            .eq('id', id)
+            .eq('id', requestId)
             .select()
             .single();
 
         if (error) throw error;
-        return mapToLeaveRequest(data);
+
+        // Update leave balance
+        const request = mapDbToLeaveRequest(data);
+        await this.updateLeaveBalance(request.employeeId, request.leaveTypeId, request.daysCount, new Date().getFullYear());
+
+        return request;
+    },
+
+    async rejectLeave(requestId: string): Promise<LeaveRequest> {
+        const { data, error } = await supabase
+            .from('leave_requests')
+            .update({ status: 'rejected' })
+            .eq('id', requestId)
+            .select()
+            .single();
+
+        if (error) throw error;
+        return mapDbToLeaveRequest(data);
+    },
+
+    // Leave Balances
+    async getLeaveBalances(employeeId: string, year: number): Promise<LeaveBalance[]> {
+        const { data, error } = await supabase
+            .from('leave_balances')
+            .select('*')
+            .eq('employee_id', employeeId)
+            .eq('year', year);
+
+        if (error) throw error;
+        return (data || []).map(mapDbToLeaveBalance);
+    },
+
+    async initializeLeaveBalance(orgId: string, employeeId: string, leaveTypeId: string, year: number, daysAllowed: number): Promise<LeaveBalance> {
+        const { data, error } = await supabase
+            .from('leave_balances')
+            .insert({
+                org_id: orgId,
+                employee_id: employeeId,
+                leave_type_id: leaveTypeId,
+                year,
+                days_taken: 0,
+                days_remaining: daysAllowed
+            })
+            .select()
+            .single();
+
+        if (error) throw error;
+        return mapDbToLeaveBalance(data);
+    },
+
+    async updateLeaveBalance(employeeId: string, leaveTypeId: string, daysTaken: number, year: number): Promise<void> {
+        const { data: existing } = await supabase
+            .from('leave_balances')
+            .select('*')
+            .eq('employee_id', employeeId)
+            .eq('leave_type_id', leaveTypeId)
+            .eq('year', year)
+            .single();
+
+        if (existing) {
+            const newDaysTaken = existing.days_taken + daysTaken;
+            const newDaysRemaining = existing.days_remaining - daysTaken;
+
+            await supabase
+                .from('leave_balances')
+                .update({
+                    days_taken: newDaysTaken,
+                    days_remaining: newDaysRemaining
+                })
+                .eq('id', existing.id);
+        }
     }
 };

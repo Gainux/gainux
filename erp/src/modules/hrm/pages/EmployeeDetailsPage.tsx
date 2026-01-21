@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { employeeService } from "../services/employeeService";
+import { NewEmployeeForm } from "../components/NewEmployeeForm";
 import type { Employee } from "../types";
 
 export default function EmployeeDetailsPage() {
@@ -15,8 +16,10 @@ export default function EmployeeDetailsPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (id) {
+        if (id && id !== 'new') {
             loadEmployee(id);
+        } else if (id === 'new') {
+            setLoading(false);
         }
     }, [id]);
 
@@ -34,6 +37,10 @@ export default function EmployeeDetailsPage() {
 
     if (loading) {
         return <div className="flex-1 p-8 flex justify-center items-center">Loading...</div>;
+    }
+
+    if (id === 'new') {
+        return <NewEmployeeForm />;
     }
 
     if (!employee) {

@@ -12,6 +12,7 @@ import DealsPage from "@/modules/crm/pages/DealsPage";
 
 import EmployeeList from "./modules/hrm/pages/EmployeeList";
 import EmployeeDetailsPage from "./modules/hrm/pages/EmployeeDetailsPage";
+import OrgStructurePage from "./modules/hrm/pages/OrgStructurePage";
 import AttendancePage from "./modules/hrm/pages/AttendancePage";
 import InvoiceList from "./modules/finance/pages/InvoiceList";
 import CreateInvoice from "./modules/finance/pages/CreateInvoice";
@@ -52,6 +53,7 @@ import { ThemeProvider } from "@/context/ThemeContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import LoginPage from "@/pages/auth/LoginPage";
 import ProfilePage from "@/pages/auth/ProfilePage";
+import DepartmentModuleAccessPage from "@/pages/system/DepartmentModuleAccessPage";
 import SettingsPage from "@/pages/SettingsPage";
 import BankDetails from "./modules/finance/pages/BankDetails";
 import BudgetList from "./modules/finance/pages/BudgetList";
@@ -91,6 +93,7 @@ function App() {
                     <Route path="/hrm/attendance" element={<AttendancePage />} />
                     <Route path="/hrm/employees" element={<EmployeeList />} />
                     <Route path="/hrm/employees/:id" element={<EmployeeDetailsPage />} />
+                    <Route path="/hrm/org-structure" element={<OrgStructurePage />} />
                     <Route path="/hrm/*" element={<ComingSoonPage title="Human Resources" />} />
                   </Route>
 
@@ -210,6 +213,7 @@ function App() {
                       <Route path="/system/company" element={<CompanySettingsPage />} />
                       <Route path="/system/audit" element={<AuditLogsPage />} />
                       <Route path="/system/security" element={<SecuritySettingsPage />} />
+                      <Route path="/system/department-access" element={<DepartmentModuleAccessPage />} />
                       <Route path="/settings" element={<SettingsPage />} />
                       <Route path="/system/*" element={<ComingSoonPage title="System Settings" />} />
                     </Route>
