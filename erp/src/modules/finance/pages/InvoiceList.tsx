@@ -14,23 +14,28 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 import { invoiceService } from "../services/invoiceService";
 import type { Invoice } from "../types";
 
 export default function InvoiceList() {
     const navigate = useNavigate();
+    const { profile } = useAuth();
+    const orgId = profile?.org_id;
+
     const [invoices, setInvoices] = useState<Invoice[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         fetchInvoices();
-    }, []);
+    }, [orgId]);
 
     const fetchInvoices = async () => {
         try {
+            if (!orgId) return;
             setLoading(true);
-            const data = await invoiceService.getInvoices();
+            const data = await invoiceService.getInvoices(orgId);
             setInvoices(data);
         } catch (err: any) {
             console.error("Error fetching invoices:", err);

@@ -29,6 +29,8 @@ import {
 } from "@/components/ui/select";
 import { expenseService } from "../services/expenseService";
 import { Loader2 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/lib/supabase"; // Needed if we used it, but useAuth is better
 import type { Expense } from "../types";
 
 const formSchema = z.object({
@@ -70,7 +72,7 @@ export default function ExpenseForm({ open, onOpenChange, onSuccess, expenseToEd
             form.reset({
                 title: expenseToEdit.title,
                 amount: expenseToEdit.amount.toString(),
-                category: expenseToEdit.category,
+                category: expenseToEdit.category as any, // Cast to any or specific union to avoid TS error
                 expenseDate: expenseToEdit.expenseDate
                     ? new Date(expenseToEdit.expenseDate).toISOString().split('T')[0]
                     : new Date().toISOString().split('T')[0],
@@ -107,13 +109,25 @@ export default function ExpenseForm({ open, onOpenChange, onSuccess, expenseToEd
         }
     };
 
+
+
+    // START OF ACTUAL REPLACE
+    const { profile } = useAuth();
+    const orgId = profile?.org_id;
+
     const onSubmit = async (values: z.infer<typeof formSchema>) => {
+        if (!orgId) {
+            alert("Organization ID not found");
+            return;
+        }
+
         try {
             setSubmitting(true);
             const expenseData = {
                 ...values,
                 amount: parseFloat(values.amount),
                 status: 'pending' as const,
+                org_id: orgId, // Added org_id
             };
 
             if (expenseToEdit) {
@@ -125,7 +139,7 @@ export default function ExpenseForm({ open, onOpenChange, onSuccess, expenseToEd
             onOpenChange(false);
         } catch (error) {
             console.error(error);
-            alert("Failed to save expense");
+            alert("Failed to save expense: " + (error as any).message);
         } finally {
             setSubmitting(false);
         }

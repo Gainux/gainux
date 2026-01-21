@@ -52,7 +52,7 @@ export default function AuditLogsPage() {
     const filteredLogs = logs.filter(log =>
         log.action.toLowerCase().includes(searchQuery.toLowerCase()) ||
         log.entity.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (log as any).userName?.toLowerCase().includes(searchQuery.toLowerCase())
+        log.user_name?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     const getActionBadgeVariant = (action: string) => {
@@ -121,10 +121,10 @@ export default function AuditLogsPage() {
                                     filteredLogs.map((log) => (
                                         <TableRow key={log.id}>
                                             <TableCell className="font-mono text-xs text-muted-foreground">
-                                                {format(new Date(log.createdAt), "MMM d, yyyy HH:mm:ss")}
+                                                {format(new Date(log.created_at), "MMM d, yyyy HH:mm:ss")}
                                             </TableCell>
                                             <TableCell className="font-medium">
-                                                {(log as any).userName || 'Unknown'}
+                                                {log.user_name || 'Unknown'}
                                             </TableCell>
                                             <TableCell>
                                                 <Badge variant={getActionBadgeVariant(log.action) as any} className="uppercase text-[10px]">
@@ -134,7 +134,7 @@ export default function AuditLogsPage() {
                                             <TableCell>
                                                 <div className="flex flex-col">
                                                     <span className="font-medium">{log.entity}</span>
-                                                    <span className="text-[10px] text-muted-foreground font-mono">{log.entityId.substring(0, 8)}...</span>
+                                                    <span className="text-[10px] text-muted-foreground font-mono">{log.entity_id.substring(0, 8)}...</span>
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-xs text-muted-foreground max-w-[300px] truncate" title={JSON.stringify(log.details, null, 2)}>

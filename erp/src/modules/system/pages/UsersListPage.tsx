@@ -26,11 +26,13 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Search, UserCog, Plus, Trash2, Users } from "lucide-react";
 import { userService } from "../services/userService";
 import { UserDialog } from "../components/UserDialog";
+import { RolePermissionMatrix } from "../components/RolePermissionMatrix";
 import type { SystemUser } from "../types";
 
 export default function UsersListPage() {
@@ -102,7 +104,7 @@ export default function UsersListPage() {
 
     const filteredUsers = users.filter(user =>
         (user.email?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
-        (user.fullName?.toLowerCase() || "").includes(searchTerm.toLowerCase())
+        (user.full_name?.toLowerCase() || "").includes(searchTerm.toLowerCase())
     );
 
     const getRoleBadgeColor = (role: string) => {
@@ -130,100 +132,111 @@ export default function UsersListPage() {
                 </Button>
             </div>
 
-            <Card className="border-border/50 shadow-sm">
-                <CardHeader className="pb-4">
-                    <div className="flex items-center justify-between">
-                        <div className="relative w-full sm:w-72">
-                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                            <Input
-                                placeholder="Search by name or email..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="pl-9"
-                            />
-                        </div>
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    <div className="rounded-md border">
-                        <Table>
-                            <TableHeader>
-                                <TableRow className="bg-muted/50 hover:bg-muted/50">
-                                    <TableHead>User</TableHead>
-                                    <TableHead>Email</TableHead>
-                                    <TableHead>Role</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {loading ? (
-                                    <TableRow>
-                                        <TableCell colSpan={5} className="h-64 text-center">
-                                            <div className="flex h-full w-full items-center justify-center">
-                                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                                            </div>
-                                        </TableCell>
+            <Tabs defaultValue="users" className="space-y-4">
+                <TabsList>
+                    <TabsTrigger value="users">Users</TabsTrigger>
+                    <TabsTrigger value="roles">Roles & Permissions</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="users" className="space-y-4">
+                    <Card className="border-border/50 shadow-sm">
+                        <CardHeader className="pb-4">
+                            <div className="flex items-center justify-between">
+                                <div className="relative w-full sm:w-72">
+                                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                    <Input
+                                        placeholder="Search by name or email..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        className="pl-9"
+                                    />
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <div className="rounded-md border mx-6 mb-6">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow className="bg-muted/50 hover:bg-muted/50">
+                                        <TableHead>User</TableHead>
+                                        <TableHead>Email</TableHead>
+                                        <TableHead>Role</TableHead>
+                                        <TableHead>Status</TableHead>
+                                        <TableHead className="text-right">Actions</TableHead>
                                     </TableRow>
-                                ) : filteredUsers.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell colSpan={5} className="h-64 text-center">
-                                            <div className="flex flex-col items-center justify-center text-muted-foreground">
-                                                <div className="bg-muted/50 p-4 rounded-full mb-4">
-                                                    <Users className="h-8 w-8" />
-                                                </div>
-                                                <p className="text-lg font-medium">No users found</p>
-                                                <p className="text-sm">Try adding a new user or adjusting your search.</p>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                ) : (
-                                    filteredUsers.map((user) => (
-                                        <TableRow key={user.id}>
-                                            <TableCell className="font-medium">{user.fullName || "N/A"}</TableCell>
-                                            <TableCell className="text-muted-foreground">{user.email}</TableCell>
-                                            <TableCell>
-                                                <Badge variant={getRoleBadgeColor(user.role) as any} className="capitalize">
-                                                    {user.role}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Badge variant="outline" className={user.status === 'active' ? 'bg-green-50 text-green-700 border-green-200 capitalize' : 'capitalize'}>
-                                                    {user.status}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <div className="flex items-center justify-end gap-2">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        className="h-8 px-2 lg:px-3"
-                                                        onClick={() => {
-                                                            setEditingUser(user);
-                                                            setDialogOpen(true);
-                                                        }}
-                                                    >
-                                                        <UserCog className="h-4 w-4 mr-2" />
-                                                        Edit
-                                                    </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                                        onClick={() => confirmDeleteUser(user)}
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
+                                </TableHeader>
+                                <TableBody>
+                                    {loading ? (
+                                        <TableRow>
+                                            <TableCell colSpan={5} className="h-64 text-center">
+                                                <div className="flex h-full w-full items-center justify-center">
+                                                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
                                                 </div>
                                             </TableCell>
                                         </TableRow>
-                                    ))
-                                )}
-                            </TableBody>
-                        </Table>
-                    </div>
-                </CardContent>
-            </Card>
+                                    ) : filteredUsers.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={5} className="h-64 text-center">
+                                                <div className="flex flex-col items-center justify-center text-muted-foreground">
+                                                    <div className="bg-muted/50 p-4 rounded-full mb-4">
+                                                        <Users className="h-8 w-8" />
+                                                    </div>
+                                                    <p className="text-lg font-medium">No users found</p>
+                                                    <p className="text-sm">Try adding a new user or adjusting your search.</p>
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    ) : (
+                                        filteredUsers.map((user) => (
+                                            <TableRow key={user.id}>
+                                                <TableCell className="font-medium">{user.full_name || "N/A"}</TableCell>
+                                                <TableCell className="text-muted-foreground">{user.email}</TableCell>
+                                                <TableCell>
+                                                    <Badge variant={getRoleBadgeColor(user.role) as any} className="capitalize">
+                                                        {user.role}
+                                                    </Badge>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Badge variant="outline" className={user.status === 'active' ? 'bg-green-50 text-green-700 border-green-200 capitalize' : 'capitalize'}>
+                                                        {user.status}
+                                                    </Badge>
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="h-8 px-2 lg:px-3"
+                                                            onClick={() => {
+                                                                setEditingUser(user);
+                                                                setDialogOpen(true);
+                                                            }}
+                                                        >
+                                                            <UserCog className="h-4 w-4 mr-2" />
+                                                            Edit
+                                                        </Button>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                            onClick={() => confirmDeleteUser(user)}
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    </Card>
+                </TabsContent>
+
+                <TabsContent value="roles" className="space-y-4">
+                    <RolePermissionMatrix />
+                </TabsContent>
+            </Tabs>
 
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogContent>

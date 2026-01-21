@@ -29,18 +29,21 @@ export interface InvoiceItem {
 
 export interface Expense {
     id: string;
+    org_id: string;
+    employee_id: string; // profile_id
     title: string;
     description?: string;
-    category: 'office' | 'travel' | 'equipment' | 'utilities' | 'marketing' | 'other';
+    category: string;
     amount: number;
-    expenseDate: string;
+    expenseDate: string; // expense_date
     vendor: string;
-    customerId?: string;
-    receiptUrl?: string;
-    status: 'pending' | 'approved' | 'rejected';
+    receiptUrl?: string; // receipt_url
+    status: 'pending' | 'approved' | 'rejected' | 'reimbursed';
+    rejectionReason?: string; // rejection_reason
     createdBy?: string;
     createdAt?: string;
     updatedAt?: string;
+    employeeName?: string; // For display
 }
 
 export interface FinancialMetrics {
@@ -49,3 +52,94 @@ export interface FinancialMetrics {
     totalExpenses: number;
     profit: number;
 }
+
+// General Ledger Types
+
+export interface Account {
+    id: string;
+    org_id: string;
+    code: string;
+    name: string;
+    type: 'asset' | 'liability' | 'equity' | 'revenue' | 'expense';
+    subtype?: string;
+    parent_id?: string | null;
+    currency: string;
+    is_active: boolean;
+    current_balance?: number; // Calculated/Cached
+    created_at: string;
+    updated_at: string;
+    children?: Account[]; // For tree view
+}
+
+export interface JournalEntry {
+    id: string;
+    org_id: string;
+    entry_date: string;
+    description: string;
+    reference?: string;
+    status: 'draft' | 'posted';
+    created_by?: string;
+    created_at: string;
+    updated_at: string;
+    items?: JournalEntryItem[];
+}
+
+export interface JournalEntryItem {
+    id: string;
+    journal_id: string;
+    account_id: string;
+    debit: number;
+    credit: number;
+    description?: string;
+    created_at?: string;
+    account?: Account; // Joined for display
+}
+
+export interface AccountTypeOption {
+    value: string;
+    label: string;
+}
+
+import type { Vendor } from "@/modules/procurement/types";
+
+export type { Vendor };
+
+export interface Bill {
+    id: string;
+    org_id: string;
+    vendor_id: string;
+    billNumber: string; // bill_number
+    vendorInvoiceNumber?: string; // vendor_invoice_number
+    issueDate: string; // issue_date
+    dueDate: string; // due_date
+    status: 'draft' | 'open' | 'paid' | 'overdue' | 'void';
+    currency: string;
+    subtotal: number;
+    taxRate: number; // tax_rate
+    taxAmount: number; // tax_amount
+    total: number; // total_amount
+    notes?: string;
+    items?: BillItem[];
+    created_at: string;
+    updated_at: string;
+    vendor?: Vendor; // For display
+}
+
+export interface BillItem {
+    id: string;
+    billId: string; // bill_id
+    description: string;
+    quantity: number;
+    unitPrice: number; // unit_price
+    amount: number;
+    expenseAccountId?: string; // expense_account_id
+    created_at?: string;
+}
+
+export const ACCOUNT_TYPES: AccountTypeOption[] = [
+    { value: 'asset', label: 'Asset' },
+    { value: 'liability', label: 'Liability' },
+    { value: 'equity', label: 'Equity' },
+    { value: 'revenue', label: 'Revenue' },
+    { value: 'expense', label: 'Expense' },
+];

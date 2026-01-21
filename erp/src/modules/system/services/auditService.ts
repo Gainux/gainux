@@ -39,14 +39,14 @@ export const auditService = {
 
         return data.map((log: any) => ({
             id: log.id,
-            orgId: log.org_id,
-            userId: log.user_id,
-            userName: log.profiles?.full_name || log.profiles?.email || 'Unknown',
+            org_id: log.org_id,
+            user_id: log.user_id,
+            user_name: log.profiles?.full_name || log.profiles?.email || 'Unknown',
             action: log.action,
             entity: log.entity,
-            entityId: log.entity_id,
+            entity_id: log.entity_id,
             details: log.details,
-            createdAt: log.created_at
+            created_at: log.created_at
         }));
     }
 };

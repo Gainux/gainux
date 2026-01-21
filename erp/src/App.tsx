@@ -17,6 +17,10 @@ import CreateInvoice from "./modules/finance/pages/CreateInvoice";
 import InvoiceDetails from "./modules/finance/pages/InvoiceDetails";
 import EditInvoice from "./modules/finance/pages/EditInvoice";
 import ExpenseList from "./modules/finance/pages/ExpenseList";
+import GeneralLedgerPage from "./modules/finance/pages/GeneralLedgerPage";
+import CreateBill from "./modules/finance/pages/CreateBill";
+import PayablesPage from "./modules/finance/pages/PayablesPage";
+import VendorList from "./modules/procurement/pages/VendorList";
 
 import LeadDetailsPage from "@/modules/crm/pages/LeadDetailsPage";
 
@@ -33,6 +37,7 @@ import ProjectDetailsPage from "@/modules/project-management/pages/ProjectDetail
 import CompanySettingsPage from "@/modules/system/pages/CompanySettingsPage";
 import AuditLogsPage from "@/modules/system/pages/AuditLogsPage";
 import UsersListPage from "@/modules/system/pages/UsersListPage";
+import SecuritySettingsPage from "@/modules/system/pages/SecuritySettingsPage";
 
 import ProductListPage from "@/modules/marketplace/pages/ProductListPage";
 import ProductDetailsPage from "@/modules/marketplace/pages/ProductDetailsPage";
@@ -81,16 +86,25 @@ function App() {
 
                   {/* Finance Module */}
                   <Route element={<ModuleGuard moduleId="finance" />}>
+                    import CreateBill from "./modules/finance/pages/CreateBill";
+                    import PayablesPage from "./modules/finance/pages/PayablesPage";
+
+                    <Route path="/finance/gl" element={<GeneralLedgerPage />} />
                     <Route path="/finance/invoices/create" element={<CreateInvoice />} />
                     <Route path="/finance/invoices/:id/edit" element={<EditInvoice />} />
                     <Route path="/finance/invoices/:id" element={<InvoiceDetails />} />
                     <Route path="/finance/invoices" element={<InvoiceList />} />
+                    <Route path="/finance/payables/create" element={<CreateBill />} />
+                    <Route path="/finance/payables" element={<PayablesPage />} />
                     <Route path="/finance/expenses" element={<ExpenseList />} />
                     <Route path="/finance/*" element={<ComingSoonPage title="Finance & Accounting" />} />
                   </Route>
 
+                  import VendorList from "./modules/procurement/pages/VendorList";
+
                   {/* Procurement & Supply Chain */}
                   <Route element={<ModuleGuard moduleId="supply-chain" />}>
+                    <Route path="/procurement/vendors" element={<VendorList />} />
                     <Route path="/procurement/*" element={<ComingSoonPage title="Procurement & Supply Chain" />} />
                   </Route>
 
@@ -163,6 +177,7 @@ function App() {
                       <Route path="/users" element={<UsersListPage />} />
                       <Route path="/system/company" element={<CompanySettingsPage />} />
                       <Route path="/system/audit" element={<AuditLogsPage />} />
+                      <Route path="/system/security" element={<SecuritySettingsPage />} />
                       <Route path="/settings" element={<SettingsPage />} />
                       <Route path="/system/*" element={<ComingSoonPage title="System Settings" />} />
                     </Route>

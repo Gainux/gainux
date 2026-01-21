@@ -164,7 +164,7 @@ export function Sidebar({ className, isCollapsed = false, onToggle }: SidebarPro
                 },
                 {
                     href: "/hrm/org",
-                    label: "Organization",
+                    label: "Org Structure",
                     icon: Building,
                     active: pathname.startsWith("/hrm/org"),
                 },

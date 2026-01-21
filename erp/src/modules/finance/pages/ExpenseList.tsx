@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
     Table,
@@ -9,6 +9,14 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import {
     Select,
     SelectContent,
@@ -21,9 +29,12 @@ import { expenseService } from "../services/expenseService";
 import { formatCurrency } from "@/lib/utils";
 import ExpenseForm from "../components/ExpenseForm";
 import ExpenseStats from "../components/ExpenseStats";
+import { useAuth } from "@/context/AuthContext";
+import { toast } from "sonner";
 import type { Expense } from "../types";
 
 export default function ExpenseList() {
+    const { isAdmin, profile } = useAuth(); // Get role access
     const [expenses, setExpenses] = useState<Expense[]>([]);
     const [loading, setLoading] = useState(true);
     const [isFormOpen, setIsFormOpen] = useState(false);
@@ -33,6 +44,11 @@ export default function ExpenseList() {
         totalPending: 0,
         categoryBreakdown: {}
     });
+
+    // Rejection Logic
+    const [isRejectOpen, setIsRejectOpen] = useState(false);
+    const [rejectId, setRejectId] = useState<string | null>(null);
+    const [rejectReason, setRejectReason] = useState("");
 
     // Filters
     const [categoryFilter, setCategoryFilter] = useState("all");
@@ -77,11 +93,46 @@ export default function ExpenseList() {
             try {
                 await expenseService.deleteExpense(id);
                 fetchData();
+                toast.success("Expense deleted");
             } catch (error) {
                 console.error("Failed to delete expense", error);
+                toast.error("Failed to delete expense");
             }
         }
     };
+
+    const handleApprove = async (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!profile?.org_id) return;
+        try {
+            await expenseService.approveExpense(id, profile.org_id);
+            toast.success("Expense Approved");
+            fetchData();
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to approve expense");
+        }
+    }
+
+    const handleRejectClick = (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setRejectId(id);
+        setRejectReason("");
+        setIsRejectOpen(true);
+    }
+
+    const confirmReject = async () => {
+        if (!rejectId) return;
+        try {
+            await expenseService.rejectExpense(rejectId, rejectReason);
+            toast.success("Expense Rejected");
+            setIsRejectOpen(false);
+            fetchData();
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to reject expense");
+        }
+    }
 
     const getStatusBadge = (status: string) => {
         const styles = {
@@ -95,6 +146,9 @@ export default function ExpenseList() {
             </Badge>
         );
     };
+
+    // Helper: Can user approve?
+    const canApprove = isAdmin || profile?.role === 'owner';
 
     return (
         <div className="flex-1 space-y-4 p-8 pt-6">
@@ -143,7 +197,7 @@ export default function ExpenseList() {
                 </div>
             </div>
 
-            <div className="rounded-md border bg-white">
+            <div className="rounded-md border">
                 <Table>
                     <TableHeader>
                         <TableRow>
@@ -151,21 +205,22 @@ export default function ExpenseList() {
                             <TableHead>Title</TableHead>
                             <TableHead>Category</TableHead>
                             <TableHead>Vendor</TableHead>
+                            <TableHead>Employee</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead className="text-right">Amount</TableHead>
-                            <TableHead></TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {loading ? (
                             <TableRow>
-                                <TableCell colSpan={7} className="h-24 text-center">
+                                <TableCell colSpan={8} className="h-24 text-center">
                                     Loading...
                                 </TableCell>
                             </TableRow>
                         ) : expenses.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={7} className="h-24 text-center">
+                                <TableCell colSpan={8} className="h-24 text-center">
                                     No expenses found.
                                 </TableCell>
                             </TableRow>
@@ -178,32 +233,61 @@ export default function ExpenseList() {
                                     <TableCell className="font-medium">{expense.title}</TableCell>
                                     <TableCell className="capitalize">{expense.category}</TableCell>
                                     <TableCell>{expense.vendor}</TableCell>
+                                    <TableCell>{expense.employeeName || 'Unknown'}</TableCell>
                                     <TableCell>{getStatusBadge(expense.status)}</TableCell>
                                     <TableCell className="text-right">
                                         {formatCurrency(expense.amount)}
                                     </TableCell>
-                                    <TableCell>
-                                        <div className="flex items-center gap-2">
+                                    <TableCell className="text-right">
+                                        <div className="flex items-center justify-end gap-2">
+                                            {/* Approval Buttons */}
+                                            {expense.status === 'pending' && canApprove && (
+                                                <>
+                                                    <Button
+                                                        size="icon"
+                                                        variant="ghost"
+                                                        className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-100"
+                                                        onClick={(e) => handleApprove(expense.id, e)}
+                                                        title="Approve"
+                                                    >
+                                                        <Check className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button
+                                                        size="icon"
+                                                        variant="ghost"
+                                                        className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-100"
+                                                        onClick={(e) => handleRejectClick(expense.id, e)}
+                                                        title="Reject"
+                                                    >
+                                                        <X className="h-4 w-4" />
+                                                    </Button>
+                                                </>
+                                            )}
+
+                                            {/* Existing Actions */}
                                             {expense.receiptUrl && (
-                                                <a
-                                                    href={expense.receiptUrl}
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                    className="text-blue-600 hover:underline text-sm mr-2"
-                                                    onClick={(e) => e.stopPropagation()}
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="h-8 text-blue-600 hover:text-blue-700 px-2"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        window.open(expense.receiptUrl, '_blank');
+                                                    }}
                                                 >
                                                     Receipt
-                                                </a>
+                                                </Button>
                                             )}
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
+                                                className="h-8 w-8 text-muted-foreground hover:text-destructive"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     handleDelete(expense.id);
                                                 }}
                                             >
-                                                <Trash2 className="h-4 w-4 text-red-500" />
+                                                <Trash2 className="h-4 w-4" />
                                             </Button>
                                         </div>
                                     </TableCell>
@@ -220,6 +304,26 @@ export default function ExpenseList() {
                 onSuccess={fetchData}
                 expenseToEdit={editingExpense}
             />
+
+            {/* Rejection Dialog */}
+            <Dialog open={isRejectOpen} onOpenChange={setIsRejectOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Reject Expense</DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <Input
+                            placeholder="Reason for rejection (e.g., Duplicate, Policy Violation)"
+                            value={rejectReason}
+                            onChange={(e) => setRejectReason(e.target.value)}
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsRejectOpen(false)}>Cancel</Button>
+                        <Button variant="destructive" onClick={confirmReject}>Reject Expense</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

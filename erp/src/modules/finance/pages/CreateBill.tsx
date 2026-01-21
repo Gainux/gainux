@@ -5,49 +5,53 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
-    SelectValue,
+    SelectValue
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { invoiceService } from "../services/invoiceService";
-import { customerService } from "@/modules/crm/services/customerService";
-import type { Customer } from "@/modules/crm/types";
-import type { InvoiceItem } from "../types";
-
+import { billService } from "../services/billService";
+import { vendorService } from "@/modules/procurement/services/vendorService";
+import type { Vendor, BillItem } from "../types";
 import { useAuth } from "@/context/AuthContext";
+import { toast } from "sonner";
 
-export default function CreateInvoice() {
+export default function CreateBill() {
     const navigate = useNavigate();
     const { profile } = useAuth();
     const orgId = profile?.org_id;
 
-    const [customers, setCustomers] = useState<Customer[]>([]);
-    const [customerId, setCustomerId] = useState("");
+    const [vendors, setVendors] = useState<Vendor[]>([]);
+    const [vendorId, setVendorId] = useState("");
+
+    // Bill Details
+    const [vendorInvoiceNumber, setVendorInvoiceNumber] = useState("");
     const [issueDate, setIssueDate] = useState(new Date().toISOString().split('T')[0]);
     const [dueDate, setDueDate] = useState("");
-    const [applyGst, setApplyGst] = useState(true);
-    const [taxRate, setTaxRate] = useState("18");
     const [notes, setNotes] = useState("");
-    const [items, setItems] = useState<Partial<InvoiceItem>[]>([
+
+    // Items
+    const [items, setItems] = useState<Partial<BillItem>[]>([
         { description: "", quantity: 1, unitPrice: 0, amount: 0 }
     ]);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        fetchCustomers();
-    }, []);
+        if (orgId) {
+            fetchVendors();
+        }
+    }, [orgId]);
 
-    const fetchCustomers = async () => {
+    const fetchVendors = async () => {
         try {
-            const data = await customerService.getCustomers();
-            setCustomers(data);
+            const data = await vendorService.getVendors(orgId!);
+            setVendors(data);
         } catch (err) {
-            console.error("Error fetching customers:", err);
+            console.error("Error fetching vendors:", err);
+            toast.error("Failed to load vendors");
         }
     };
 
@@ -78,91 +82,104 @@ export default function CreateInvoice() {
 
     const calculateTotals = () => {
         const subtotal = items.reduce((sum, item) => sum + (item.amount || 0), 0);
-        const tax = applyGst ? subtotal * (parseFloat(taxRate) / 100) : 0;
-        const total = subtotal + tax;
-        return { subtotal, tax, total };
+        // For simplicity, we'll assume price includes tax or tax is 0 for now, 
+        // OR we can add a simple tax field later. Let's stick to subtotal = total for MVP
+        // unless we add tax input.
+        const total = subtotal;
+        return { subtotal, total };
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!customerId) {
-            alert("Please select a customer");
+        if (!vendorId) {
+            toast.error("Please select a vendor");
             return;
         }
 
         if (items.length === 0 || !items[0].description) {
-            alert("Please add at least one line item");
+            toast.error("Please add at least one line item");
             return;
         }
 
         try {
             setLoading(true);
-            const { subtotal, tax, total } = calculateTotals();
+            const { subtotal, total } = calculateTotals();
 
             if (!orgId) {
-                alert("Organization ID not found");
+                toast.error("Organization ID not found");
                 return;
             }
 
-            await invoiceService.createInvoice({
+            await billService.createBill({
                 orgId,
-                customerId,
+                vendor_id: vendorId,
+                vendorInvoiceNumber,
                 issueDate,
                 dueDate,
                 status: 'draft',
                 subtotal,
-                taxRate: applyGst ? parseFloat(taxRate) : 0,
-                taxAmount: tax,
+                taxRate: 0, // Simplified
+                taxAmount: 0,
                 total,
                 currency: 'INR',
                 notes,
-            }, items as InvoiceItem[]);
+            }, items as BillItem[]);
 
-            navigate("/finance/invoices");
+            toast.success("Bill created successfully");
+            navigate("/finance/payables");
         } catch (err: any) {
-            console.error("Error creating invoice:", err);
-            alert("Failed to create invoice: " + err.message);
+            console.error("Error creating bill:", err);
+            toast.error("Failed to create bill: " + err.message);
         } finally {
             setLoading(false);
         }
     };
 
-    const { subtotal, tax, total } = calculateTotals();
+    const { total } = calculateTotals();
 
     return (
         <div className="flex-1 space-y-4 p-8 pt-6">
             <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={() => navigate("/finance/invoices")}>
+                <Button variant="ghost" size="icon" onClick={() => navigate("/finance/payables")}>
                     <ArrowLeft className="h-4 w-4" />
                 </Button>
-                <h2 className="text-3xl font-bold tracking-tight">Create Invoice</h2>
+                <h2 className="text-3xl font-bold tracking-tight">Create Bill</h2>
             </div>
 
             <form onSubmit={handleSubmit}>
                 <div className="grid gap-6 md:grid-cols-3">
                     <div className="md:col-span-2 space-y-6">
-                        {/* Invoice Details */}
+                        {/* Bill Details */}
                         <Card>
                             <CardHeader>
-                                <CardTitle>Invoice Details</CardTitle>
+                                <CardTitle>Bill Details</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="grid gap-4 md:grid-cols-2">
                                     <div className="space-y-2">
-                                        <Label htmlFor="customer">Customer *</Label>
-                                        <Select value={customerId} onValueChange={setCustomerId} required>
+                                        <Label htmlFor="vendor">Vendor *</Label>
+                                        <Select value={vendorId} onValueChange={setVendorId} required>
                                             <SelectTrigger>
-                                                <SelectValue placeholder="Select customer" />
+                                                <SelectValue placeholder="Select vendor" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {customers.map(c => (
-                                                    <SelectItem key={c.id} value={c.id}>
-                                                        {c.name} {c.company ? `(${c.company})` : ''}
+                                                {vendors.map(v => (
+                                                    <SelectItem key={v.id} value={v.id}>
+                                                        {v.name}
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>
                                         </Select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="vendorRef">Vendor Invoice #</Label>
+                                        <Input
+                                            id="vendorRef"
+                                            value={vendorInvoiceNumber}
+                                            onChange={(e) => setVendorInvoiceNumber(e.target.value)}
+                                            placeholder="e.g. INV-2024-001"
+                                        />
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="issueDate">Issue Date *</Label>
@@ -184,30 +201,6 @@ export default function CreateInvoice() {
                                             required
                                         />
                                     </div>
-                                    <div className="md:col-span-2 space-y-3">
-                                        <div className="flex items-center space-x-2">
-                                            <Checkbox
-                                                id="applyGst"
-                                                checked={applyGst}
-                                                onCheckedChange={(checked) => setApplyGst(checked as boolean)}
-                                            />
-                                            <Label htmlFor="applyGst" className="cursor-pointer">
-                                                Apply GST
-                                            </Label>
-                                        </div>
-                                        {applyGst && (
-                                            <div className="space-y-2">
-                                                <Label htmlFor="taxRate">GST Rate (%)</Label>
-                                                <Input
-                                                    id="taxRate"
-                                                    type="number"
-                                                    step="0.01"
-                                                    value={taxRate}
-                                                    onChange={(e) => setTaxRate(e.target.value)}
-                                                />
-                                            </div>
-                                        )}
-                                    </div>
                                 </div>
                             </CardContent>
                         </Card>
@@ -228,7 +221,7 @@ export default function CreateInvoice() {
                                             <div className="md:col-span-5 space-y-2">
                                                 <Label>Description</Label>
                                                 <Input
-                                                    placeholder="Item description"
+                                                    placeholder="Expense description"
                                                     value={item.description}
                                                     onChange={(e) => handleItemChange(index, 'description', e.target.value)}
                                                     required
@@ -286,7 +279,7 @@ export default function CreateInvoice() {
                             </CardHeader>
                             <CardContent>
                                 <Textarea
-                                    placeholder="Payment terms, special instructions, etc."
+                                    placeholder="Notes..."
                                     value={notes}
                                     onChange={(e) => setNotes(e.target.value)}
                                     rows={3}
@@ -302,17 +295,6 @@ export default function CreateInvoice() {
                                 <CardTitle>Summary</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Subtotal:</span>
-                                    <span className="font-medium">₹{subtotal.toFixed(2)}</span>
-                                </div>
-                                {applyGst && (
-                                    <div className="flex justify-between">
-                                        <span className="text-muted-foreground">GST ({taxRate}%):</span>
-                                        <span className="font-medium">₹{tax.toFixed(2)}</span>
-                                    </div>
-                                )}
-                                <div className="h-px bg-border" />
                                 <div className="flex justify-between text-lg font-bold">
                                     <span>Total:</span>
                                     <span>₹{total.toFixed(2)}</span>
@@ -320,13 +302,13 @@ export default function CreateInvoice() {
 
                                 <div className="pt-4 space-y-2">
                                     <Button type="submit" className="w-full" disabled={loading}>
-                                        {loading ? "Creating..." : "Create Invoice"}
+                                        {loading ? "Creating..." : "Create Bill"}
                                     </Button>
                                     <Button
                                         type="button"
                                         variant="outline"
                                         className="w-full"
-                                        onClick={() => navigate("/finance/invoices")}
+                                        onClick={() => navigate("/finance/payables")}
                                     >
                                         Cancel
                                     </Button>

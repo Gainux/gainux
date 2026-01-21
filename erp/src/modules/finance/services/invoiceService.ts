@@ -1,15 +1,26 @@
 import { supabase } from "@/lib/supabase";
 import type { Invoice, InvoiceItem } from "../types";
+import { financeService } from "./financeService";
+import { toast } from "sonner";
+
+// Helper to get financial year
+
 
 export const invoiceService = {
-    async getInvoices() {
-        const { data, error } = await supabase
+    async getInvoices(orgId?: string) {
+        let query = supabase
             .from("invoices")
             .select(`
                 *,
                 invoice_items(*)
             `)
             .order("created_at", { ascending: false });
+
+        if (orgId) {
+            query = query.eq("org_id", orgId);
+        }
+
+        const { data, error } = await query;
 
         if (error) throw error;
 
@@ -71,7 +82,7 @@ export const invoiceService = {
         } as Invoice & { customer: any };
     },
 
-    async createInvoice(invoiceData: Partial<Invoice>, items: Partial<InvoiceItem>[]) {
+    async createInvoice(invoiceData: Partial<Invoice> & { orgId: string }, items: Partial<InvoiceItem>[]) {
         // Generate invoice number
         const { data: invoiceNumberData, error: numberError } = await supabase
             .rpc('generate_invoice_number');
@@ -82,6 +93,7 @@ export const invoiceService = {
         const { data: invoice, error: invoiceError } = await supabase
             .from("invoices")
             .insert([{
+                org_id: invoiceData.orgId,
                 invoice_number: invoiceNumberData,
                 customer_id: invoiceData.customerId,
                 deal_id: invoiceData.dealId,
@@ -105,6 +117,7 @@ export const invoiceService = {
             const { error: itemsError } = await supabase
                 .from("invoice_items")
                 .insert(items.map(item => ({
+                    org_id: invoiceData.orgId,
                     invoice_id: invoice.id,
                     description: item.description,
                     quantity: item.quantity,
@@ -147,11 +160,16 @@ export const invoiceService = {
                 .delete()
                 .eq("invoice_id", id);
 
+            // Fetch invoice to get org_id
+            const { data: inv } = await supabase.from('invoices').select('org_id').eq('id', id).single();
+            const orgId = inv?.org_id;
+
             // Insert new items
             if (items.length > 0) {
                 await supabase
                     .from("invoice_items")
                     .insert(items.map(item => ({
+                        org_id: orgId,
                         invoice_id: id,
                         description: item.description,
                         quantity: item.quantity,
@@ -165,6 +183,38 @@ export const invoiceService = {
     },
 
     async deleteInvoice(id: string) {
+        // 1. Fetch invoice to get details for GL cleanup
+        const { data: invoice, error: fetchError } = await supabase
+            .from("invoices")
+            .select("invoice_number, org_id")
+            .eq("id", id)
+            .single();
+
+        if (fetchError) {
+            // If invoice doesn't exist, just return or throw? 
+            // If fetching failed, we probably can't delete it anyway.
+            throw fetchError;
+        }
+
+        if (invoice && invoice.invoice_number && invoice.org_id) {
+            // 2. Delete associated Journal Entry (if any)
+            // We assume reference == invoice_number
+            const { error: glError } = await supabase
+                .from("journal_entries")
+                .delete()
+                .eq("org_id", invoice.org_id)
+                .eq("reference", invoice.invoice_number);
+
+            if (glError) {
+                console.error("Failed to cleanup GL entry for invoice deletion:", glError);
+                // Should we block? Probably yes, to ensure consistency.
+                throw new Error(`Failed to delete associated GL entry: ${glError.message}`);
+            } else {
+                // console.log("Associated GL entry deleted.");
+            }
+        }
+
+        // 3. Delete Invoice
         const { error } = await supabase
             .from("invoices")
             .delete()
@@ -180,6 +230,114 @@ export const invoiceService = {
             .eq("id", id);
 
         if (error) throw error;
+
+        // --- GL INTEGRATION ---
+
+        // If status changed to 'sent', post a Journal Entry
+        if (status === 'sent') {
+            try {
+                // 1. Fetch Invoice Details
+                const invoice = await this.getInvoiceById(id);
+                const orgId = (invoice as any).org_id;
+
+                if (!orgId) {
+                    console.warn("Invoice missing org_id, skipping GL posting");
+                    return this.getInvoiceById(id);
+                }
+
+                // 2. Fetch Existing Accounts
+                // We fetch all to minimize queries and check existence
+                const existingAccounts = await financeService.getAccounts(orgId);
+
+                // Helper to Get or Create Account
+                const getOrCreateAccount = async (code: string, name: string, type: 'asset' | 'liability' | 'equity' | 'revenue' | 'expense') => {
+                    const found = existingAccounts.find(a => a.code === code);
+                    if (found) return found;
+
+                    console.log(`Auto-creating missing account: ${code} - ${name}`);
+                    try {
+                        const newAccount = await financeService.createAccount({
+                            org_id: orgId,
+                            code,
+                            name,
+                            type,
+                            currency: 'INR',
+                            is_active: true
+                        });
+                        return newAccount;
+                    } catch (err: any) {
+                        // Handle race condition if account was created in parallel
+                        if (err.message && err.message.includes('unique constraint')) {
+                            // Fetch again
+                            const retryAccounts = await financeService.getAccounts(orgId);
+                            return retryAccounts.find(a => a.code === code)!;
+                        }
+                        throw err;
+                    }
+                };
+
+                // 3. Resolve Accounts (Auto-create if missing)
+                // Accounts Receivable (1200) - Asset
+                const arAccount = await getOrCreateAccount('1200', 'Accounts Receivable', 'asset');
+
+                // Sales / Revenue (4000) - Revenue
+                const salesAccount = await getOrCreateAccount('4000', 'Sales Revenue', 'revenue');
+
+                // Tax Payable (2200) - Liability (Only needed if there is tax)
+                let taxAccount = null;
+                if (invoice.taxAmount > 0) {
+                    taxAccount = await getOrCreateAccount('2200', 'Tax Payable', 'liability');
+                }
+
+                if (!arAccount || !salesAccount) {
+                    throw new Error("Failed to resolve critical GL accounts (AR or Sales).");
+                }
+
+                // 4. Prepare Journal Entry Items
+                const journalItems = [];
+
+                // Debit AR (Total)
+                journalItems.push({
+                    account_id: arAccount.id,
+                    debit: invoice.total,
+                    credit: 0
+                });
+
+                // Credit Sales (Subtotal)
+                journalItems.push({
+                    account_id: salesAccount.id,
+                    debit: 0,
+                    credit: invoice.subtotal
+                });
+
+                // Credit Tax (Tax Amount)
+                if (invoice.taxAmount > 0 && taxAccount) {
+                    journalItems.push({
+                        account_id: taxAccount.id,
+                        debit: 0,
+                        credit: invoice.taxAmount
+                    });
+                } else if (invoice.taxAmount > 0) {
+                    // Fallback: Add to sales if tax account couldn't be created (unlikely)
+                    journalItems[1].credit += invoice.taxAmount;
+                }
+
+                // 5. Create Journal Entry
+                await financeService.createJournalEntry({
+                    org_id: orgId,
+                    entry_date: invoice.issueDate || new Date().toISOString(),
+                    description: `Invoice #${invoice.invoiceNumber} - ${invoice.customer?.name || ''}`,
+                    reference: invoice.invoiceNumber,
+                    status: 'posted'
+                }, journalItems);
+
+                toast.success("GL Entry posted successfully");
+
+            } catch (glError: any) {
+                console.error("Failed to post GL entry for invoice:", glError);
+                toast.error(`GL Posting Failed: ${glError.message}`);
+            }
+        }
 
         return this.getInvoiceById(id);
     },

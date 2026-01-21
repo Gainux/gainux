@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, Plus, Building, MapPin, Globe, CreditCard, Mail, Phone, Save } from "lucide-react";
 
 export default function CompanySettingsPage() {
@@ -16,6 +18,8 @@ export default function CompanySettingsPage() {
     const [branches, setBranches] = useState<Branch[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [branchSaving, setBranchSaving] = useState(false);
+    const [isBranchDialogOpen, setIsBranchDialogOpen] = useState(false);
 
     // Editable fields
     const [orgName, setOrgName] = useState("");
@@ -28,6 +32,12 @@ export default function CompanySettingsPage() {
     const [gstin, setGstin] = useState("");
     const [currency, setCurrency] = useState("USD");
     const [taxId, setTaxId] = useState("");
+
+    // Branch Form
+    const [newBranchName, setNewBranchName] = useState("");
+    const [newBranchCode, setNewBranchCode] = useState("");
+    const [newBranchAddress, setNewBranchAddress] = useState("");
+    const [isMainBranch, setIsMainBranch] = useState(false);
 
     useEffect(() => {
         if (profile?.org_id) {
@@ -97,6 +107,37 @@ export default function CompanySettingsPage() {
             alert("Failed to save organization settings. Please try again.");
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleCreateBranch = async () => {
+        if (!newBranchName || !profile?.org_id) return;
+
+        setBranchSaving(true);
+        try {
+            await companyService.createBranch({
+                org_id: profile.org_id,
+                name: newBranchName,
+                code: newBranchCode,
+                address: { street: newBranchAddress },
+                is_main: isMainBranch
+            });
+
+            // Refresh branches
+            const branchData = await companyService.getBranches(profile.org_id);
+            setBranches(branchData);
+
+            setIsBranchDialogOpen(false);
+            setNewBranchName("");
+            setNewBranchCode("");
+            setNewBranchAddress("");
+            setIsMainBranch(false);
+            alert("Branch created successfully!");
+        } catch (error: any) {
+            console.error("Failed to create branch", error);
+            alert("Failed to create branch: " + error.message);
+        } finally {
+            setBranchSaving(false);
         }
     };
 
@@ -360,7 +401,9 @@ export default function CompanySettingsPage() {
                             </CardTitle>
                             <CardDescription>Manage office locations</CardDescription>
                         </div>
-                        <Button size="sm" variant="outline"><Plus className="h-4 w-4 mr-2" /> Add Branch</Button>
+                        <Button size="sm" variant="outline" onClick={() => setIsBranchDialogOpen(true)}>
+                            <Plus className="h-4 w-4 mr-2" /> Add Branch
+                        </Button>
                     </CardHeader>
                     <CardContent className="pt-4">
                         <div className="space-y-3">
@@ -386,6 +429,65 @@ export default function CompanySettingsPage() {
                     </CardContent>
                 </Card>
             </div>
+
+            <Dialog open={isBranchDialogOpen} onOpenChange={setIsBranchDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Add New Branch</DialogTitle>
+                        <DialogDescription>
+                            Create a new office location for your organization.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-2">
+                        <div className="space-y-2">
+                            <Label htmlFor="branchName">Branch Name *</Label>
+                            <Input
+                                id="branchName"
+                                value={newBranchName}
+                                onChange={(e) => setNewBranchName(e.target.value)}
+                                placeholder="Head Office"
+                            />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="branchCode">Branch Code</Label>
+                                <Input
+                                    id="branchCode"
+                                    value={newBranchCode}
+                                    onChange={(e) => setNewBranchCode(e.target.value)}
+                                    placeholder="HQ-001"
+                                />
+                            </div>
+                            <div className="flex items-end pb-2">
+                                <div className="flex items-center space-x-2">
+                                    <Checkbox
+                                        id="isMain"
+                                        checked={isMainBranch}
+                                        onCheckedChange={(c) => setIsMainBranch(!!c)}
+                                    />
+                                    <Label htmlFor="isMain">Main Branch?</Label>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="branchAddress">Address</Label>
+                            <Input
+                                id="branchAddress"
+                                value={newBranchAddress}
+                                onChange={(e) => setNewBranchAddress(e.target.value)}
+                                placeholder="Branch address"
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsBranchDialogOpen(false)}>Cancel</Button>
+                        <Button onClick={handleCreateBranch} disabled={branchSaving || !newBranchName}>
+                            {branchSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Create Branch
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

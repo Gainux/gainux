@@ -1,6 +1,10 @@
 export type UserRole = 'admin' | 'manager' | 'user';
 export type UserStatus = 'active' | 'inactive';
 
+export interface RolePermissions {
+    [role: string]: string[]; // role -> module_ids
+}
+
 export interface Organization {
     id: string;
     name: string;
@@ -8,7 +12,10 @@ export interface Organization {
     currency: string;
     tax_id?: string;
     address?: any;
-    settings?: any;
+    settings?: {
+        permissions?: RolePermissions;
+        [key: string]: any;
+    };
     created_at: string;
     updated_at?: string;
 }
@@ -28,6 +35,7 @@ export interface AuditLog {
     id: string;
     org_id: string;
     user_id: string;
+    user_name?: string;
     action: string;
     entity: string;
     entity_id: string;
