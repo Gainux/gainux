@@ -17,10 +17,11 @@ interface TaskFormProps {
     onSubmit: (data: Partial<Task>) => void;
     onCancel: () => void;
     initialData?: Task | null;
-    projectId: string; // Required to scope assignee search if needed, usually we fetch all employees for now
+    projectId: string;
+    projectMembers?: any[]; // Array of employees
 }
 
-export function TaskForm({ onSubmit, onCancel, initialData, projectId }: TaskFormProps) {
+export function TaskForm({ onSubmit, onCancel, initialData, projectId, projectMembers = [] }: TaskFormProps) {
     const [formData, setFormData] = useState<Partial<Task>>({
         title: "",
         description: "",
@@ -28,19 +29,9 @@ export function TaskForm({ onSubmit, onCancel, initialData, projectId }: TaskFor
         status: "todo",
         priority: "medium",
         dueDate: "",
-        projectId: projectId, // Ensure projectId is set
+        projectId: projectId,
         ...initialData
     });
-
-    const [employees, setEmployees] = useState<any[]>([]); // Using any for simplicity just for id/name
-
-    useEffect(() => {
-        const fetchEmployees = async () => {
-            const { data } = await supabase.from('employees').select('id, first_name, last_name');
-            if (data) setEmployees(data);
-        };
-        fetchEmployees();
-    }, []);
 
     useEffect(() => {
         if (initialData) {
@@ -94,9 +85,9 @@ export function TaskForm({ onSubmit, onCancel, initialData, projectId }: TaskFor
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="none">Unassigned</SelectItem>
-                            {employees.map((emp) => (
+                            {projectMembers.map((emp) => (
                                 <SelectItem key={emp.id} value={emp.id}>
-                                    {emp.first_name} {emp.last_name}
+                                    {emp.firstName} {emp.lastName}
                                 </SelectItem>
                             ))}
                         </SelectContent>

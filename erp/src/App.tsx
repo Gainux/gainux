@@ -70,6 +70,9 @@ import PublicJobDetails from "./modules/recruitment/public/PublicJobDetails";
 
 const TaxReportPage = lazy(() => import('./modules/finance/pages/TaxReportPage'));
 
+import ResourcePlanPage from "./modules/project-management/pages/ResourcePlanPage";
+import TimesheetsPage from "./modules/project-management/pages/TimesheetsPage";
+
 function App() {
   return (
     <ThemeProvider>
@@ -151,6 +154,8 @@ function App() {
                   <Route element={<ModuleGuard moduleId="projects" />}>
                     <Route path="/projects" element={<ProjectsListPage />} />
                     <Route path="/projects/:id" element={<ProjectDetailsPage />} />
+                    <Route path="/projects/resources" element={<ResourcePlanPage />} />
+                    <Route path="/projects/timesheets" element={<TimesheetsPage />} />
                     <Route path="/projects/*" element={<ComingSoonPage title="Project Management" />} />
                   </Route>
 

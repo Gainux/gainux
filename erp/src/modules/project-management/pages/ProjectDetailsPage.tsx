@@ -13,9 +13,11 @@ import {
     Card,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Plus, ArrowLeft, Loader2, ListTodo, CheckCircle2, Clock } from "lucide-react";
 import { projectService } from "../services/projectService";
-import type { Project, Task, TaskStatus } from "../types";
+import type { Project, Task, TaskStatus, ResourceAllocation } from "../types";
 import TaskBoard from "../components/TaskBoard";
 import { TaskForm } from "../components/TaskForm";
 import { ProjectForm } from "../components/ProjectForm";
@@ -26,6 +28,7 @@ export default function ProjectDetailsPage() {
 
     const [project, setProject] = useState<Project | null>(null);
     const [tasks, setTasks] = useState<Task[]>([]);
+    const [allocations, setAllocations] = useState<ResourceAllocation[]>([]);
     const [loading, setLoading] = useState(true);
 
     const [taskDialogOpen, setTaskDialogOpen] = useState(false);
@@ -37,12 +40,14 @@ export default function ProjectDetailsPage() {
         if (!id) return;
         setLoading(true);
         try {
-            const [projData, taskData] = await Promise.all([
+            const [projData, taskData, allocData] = await Promise.all([
                 projectService.getProjectById(id),
-                projectService.getProjectTasks(id)
+                projectService.getProjectTasks(id),
+                projectService.getResourceAllocations(id)
             ]);
             setProject(projData);
             setTasks(taskData);
+            setAllocations(allocData);
         } catch (error) {
             console.error("Failed to fetch project details", error);
         } finally {
@@ -105,6 +110,9 @@ export default function ProjectDetailsPage() {
         }
     };
 
+    // Derived unique members from allocations
+    const projectMembers = Array.from(new Map(allocations.map(a => [a.employeeId, a.employee])).values()).filter(Boolean);
+
     if (loading) {
         return (
             <div className="flex items-center justify-center h-full">
@@ -129,18 +137,39 @@ export default function ProjectDetailsPage() {
         <div className="flex-1 h-[calc(100vh-4rem)] bg-muted/10 flex flex-col">
             {/* Header */}
             <div className="border-b bg-background p-6">
-                <div className="flex items-center space-x-4 mb-4">
-                    <Button variant="ghost" size="icon" onClick={() => navigate("/projects")}>
-                        <ArrowLeft className="h-4 w-4" />
-                    </Button>
-                    <div>
-                        <h1 className="text-2xl font-bold tracking-tight">{project.name}</h1>
-                        <p className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
-                            <Badge variant="outline">{project.status}</Badge>
-                            {project.client && <span>• Client: {project.client.name}</span>}
-                        </p>
+                <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center space-x-4">
+                        <Button variant="ghost" size="icon" onClick={() => navigate("/projects")}>
+                            <ArrowLeft className="h-4 w-4" />
+                        </Button>
+                        <div>
+                            <h1 className="text-2xl font-bold tracking-tight">{project.name}</h1>
+                            <div className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
+                                <Badge variant="outline">{project.status}</Badge>
+                                {project.client && <span>• Client: {project.client.name}</span>}
+                            </div>
+                        </div>
                     </div>
-                    <div className="ml-auto flex items-center gap-2">
+                    <div className="flex items-center gap-2">
+                        {/* Project Members Avatars */}
+                        <div className="flex -space-x-2 mr-4">
+                            <TooltipProvider>
+                                {projectMembers.map((member: any) => (
+                                    <Tooltip key={member.id}>
+                                        <TooltipTrigger asChild>
+                                            <Avatar className="h-8 w-8 border-2 border-background">
+                                                <AvatarImage src={member.avatarUrl} />
+                                                <AvatarFallback>{member.firstName?.[0]}{member.lastName?.[0]}</AvatarFallback>
+                                            </Avatar>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>{member.firstName} {member.lastName}</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                ))}
+                            </TooltipProvider>
+                        </div>
+
                         <Button variant="outline" onClick={() => setProjectEditOpen(true)}>
                             Edit Project
                         </Button>
@@ -168,6 +197,7 @@ export default function ProjectDetailsPage() {
                                         setTaskDialogOpen(false);
                                         setEditingTask(null);
                                     }}
+                                    projectMembers={projectMembers}
                                 />
                             </DialogContent>
                         </Dialog>

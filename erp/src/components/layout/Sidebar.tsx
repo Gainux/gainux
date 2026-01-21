@@ -342,12 +342,6 @@ export function Sidebar({ className, isCollapsed = false, onToggle }: SidebarPro
                     icon: Clock,
                     active: pathname.startsWith("/projects/timesheets"),
                 },
-                {
-                    href: "/projects/billing",
-                    label: "Billing & Costs",
-                    icon: BadgeCent,
-                    active: pathname.startsWith("/projects/billing"),
-                },
             ]
         },
         {

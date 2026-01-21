@@ -232,5 +232,211 @@ export const projectService = {
             .delete()
             .eq('id', id);
         if (error) throw error;
+    },
+
+    // Resource Allocation
+    async getResourceAllocations(projectId: string) {
+        const { data, error } = await supabase
+            .from('resource_allocations')
+            .select(`
+                *,
+                employees (id, first_name, last_name)
+            `)
+            .eq('project_id', projectId);
+
+        if (error) throw error;
+        return data.map((item: any) => ({
+            id: item.id,
+            projectId: item.project_id,
+            employeeId: item.employee_id,
+            employee: item.employees ? {
+                id: item.employees.id,
+                firstName: item.employees.first_name,
+                lastName: item.employees.last_name,
+                avatarUrl: item.employees.avatar_url
+            } : undefined,
+            startDate: item.start_date,
+            endDate: item.end_date,
+            allocationPercentage: item.allocation_percentage
+        }));
+    },
+
+    async createResourceAllocation(allocation: any) {
+        // Fetch org_id from the employee record (since project might not have it exposed or linked differently)
+        // We assume the employee belongs to the same org as the resource allocation should.
+        const { data: employee } = await supabase
+            .from('employees')
+            .select('org_id')
+            .eq('id', allocation.employeeId)
+            .single();
+
+        if (!employee) throw new Error('Employee not found');
+
+        const { data, error } = await supabase
+            .from('resource_allocations')
+            .insert({
+                project_id: allocation.projectId,
+                employee_id: allocation.employeeId,
+                start_date: allocation.startDate,
+                end_date: allocation.endDate,
+                allocation_percentage: allocation.allocationPercentage,
+                org_id: employee.org_id
+            })
+            .select()
+            .single();
+
+        if (error) throw error;
+        return data;
+    },
+
+    async updateResourceAllocation(id: string, updates: Partial<any>) {
+        const dbUpdates: any = {};
+        if (updates.employeeId !== undefined) dbUpdates.employee_id = updates.employeeId;
+        if (updates.startDate !== undefined) dbUpdates.start_date = updates.startDate;
+        if (updates.endDate !== undefined) dbUpdates.end_date = updates.endDate;
+        if (updates.allocationPercentage !== undefined) dbUpdates.allocation_percentage = updates.allocationPercentage;
+
+        // If employeeId is changing, we might need to update org_id too, but usually org stays same.
+        // We'll skip org_id update for now as moves between orgs are rare/complex.
+
+        const { data, error } = await supabase
+            .from('resource_allocations')
+            .update(dbUpdates)
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) throw error;
+        return data;
+    },
+
+    async deleteResourceAllocation(id: string) {
+        const { error } = await supabase
+            .from('resource_allocations')
+            .delete()
+            .eq('id', id);
+        if (error) throw error;
+    },
+
+    // Timesheets
+    async getTimesheets(projectId?: string) {
+        let query = supabase
+            .from('timesheets')
+            .select(`
+                *,
+                projects (name)
+            `)
+            .order('date', { ascending: false });
+
+        if (projectId) {
+            query = query.eq('project_id', projectId);
+        }
+
+        const { data, error } = await query;
+        if (error) throw error;
+        return data.map((item: any) => ({
+            id: item.id,
+            projectId: item.project_id,
+            projectName: item.projects?.name,
+            taskId: item.task_id,
+            employeeId: item.employee_id,
+            date: item.date,
+            hours: Number(item.hours),
+            description: item.description,
+            status: item.status
+        }));
+    },
+
+    async createTimesheetEntry(entry: any) {
+        // Fetch org_id from the employee
+        const { data: employee } = await supabase
+            .from('employees')
+            .select('org_id')
+            .eq('id', entry.employeeId)
+            .single();
+
+        if (!employee) throw new Error('Employee not found');
+
+        const { data, error } = await supabase
+            .from('timesheets')
+            .insert({
+                project_id: entry.projectId,
+                task_id: entry.taskId,
+                employee_id: entry.employeeId,
+                date: entry.date,
+                hours: entry.hours,
+                description: entry.description,
+                status: entry.status || 'draft',
+                org_id: employee.org_id
+            })
+            .select()
+            .single();
+
+        if (error) throw error;
+        return data;
+    },
+
+    async updateTimesheetEntry(id: string, updates: Partial<any>) {
+        const dbUpdates: any = {};
+        if (updates.hours !== undefined) dbUpdates.hours = updates.hours;
+        if (updates.description !== undefined) dbUpdates.description = updates.description;
+        if (updates.status !== undefined) dbUpdates.status = updates.status;
+        if (updates.date !== undefined) dbUpdates.date = updates.date;
+        if (updates.projectId !== undefined) dbUpdates.project_id = updates.projectId;
+        if (updates.taskId !== undefined) dbUpdates.task_id = updates.taskId;
+
+        const { data, error } = await supabase
+            .from('timesheets')
+            .update(dbUpdates)
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) throw error;
+        return data;
+    },
+
+    async deleteTimesheetEntry(id: string) {
+        const { error } = await supabase
+            .from('timesheets')
+            .delete()
+            .eq('id', id);
+        if (error) throw error;
+    },
+
+    // Expenses
+    async getProjectExpenses(projectId: string) {
+        const { data, error } = await supabase
+            .from('project_expenses')
+            .select('*')
+            .eq('project_id', projectId)
+            .order('date', { ascending: false });
+
+        if (error) throw error;
+        return data.map((item: any) => ({
+            id: item.id,
+            projectId: item.project_id,
+            category: item.category,
+            amount: Number(item.amount),
+            date: item.date,
+            description: item.description
+        }));
+    },
+
+    async createProjectExpense(expense: any) {
+        const { data, error } = await supabase
+            .from('project_expenses')
+            .insert({
+                project_id: expense.projectId,
+                category: expense.category,
+                amount: expense.amount,
+                date: expense.date,
+                description: expense.description
+            })
+            .select()
+            .single();
+
+        if (error) throw error;
+        return data;
     }
 };

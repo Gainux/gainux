@@ -57,3 +57,33 @@ export interface Task {
     createdAt: string;
     updatedAt: string;
 }
+
+export interface ResourceAllocation {
+    id: string;
+    projectId: string;
+    project?: {
+        id: string;
+        name: string;
+    };
+    employeeId: string;
+    employee?: {
+        id: string;
+        firstName: string;
+        lastName: string;
+        avatarUrl?: string;
+    };
+    startDate: string;
+    endDate: string;
+    allocationPercentage: number;
+}
+
+export interface TimesheetEntry {
+    id: string;
+    projectId: string;
+    taskId?: string;
+    employeeId: string;
+    date: string;
+    hours: number;
+    description?: string;
+    status: 'draft' | 'submitted' | 'approved' | 'rejected';
+}
