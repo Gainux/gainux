@@ -115,7 +115,7 @@ export const attendanceService = {
     async markAttendance(attendance: Omit<AttendanceLog, 'id' | 'createdAt' | 'updatedAt'>): Promise<AttendanceLog> {
         const { data, error } = await supabase
             .from('attendance_logs')
-            .insert(mapAttendanceToDb(attendance))
+            .upsert(mapAttendanceToDb(attendance), { onConflict: 'employee_id, date' })
             .select()
             .single();
 

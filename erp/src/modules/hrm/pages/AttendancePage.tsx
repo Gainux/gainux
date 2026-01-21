@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { format } from "date-fns";
-import { Calendar, Clock, UserCheck, Edit } from "lucide-react";
+import { format, addDays, subDays } from "date-fns";
+import { Calendar, Clock, UserCheck, Edit, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -43,6 +43,10 @@ export default function AttendancePage() {
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [isBulkSubmitting, setIsBulkSubmitting] = useState(false);
+
+    // New filter states
+    const [searchQuery, setSearchQuery] = useState('');
+    const [statusFilter, setStatusFilter] = useState<'all' | 'present' | 'absent' | 'unmarked'>('all');
 
     // Edit Modal State
     const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -105,8 +109,8 @@ export default function AttendancePage() {
                     employeeId: id,
                     date: date,
                     status: status,
-                    checkIn: status === 'present' ? `${date}T09:00:00Z` : undefined,
-                    checkOut: status === 'present' ? `${date}T17:00:00Z` : undefined
+                    checkIn: status === 'present' ? new Date(`${date}T09:00:00`).toISOString() : undefined,
+                    checkOut: status === 'present' ? new Date(`${date}T17:00:00`).toISOString() : undefined
                 });
             });
 
@@ -142,7 +146,8 @@ export default function AttendancePage() {
             // Construct ISO strings from time inputs
             const constructDateTime = (timeStr: string) => {
                 if (!timeStr) return undefined;
-                return `${date}T${timeStr}:00Z`;
+                // Create date object in local time and convert to UTC
+                return new Date(`${date}T${timeStr}:00`).toISOString();
             };
 
             await attendanceService.markAttendance({
@@ -198,45 +203,193 @@ export default function AttendancePage() {
         );
     };
 
-    // Calculate stats from employee data
+    // Filter employees based on search and status
+    const filteredEmployees = employees.filter(emp => {
+        // Search filter
+        const matchesSearch = searchQuery === '' ||
+            `${emp.employee.firstName} ${emp.employee.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            emp.employee.employeeCode?.toLowerCase().includes(searchQuery.toLowerCase());
+
+        // Status filter
+        const matchesStatus = statusFilter === 'all' ||
+            (statusFilter === 'present' && emp.attendance?.status === 'present') ||
+            (statusFilter === 'absent' && emp.attendance?.status === 'absent') ||
+            (statusFilter === 'unmarked' && !emp.attendance);
+
+        return matchesSearch && matchesStatus;
+    });
+
+    // Calculate stats from all employees
     const stats = {
         total: employees.length,
         present: employees.filter(e => e.attendance?.status === 'present').length,
-        absent: employees.filter(e => !e.attendance || e.attendance.status === 'absent').length
+        absent: employees.filter(e => e.attendance?.status === 'absent').length,
+        unmarked: employees.filter(e => !e.attendance).length
+    };
+
+    // Quick actions to mark all unmarked employees
+    const handleMarkAllPresent = async () => {
+        const unmarkedEmployees = employees.filter(e => !e.attendance);
+        if (unmarkedEmployees.length === 0) {
+            toast.info("All employees already marked");
+            return;
+        }
+
+        setIsBulkSubmitting(true);
+        try {
+            await Promise.all(unmarkedEmployees.map(e =>
+                attendanceService.markAttendance({
+                    employeeId: e.employee.id,
+                    status: 'present',
+                    date: date,
+                    checkIn: '09:00',
+                    orgId: profile!.org_id,
+                })
+            ));
+            toast.success(`Marked ${unmarkedEmployees.length} employees as present`);
+            loadData();
+        } catch (error) {
+            toast.error("Failed to mark employees");
+        } finally {
+            setIsBulkSubmitting(false);
+        }
+    };
+
+    const handleMarkAllAbsent = async () => {
+        const unmarkedEmployees = employees.filter(e => !e.attendance);
+        if (unmarkedEmployees.length === 0) {
+            toast.info("All employees already marked");
+            return;
+        }
+
+        setIsBulkSubmitting(true);
+        try {
+            await Promise.all(unmarkedEmployees.map(e =>
+                attendanceService.markAttendance({
+                    employeeId: e.employee.id,
+                    status: 'absent',
+                    date: date,
+                    orgId: profile!.org_id,
+                })
+            ));
+            toast.success(`Marked ${unmarkedEmployees.length} employees as absent`);
+            loadData();
+        } catch (error) {
+            toast.error("Failed to mark employees");
+        } finally {
+            setIsBulkSubmitting(false);
+        }
+    };
+
+    // Date navigation functions
+    const goToPreviousDay = () => {
+        const currentDate = new Date(date);
+        const previousDay = subDays(currentDate, 1);
+        setDate(previousDay.toISOString().split('T')[0]);
+    };
+
+    const goToNextDay = () => {
+        const currentDate = new Date(date);
+        const nextDay = addDays(currentDate, 1);
+        setDate(nextDay.toISOString().split('T')[0]);
+    };
+
+    const goToToday = () => {
+        setDate(new Date().toISOString().split('T')[0]);
     };
 
     return (
         <div className="flex-1 space-y-4 p-8 pt-6">
-            <div className="flex items-center justify-between space-y-2">
-                <h2 className="text-3xl font-bold tracking-tight">Attendance Management</h2>
-                <div className="flex items-center space-x-2">
-                    <div className="flex items-center gap-2 border rounded-md px-3 py-1">
-                        <Calendar className="h-4 w-4 text-gray-500" />
+            {/* Header with Date Navigation */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                    <h2 className="text-3xl font-bold tracking-tight">Attendance Management</h2>
+                    <p className="text-muted-foreground">
+                        {format(new Date(date), 'EEEE, MMM d, yyyy')}
+                    </p>
+                </div>
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" size="icon" onClick={goToPreviousDay}>
+                        <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <div className="flex items-center gap-2 border rounded-md px-3 py-2">
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
                         <Input
                             type="date"
                             value={date}
                             onChange={(e) => setDate(e.target.value)}
-                            className="border-0 p-0 h-auto focus-visible:ring-0"
+                            className="border-0 p-0 h-auto w-32 focus-visible:ring-0"
                         />
                     </div>
+                    <Button variant="outline" size="icon" onClick={goToNextDay}>
+                        <ChevronRight className="h-4 w-4" />
+                    </Button>
+                    <Button variant="outline" onClick={goToToday}>
+                        Today
+                    </Button>
                 </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            {/* Search and Filters */}
+            <div className="flex flex-col sm:flex-row gap-4">
+                <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        placeholder="Search employees by name or code..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-10"
+                    />
+                </div>
+                <Select value={statusFilter} onValueChange={(v: any) => setStatusFilter(v)}>
+                    <SelectTrigger className="w-full sm:w-48">
+                        <SelectValue placeholder="Filter by status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Employees</SelectItem>
+                        <SelectItem value="present">Present Only</SelectItem>
+                        <SelectItem value="absent">Absent Only</SelectItem>
+                        <SelectItem value="unmarked">Unmarked Only</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="flex flex-wrap items-center gap-2">
                 <Button
                     variant="default"
-                    onClick={() => handleBulkMark('present')}
-                    disabled={selectedIds.length === 0 || isBulkSubmitting}
+                    onClick={handleMarkAllPresent}
+                    disabled={isBulkSubmitting || stats.unmarked === 0}
                 >
-                    Mark Present
+                    <UserCheck className="mr-2 h-4 w-4" />
+                    Mark All Present ({stats.unmarked})
                 </Button>
                 <Button
-                    variant="destructive"
-                    onClick={() => handleBulkMark('absent')}
-                    disabled={selectedIds.length === 0 || isBulkSubmitting}
+                    variant="outline"
+                    onClick={handleMarkAllAbsent}
+                    disabled={isBulkSubmitting || stats.unmarked === 0}
                 >
-                    Mark Absent
+                    Mark All Absent ({stats.unmarked})
                 </Button>
+                <div className="ml-2 border-l pl-2">
+                    <Button
+                        variant="secondary"
+                        onClick={() => handleBulkMark('present')}
+                        disabled={selectedIds.length === 0 || isBulkSubmitting}
+                        size="sm"
+                    >
+                        Mark Selected Present ({selectedIds.length})
+                    </Button>
+                    <Button
+                        variant="secondary"
+                        onClick={() => handleBulkMark('absent')}
+                        disabled={selectedIds.length === 0 || isBulkSubmitting}
+                        size="sm"
+                        className="ml-2"
+                    >
+                        Mark Selected Absent ({selectedIds.length})
+                    </Button>
+                </div>
             </div>
 
             <div className="grid gap-4 md:grid-cols-3">
@@ -297,12 +450,16 @@ export default function AttendancePage() {
                             <TableRow>
                                 <TableCell colSpan={8} className="h-24 text-center">Loading...</TableCell>
                             </TableRow>
-                        ) : employees.length === 0 ? (
+                        ) : filteredEmployees.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={8} className="h-24 text-center">No employees found.</TableCell>
+                                <TableCell colSpan={8} className="h-24 text-center">
+                                    {searchQuery || statusFilter !== 'all' ?
+                                        'No employees match your filters' :
+                                        'No active employees found'}
+                                </TableCell>
                             </TableRow>
                         ) : (
-                            employees.map((record) => (
+                            filteredEmployees.map((record) => (
                                 <TableRow key={record.employee.id}>
                                     <TableCell>
                                         <input
@@ -316,7 +473,7 @@ export default function AttendancePage() {
                                         {record.employee.firstName} {record.employee.lastName}
                                     </TableCell>
                                     <TableCell>{record.employee.designation?.title || '-'}</TableCell>
-                                    <TableCell>{getStatusBadge(record.attendance?.status)}</TableCell>
+                                    <TableCell>{getStatusBadge(record.attendance?.status || 'unmarked')}</TableCell>
                                     <TableCell>
                                         {record.attendance?.checkIn ? format(new Date(record.attendance.checkIn), 'h:mm a') : '-'}
                                     </TableCell>
