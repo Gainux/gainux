@@ -25,7 +25,7 @@ const mapAttendanceToDb = (attendance: Partial<AttendanceLog>) => ({
 });
 
 export const attendanceService = {
-    async getAttendanceLogs(orgId: string, date?: string): Promise<AttendanceLog[]> {
+    async getAttendanceLogs(orgId: string, date?: string, startDate?: string, endDate?: string): Promise<AttendanceLog[]> {
         let query = supabase
             .from('attendance_logs')
             .select('*')
@@ -33,6 +33,8 @@ export const attendanceService = {
 
         if (date) {
             query = query.eq('date', date);
+        } else if (startDate && endDate) {
+            query = query.gte('date', startDate).lte('date', endDate);
         }
 
         const { data, error } = await query.order('date', { ascending: false });
