@@ -1,22 +1,24 @@
 import { useState, useEffect } from "react";
-import { settingsService } from "@/services/settingsService";
-import type { OrganizationSettings } from "@/services/settingsService";
+import { companyService } from "@/modules/system/services/companyService";
+import type { Organization } from "@/modules/system/types";
 
 interface InvoicePreviewProps {
     invoice: any;
 }
 
 export default function InvoicePreview({ invoice }: InvoicePreviewProps) {
-    const [orgSettings, setOrgSettings] = useState<OrganizationSettings | null>(null);
+    const [org, setOrg] = useState<Organization | null>(null);
 
     useEffect(() => {
-        loadOrgSettings();
-    }, []);
+        if (invoice?.org_id) {
+            loadOrg(invoice.org_id);
+        }
+    }, [invoice]);
 
-    const loadOrgSettings = async () => {
+    const loadOrg = async (orgId: string) => {
         try {
-            const settings = await settingsService.getSettings();
-            setOrgSettings(settings);
+            const orgData = await companyService.getOrganization(orgId);
+            setOrg(orgData);
         } catch (err) {
             console.error("Error loading organization settings:", err);
         }
@@ -25,6 +27,8 @@ export default function InvoicePreview({ invoice }: InvoicePreviewProps) {
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(amount);
     };
+
+    const orgAddress = org?.address || {};
 
     return (
         <div style={{
@@ -56,15 +60,21 @@ export default function InvoicePreview({ invoice }: InvoicePreviewProps) {
                             <p style={{ fontSize: '0.875rem', marginTop: '0.25rem', color: '#6B7280', margin: 0 }}>{invoice.invoiceNumber}</p>
                         </div>
                         <div style={{ textAlign: 'right' }}>
-                            <h2 style={{ fontSize: '1.25rem', fontWeight: '700', margin: 0, color: '#111827' }}>{orgSettings?.organizationName || 'Gainux'}</h2>
-                            {orgSettings?.address && (
-                                <p style={{ fontSize: '0.875rem', color: '#6B7280', margin: 0 }}>{orgSettings.address}</p>
+                            <h2 style={{ fontSize: '1.25rem', fontWeight: '700', margin: 0, color: '#111827' }}>{org?.name || 'Gainux'}</h2>
+                            {orgAddress.street && (
+                                <p style={{ fontSize: '0.875rem', color: '#6B7280', margin: 0 }}>{orgAddress.street}</p>
                             )}
                             <p style={{ fontSize: '0.875rem', color: '#6B7280', margin: 0 }}>
-                                {orgSettings?.city || ''}{orgSettings?.city && orgSettings?.state ? ', ' : ''}{orgSettings?.state || ''}{(orgSettings?.city || orgSettings?.state) && orgSettings?.pincode ? ' - ' : ''}{orgSettings?.pincode || ''}
+                                {orgAddress.city || ''}{orgAddress.city && orgAddress.state ? ', ' : ''}{orgAddress.state || ''}{(orgAddress.city || orgAddress.state) && orgAddress.pincode ? ' - ' : ''}{orgAddress.pincode || ''}
                             </p>
-                            {invoice.taxRate > 0 && orgSettings?.gstin && (
-                                <p style={{ fontSize: '0.875rem', color: '#6B7280', margin: 0 }}>GSTIN: {orgSettings.gstin}</p>
+                            {orgAddress.phone && (
+                                <p style={{ fontSize: '0.875rem', color: '#6B7280', margin: 0 }}>Phone: {orgAddress.phone}</p>
+                            )}
+                            {orgAddress.email && (
+                                <p style={{ fontSize: '0.875rem', color: '#6B7280', margin: 0 }}>{orgAddress.email}</p>
+                            )}
+                            {invoice.taxRate > 0 && orgAddress.gstin && (
+                                <p style={{ fontSize: '0.875rem', color: '#6B7280', margin: 0 }}>GSTIN: {orgAddress.gstin}</p>
                             )}
                         </div>
                     </div>
@@ -76,11 +86,18 @@ export default function InvoicePreview({ invoice }: InvoicePreviewProps) {
                         <div>
                             <h3 style={{ fontSize: '0.75rem', fontWeight: '600', textTransform: 'uppercase', marginBottom: '0.5rem', color: '#6B7280', margin: 0 }}>Bill To</h3>
                             <p style={{ fontWeight: '600', color: '#111827', margin: 0 }}>{invoice.customer?.name || "Customer Name"}</p>
-                            {invoice.customer?.company && (
-                                <p style={{ fontSize: '0.875rem', color: '#6B7280', margin: 0 }}>{invoice.customer.company}</p>
+                            {/* Assuming invoice.customer refers to the 'companies' row which has address column */}
+                            {invoice.customer?.address && (
+                                <p style={{ fontSize: '0.875rem', color: '#6B7280', margin: 0, whiteSpace: 'pre-line' }}>{invoice.customer.address}</p>
                             )}
                             {invoice.customer?.email && (
                                 <p style={{ fontSize: '0.875rem', color: '#6B7280', margin: 0 }}>{invoice.customer.email}</p>
+                            )}
+                            {invoice.customer?.phone && (
+                                <p style={{ fontSize: '0.875rem', color: '#6B7280', margin: 0 }}>{invoice.customer.phone}</p>
+                            )}
+                            {invoice.customer?.website && (
+                                <p style={{ fontSize: '0.875rem', color: '#6B7280', margin: 0 }}>{invoice.customer.website}</p>
                             )}
                         </div>
                         <div style={{ textAlign: 'right' }}>

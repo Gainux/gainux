@@ -10,8 +10,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { customerService } from "../../crm/services/customerService";
-import type { Customer } from "../../crm/types";
+import { crmService } from "../../crm/services/crmService";
+import type { Company } from "../../crm/types";
 import type { Project } from "../types";
 
 interface ProjectFormProps {
@@ -32,7 +32,7 @@ export function ProjectForm({ onSubmit, onCancel, initialData }: ProjectFormProp
         ...initialData
     });
 
-    const [customers, setCustomers] = useState<Customer[]>([]);
+    const [companies, setCompanies] = useState<Company[]>([]);
 
 
     useEffect(() => {
@@ -50,15 +50,15 @@ export function ProjectForm({ onSubmit, onCancel, initialData }: ProjectFormProp
     }, [initialData]);
 
     useEffect(() => {
-        const fetchCustomers = async () => {
+        const fetchCompanies = async () => {
             try {
-                const data = await customerService.getCustomers();
-                setCustomers(data);
+                const data = await crmService.getCompanies();
+                setCompanies(data);
             } catch (error) {
-                console.error("Failed to fetch customers", error);
+                console.error("Failed to fetch companies", error);
             }
         };
-        fetchCustomers();
+        fetchCompanies();
     }, []);
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -105,9 +105,9 @@ export function ProjectForm({ onSubmit, onCancel, initialData }: ProjectFormProp
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="none">None</SelectItem>
-                            {customers.map((customer) => (
-                                <SelectItem key={customer.id} value={customer.id}>
-                                    {customer.name} {customer.company ? `(${customer.company})` : ""}
+                            {companies.map((company) => (
+                                <SelectItem key={company.id} value={company.id}>
+                                    {company.name}
                                 </SelectItem>
                             ))}
                         </SelectContent>

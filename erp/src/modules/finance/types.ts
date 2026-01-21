@@ -205,3 +205,17 @@ export interface DepreciationScheduleItem {
     depreciationAmount: number;
     closingValue: number;
 }
+
+export interface TaxRate {
+    id: string;
+    org_id: string;
+    name: string;
+    code: string;
+    rate: number;
+    type: string;
+    description?: string;
+    glAccountId?: string;
+    isActive: boolean;
+    created_at?: string;
+    updated_at?: string;
+}

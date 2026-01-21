@@ -1,6 +1,6 @@
-import { DataTable } from "@/modules/crm/components/leads/data-table" // Reusing generic data table
+import { DataTable } from "@/modules/crm/components/leads/data-table"
 import { columns } from "@/modules/crm/components/customers/columns"
-import type { Customer } from "@/modules/crm/types"
+import type { Company } from "@/modules/crm/types"
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
@@ -14,31 +14,20 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog"
 import { CustomerForm } from "../components/customers/CustomerForm"
-import { customerService } from "../services/customerService"
+import { crmService } from "@/modules/crm/services/crmService" // Using crmService
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
 export default function CustomersPage() {
     const [open, setOpen] = useState(false)
-    const [data, setData] = useState<Customer[]>([])
+    const [data, setData] = useState<Company[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
 
     const fetchCustomers = async () => {
         try {
             setLoading(true)
-            const customers = await customerService.getCustomers()
-            // Map snake_case from DB to camelCase for UI if not handled in service
-            // The service handles it for single returns, but for select(*) raw return we might need mapping 
-            // depending on how strict Supabase typing is. 
-            // For now assuming service returns raw DB fields if we didn't map them explicitly in select.
-            // Let's ensure the service maps them or we map them here.
-            // Updated service to just return data, so we map here for safety:
-            const mappedCustomers = customers.map((c: any) => ({
-                ...c,
-                totalRevenue: c.total_revenue || c.totalRevenue || "₹0.00",
-                lastOrderDate: c.last_order_date || c.lastOrderDate || "-",
-            }))
-            setData(mappedCustomers)
+            const companies = await crmService.getCompanies()
+            setData(companies)
         } catch (err: any) {
             console.error("Error fetching customers:", err)
             setError(err.message)
@@ -51,10 +40,10 @@ export default function CustomersPage() {
         fetchCustomers()
     }, [])
 
-    const handleCreate = async (newCustomerData: Partial<Customer>) => {
+    const handleCreate = async (newCompanyData: Partial<Company>) => {
         try {
-            const newCustomer = await customerService.createCustomer(newCustomerData)
-            setData([newCustomer, ...data])
+            const newCompany = await crmService.createCompany(newCompanyData)
+            setData([newCompany, ...data])
             setOpen(false)
         } catch (err: any) {
             console.error("Error creating customer:", err)

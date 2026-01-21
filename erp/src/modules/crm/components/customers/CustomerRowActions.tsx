@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MoreHorizontal, Pencil, Trash } from "lucide-react";
+import { MoreHorizontal, Pencil, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -17,8 +17,8 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { CustomerForm } from "./CustomerForm";
-import type { Customer } from "@/modules/crm/types";
-import { customerService } from "@/modules/crm/services/customerService";
+import type { Company } from "@/modules/crm/types";
+import { crmService } from "@/modules/crm/services/crmService";
 import type { Row } from "@tanstack/react-table";
 
 interface CustomerRowActionsProps<TData> {
@@ -26,18 +26,16 @@ interface CustomerRowActionsProps<TData> {
 }
 
 export function CustomerRowActions<TData>({ row }: CustomerRowActionsProps<TData>) {
-    const customer = row.original as Customer;
+    const company = row.original as unknown as Company;
     const [showEditDialog, setShowEditDialog] = useState(false);
 
-    const handleEdit = async (data: Partial<Customer>) => {
+    const handleEdit = async (data: Partial<Company>) => {
         try {
-            await customerService.updateCustomer(customer.id, data);
-            // Ideally we should reload the data or update the row directly via context
-            // For now, reloading the page is a crude but effective way to refresh data if we don't have a context
+            await crmService.updateCompany(company.id, data);
             window.location.reload();
         } catch (error) {
-            console.error("Failed to update customer", error);
-            alert("Failed to update customer");
+            console.error("Failed to update company", error);
+            alert("Failed to update company");
         }
         setShowEditDialog(false);
     };
@@ -54,18 +52,15 @@ export function CustomerRowActions<TData>({ row }: CustomerRowActionsProps<TData
                 <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
                     <DropdownMenuItem
-                        onClick={() => navigator.clipboard.writeText(customer.email)}
+                        onClick={() => navigator.clipboard.writeText(company.name)}
                     >
-                        Copy Email
+                        <Copy className="mr-2 h-4 w-4" />
+                        Copy Name
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => setShowEditDialog(true)}>
                         <Pencil className="mr-2 h-4 w-4" />
                         Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="text-red-600">
-                        <Trash className="mr-2 h-4 w-4" />
-                        Delete
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
@@ -73,14 +68,15 @@ export function CustomerRowActions<TData>({ row }: CustomerRowActionsProps<TData
             <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Edit Customer</DialogTitle>
+                        <DialogTitle>Edit Company</DialogTitle>
                         <DialogDescription>
-                            Make changes to the customer profile here.
+                            Make changes to the company profile here.
                         </DialogDescription>
                     </DialogHeader>
+                    {/* Casting to any to bridge gap between Company and CustomerForm props for now */}
                     <CustomerForm
-                        initialData={customer}
-                        onSubmit={handleEdit}
+                        initialData={company as any}
+                        onSubmit={(data) => handleEdit(data as unknown as Partial<Company>)}
                         onCancel={() => setShowEditDialog(false)}
                     />
                 </DialogContent>

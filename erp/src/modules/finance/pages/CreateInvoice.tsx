@@ -15,9 +15,9 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { invoiceService } from "../services/invoiceService";
-import { customerService } from "@/modules/crm/services/customerService";
+import { crmService } from "@/modules/crm/services/crmService";
 import { taxService } from "../services/taxService";
-import type { Customer } from "@/modules/crm/types";
+import type { Company } from "@/modules/crm/types";
 import type { InvoiceItem, TaxRate } from "../types";
 
 import { useAuth } from "@/context/AuthContext";
@@ -27,7 +27,7 @@ export default function CreateInvoice() {
     const { profile } = useAuth();
     const orgId = profile?.org_id;
 
-    const [customers, setCustomers] = useState<Customer[]>([]);
+    const [companies, setCompanies] = useState<Company[]>([]);
     const [taxRates, setTaxRates] = useState<TaxRate[]>([]);
     const [customerId, setCustomerId] = useState("");
     const [issueDate, setIssueDate] = useState(new Date().toISOString().split('T')[0]);
@@ -48,11 +48,11 @@ export default function CreateInvoice() {
 
     const fetchData = async () => {
         try {
-            const [customersData, taxRatesData] = await Promise.all([
-                customerService.getCustomers(),
+            const [companiesData, taxRatesData] = await Promise.all([
+                crmService.getCompanies(),
                 taxService.getTaxRates(orgId!)
             ]);
-            setCustomers(customersData);
+            setCompanies(companiesData);
             setTaxRates(taxRatesData);
 
             // Set default tax rate if available (e.g., first one or one marked as default)
@@ -169,9 +169,9 @@ export default function CreateInvoice() {
                                                 <SelectValue placeholder="Select customer" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {customers.map(c => (
+                                                {companies.map(c => (
                                                     <SelectItem key={c.id} value={c.id}>
-                                                        {c.name} {c.company ? `(${c.company})` : ''}
+                                                        {c.name}
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>

@@ -16,14 +16,14 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { invoiceService } from "../services/invoiceService";
-import { customerService } from "@/modules/crm/services/customerService";
-import type { Customer } from "@/modules/crm/types";
+import { crmService } from "@/modules/crm/services/crmService";
+import type { Company } from "@/modules/crm/types";
 import type { InvoiceItem } from "../types";
 
 export default function EditInvoice() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const [customers, setCustomers] = useState<Customer[]>([]);
+    const [companies, setCompanies] = useState<Company[]>([]);
     const [customerId, setCustomerId] = useState("");
     const [issueDate, setIssueDate] = useState("");
     const [dueDate, setDueDate] = useState("");
@@ -43,12 +43,12 @@ export default function EditInvoice() {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const [customersData, invoiceData] = await Promise.all([
-                customerService.getCustomers(),
+            const [companiesData, invoiceData] = await Promise.all([
+                crmService.getCompanies(),
                 id ? invoiceService.getInvoiceById(id) : null
             ]);
 
-            setCustomers(customersData);
+            setCompanies(companiesData);
 
             if (invoiceData) {
                 setCustomerId(invoiceData.customerId || "");
@@ -168,9 +168,9 @@ export default function EditInvoice() {
                                                 <SelectValue placeholder="Select customer" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {customers.map(c => (
+                                                {companies.map(c => (
                                                     <SelectItem key={c.id} value={c.id}>
-                                                        {c.name} {c.company ? `(${c.company})` : ''}
+                                                        {c.name}
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>

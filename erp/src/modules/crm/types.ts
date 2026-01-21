@@ -1,68 +1,122 @@
-export type ActivityType = "note" | "call" | "email" | "meeting" | "task";
 
-export interface Activity {
-    id: string;
-    type: ActivityType;
-    content: string;
-    date: string; // ISO string
-    relatedTo: string; // Lead or Deal ID
-    status?: "pending" | "completed"; // For tasks
-}
+export type CRMStatus = 'new' | 'contacted' | 'qualified' | 'lost' | 'lead' | 'proposal' | 'negotiation' | 'won';
 
 export interface Lead {
     id: string;
-    name: string;
-    title?: string;
-    company: string;
-    email: string;
+    orgId: string;
+    firstName: string;
+    lastName: string;
+    email?: string;
     phone?: string;
-    status: "new" | "contacted" | "qualified" | "lost";
-    source?: "website" | "referral" | "linkedin" | "other";
-    lastContacted?: string;
-    tags?: string[];
-    owner?: string;
+    companyName?: string;
+    source?: string;
+    status: string; // 'new' | 'contacted' | 'qualified' | 'lost'
+    ownerId?: string;
+    owner?: {
+        id: string;
+        firstName: string;
+        lastName: string;
+    };
+    notes?: string;
+    createdAt: string;
+    updatedAt: string;
 }
 
-export interface Product {
+export interface Company {
     id: string;
+    orgId: string;
     name: string;
-    price: number;
+    industry?: string;
+    website?: string;
+    phone?: string;
+    address?: string;
+    createdAt: string;
+    updatedAt: string;
 }
 
-export interface Requirement {
+export interface Contact {
     id: string;
-    title: string;
-    description?: string;
+    orgId: string;
+    firstName: string;
+    lastName: string;
+    email?: string;
+    phone?: string;
+    position?: string;
+    companyId?: string;
+    company?: Company;
+    createdAt: string;
+    updatedAt: string;
 }
 
 export interface Deal {
     id: string;
+    orgId: string;
     title: string;
-    value: number; // Changed from string to number for analytics
-    formattedValue: string;
-    stage: "new" | "proposal" | "negotiation" | "won" | "lost";
-    company: string;
-    contactId?: string;
+    value: number;
+    currency: string;
+    stage: string; // 'lead' | 'proposal' | 'negotiation' | 'won' | 'lost'
+    probability: number;
     expectedCloseDate?: string;
-    probability?: number; // 0-100
-    products?: Product[];
-    customerId?: string;
-    requirements?: Requirement[];
+    leadId?: string;
+    lead?: Lead;
+    companyId?: string;
+    company?: Company;
+    contactId?: string;
+    contact?: Contact;
+    ownerId?: string;
+    owner?: {
+        id: string;
+        firstName: string;
+        lastName: string;
+    };
+    createdAt: string;
+    updatedAt: string;
 }
 
-export interface Customer {
+export interface CRMActivity {
     id: string;
-    name: string;
-    company: string;
-    email: string;
-    status: "active" | "inactive" | "churned";
-    totalRevenue: string; // Formatted currency
-    lastOrderDate: string;
-    phone?: string;
-    address?: string;
-    city?: string;
-    state?: string;
-    zip?: string;
-    country?: string;
-    website?: string;
+    orgId: string;
+    type: string; // 'Call', 'Email', 'Meeting', 'Note'
+    subject?: string;
+    description?: string;
+    dueDate?: string;
+    completed: boolean;
+    dealId?: string;
+    leadId?: string;
+    contactId?: string;
+    performedBy?: string;
+    performer?: {
+        id: string;
+        firstName: string;
+        lastName: string;
+    };
+    createdAt: string;
+}
+
+export interface QuoteItem {
+    description: string;
+    quantity: number;
+    unitPrice: number;
+    total: number;
+}
+
+export interface Quote {
+    id: string;
+    orgId: string;
+    quoteNumber: string;
+    dealId?: string;
+    deal?: Deal;
+    companyId?: string;
+    company?: Company;
+    contactId?: string;
+    contact?: Contact;
+    issueDate?: string;
+    validUntil?: string;
+    status: 'draft' | 'sent' | 'accepted' | 'rejected';
+    totalAmount: number;
+    currency: string;
+    notes?: string;
+    items: QuoteItem[];
+    createdAt: string;
+    updatedAt: string;
 }

@@ -1,13 +1,13 @@
 
 import type { ColumnDef } from "@tanstack/react-table"
-import type { Customer } from "@/modules/crm/types"
+import type { Company } from "@/modules/crm/types"
 import { Badge } from "@/components/ui/badge"
 import { CustomerRowActions } from "./CustomerRowActions"
 
-export const columns: ColumnDef<Customer>[] = [
+export const columns: ColumnDef<Company>[] = [
     {
         accessorKey: "name",
-        header: "Name",
+        header: "Company Name",
         cell: ({ row }) => {
             return (
                 <a href={`/crm/customers/${row.original.id}`} className="font-medium text-blue-600 hover:underline">
@@ -17,31 +17,31 @@ export const columns: ColumnDef<Customer>[] = [
         }
     },
     {
-        accessorKey: "company",
-        header: "Company",
+        accessorKey: "industry",
+        header: "Industry",
     },
     {
-        accessorKey: "status",
-        header: "Status",
+        accessorKey: "website",
+        header: "Website",
         cell: ({ row }) => {
-            const status = row.getValue("status") as string
-            return (
-                <Badge variant={status === "active" ? "default" : "secondary"}>
-                    {status}
-                </Badge>
-            )
-        },
-    },
-    {
-        accessorKey: "totalRevenue",
-        header: "Total Revenue",
-        cell: ({ row }) => {
-            return <div className="font-medium">{row.getValue("totalRevenue")}</div>
+            const website = row.getValue("website") as string;
+            return website ? (
+                <a href={website.startsWith('http') ? website : `https://${website}`} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline">
+                    {website}
+                </a>
+            ) : "-";
         }
     },
     {
-        accessorKey: "lastOrderDate",
-        header: "Last Order",
+        accessorKey: "phone",
+        header: "Phone",
+    },
+    {
+        accessorKey: "createdAt",
+        header: "Created At",
+        cell: ({ row }) => {
+            return new Date(row.getValue("createdAt")).toLocaleDateString()
+        }
     },
     {
         id: "actions",

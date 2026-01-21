@@ -3,15 +3,14 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { customerService } from "../services/customerService";
-import { dealService } from "../services/dealService";
-import type { Customer, Deal } from "../types";
+import { crmService } from "../services/crmService";
+import type { Company, Deal } from "../types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, ArrowLeft, Mail, Building, DollarSign, Calendar, Edit } from "lucide-react";
+import { Loader2, ArrowLeft, Building, Calendar, Edit, Globe, Phone, MapPin } from "lucide-react";
 import {
     Dialog,
     DialogContent,
@@ -25,7 +24,7 @@ import { CustomerForm } from "../components/customers/CustomerForm";
 export default function CustomerDetailsPage() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const [customer, setCustomer] = useState<Customer | null>(null);
+    const [company, setCompany] = useState<Company | null>(null);
     const [deals, setDeals] = useState<Deal[]>([]);
     const [loading, setLoading] = useState(true);
     const [dealsLoading, setDealsLoading] = useState(false);
@@ -33,20 +32,20 @@ export default function CustomerDetailsPage() {
     const [editOpen, setEditOpen] = useState(false);
 
     useEffect(() => {
-        const fetchCustomer = async () => {
+        const fetchCompany = async () => {
             if (!id) return;
             try {
                 setLoading(true);
-                const data = await customerService.getCustomerById(id);
-                setCustomer(data);
+                const data = await crmService.getCompanyById(id);
+                setCompany(data);
             } catch (err: any) {
-                console.error("Error fetching customer:", err);
-                setError(err.message || "Failed to load customer details");
+                console.error("Error fetching company:", err);
+                setError(err.message || "Failed to load company details");
             } finally {
                 setLoading(false);
             }
         };
-        fetchCustomer();
+        fetchCompany();
     }, [id]);
 
     useEffect(() => {
@@ -54,7 +53,7 @@ export default function CustomerDetailsPage() {
             if (!id) return;
             try {
                 setDealsLoading(true);
-                const dealsData = await dealService.getDealsByCustomer(id);
+                const dealsData = await crmService.getDealsByCompany(id);
                 setDeals(dealsData);
             } catch (err: any) {
                 console.error("Error fetching deals:", err);
@@ -65,15 +64,15 @@ export default function CustomerDetailsPage() {
         fetchDeals();
     }, [id]);
 
-    const handleUpdate = async (updates: Partial<Customer>) => {
-        if (!customer) return;
+    const handleUpdate = async (updates: Partial<Company>) => {
+        if (!company) return;
         try {
-            const updatedCustomer = await customerService.updateCustomer(customer.id, updates);
-            setCustomer(updatedCustomer);
+            const updatedCompany = await crmService.updateCompany(company.id, updates);
+            setCompany(updatedCompany);
             setEditOpen(false);
         } catch (err: any) {
-            console.error("Error updating customer:", err);
-            alert(`Failed to update customer: ${err.message}`);
+            console.error("Error updating company:", err);
+            alert(`Failed to update company: ${err.message}`);
         }
     };
 
@@ -85,11 +84,11 @@ export default function CustomerDetailsPage() {
         );
     }
 
-    if (error || !customer) {
+    if (error || !company) {
         return (
             <div className="p-8">
                 <Alert variant="destructive">
-                    <AlertDescription>{error || "Customer not found"}</AlertDescription>
+                    <AlertDescription>{error || "Company not found"}</AlertDescription>
                 </Alert>
                 <Button variant="outline" className="mt-4" onClick={() => navigate("/crm/customers")}>
                     <ArrowLeft className="mr-2 h-4 w-4" /> Back to Customers
@@ -107,13 +106,10 @@ export default function CustomerDetailsPage() {
                         <ArrowLeft className="h-4 w-4" />
                     </Button>
                     <div>
-                        <h2 className="text-3xl font-bold tracking-tight">{customer.name}</h2>
+                        <h2 className="text-3xl font-bold tracking-tight">{company.name}</h2>
                         <div className="flex items-center text-muted-foreground mt-1">
                             <Building className="mr-1 h-4 w-4" />
-                            <span className="mr-4">{customer.company}</span>
-                            <Badge variant={customer.status === "active" ? "default" : "secondary"}>
-                                {customer.status}
-                            </Badge>
+                            <span className="mr-4">{company.industry || 'Industry N/A'}</span>
                         </div>
                     </div>
                 </div>
@@ -126,41 +122,20 @@ export default function CustomerDetailsPage() {
                         </DialogTrigger>
                         <DialogContent>
                             <DialogHeader>
-                                <DialogTitle>Edit Customer</DialogTitle>
+                                <DialogTitle>Edit Company</DialogTitle>
                                 <DialogDescription>
-                                    Update customer details.
+                                    Update company details.
                                 </DialogDescription>
                             </DialogHeader>
+                            {/* Note: Partial mismatch in props, but casting for now to enable basic edit */}
                             <CustomerForm
-                                initialData={customer}
-                                onSubmit={handleUpdate}
+                                initialData={company as any}
+                                onSubmit={(data) => handleUpdate(data as unknown as Partial<Company>)}
                                 onCancel={() => setEditOpen(false)}
                             />
                         </DialogContent>
                     </Dialog>
                 </div>
-            </div>
-
-            {/* Key Metrics */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-                        <DollarSign className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{customer.totalRevenue}</div>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Last Order</CardTitle>
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{customer.lastOrderDate || "N/A"}</div>
-                    </CardContent>
-                </Card>
             </div>
 
             {/* Main Content Tabs */}
@@ -178,30 +153,24 @@ export default function CustomerDetailsPage() {
                                 <CardTitle>Contact Information</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <div className="flex items-center">
-                                    <Mail className="mr-2 h-4 w-4 text-muted-foreground" />
-                                    <span>{customer.email}</span>
-                                </div>
-                                {customer.phone && (
+                                {company.phone && (
                                     <div className="flex items-center">
-                                        <span className="mr-2 text-muted-foreground">Phone:</span>
-                                        <span>{customer.phone}</span>
+                                        <Phone className="mr-2 h-4 w-4 text-muted-foreground" />
+                                        <span>{company.phone}</span>
                                     </div>
                                 )}
-                                {customer.website && (
+                                {company.website && (
                                     <div className="flex items-center">
-                                        <span className="mr-2 text-muted-foreground">Website:</span>
-                                        <a href={customer.website} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">
-                                            {customer.website}
+                                        <Globe className="mr-2 h-4 w-4 text-muted-foreground" />
+                                        <a href={company.website} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">
+                                            {company.website}
                                         </a>
                                     </div>
                                 )}
-                                {(customer.address || customer.city) && (
+                                {company.address && (
                                     <div className="flex items-start">
-                                        <span className="mr-2 text-muted-foreground">Address:</span>
-                                        <span>
-                                            {[customer.address, customer.city, customer.state, customer.zip, customer.country].filter(Boolean).join(", ")}
-                                        </span>
+                                        <MapPin className="mr-2 h-4 w-4 text-muted-foreground" />
+                                        <span>{company.address}</span>
                                     </div>
                                 )}
                             </CardContent>
@@ -213,7 +182,7 @@ export default function CustomerDetailsPage() {
                     <Card>
                         <CardHeader>
                             <CardTitle>Associated Deals</CardTitle>
-                            <CardDescription>Active and past deals with this customer.</CardDescription>
+                            <CardDescription>Active and past deals with this company.</CardDescription>
                         </CardHeader>
                         <CardContent>
                             {dealsLoading ? (
@@ -228,7 +197,6 @@ export default function CustomerDetailsPage() {
                                                 <div className="flex items-start justify-between">
                                                     <div>
                                                         <CardTitle className="text-base">{deal.title}</CardTitle>
-                                                        <p className="text-sm text-muted-foreground mt-1">{deal.company}</p>
                                                     </div>
                                                     <Badge variant={
                                                         deal.stage === 'won' ? 'default' :
@@ -241,7 +209,7 @@ export default function CustomerDetailsPage() {
                                             </CardHeader>
                                             <CardContent className="pb-3">
                                                 <div className="flex items-center justify-between text-sm">
-                                                    <span className="font-semibold">{deal.formattedValue}</span>
+                                                    <span className="font-semibold">{new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(deal.value || 0)}</span>
                                                     {deal.expectedCloseDate && (
                                                         <span className="text-muted-foreground">Close: {deal.expectedCloseDate}</span>
                                                     )}
@@ -251,7 +219,7 @@ export default function CustomerDetailsPage() {
                                     ))}
                                 </div>
                             ) : (
-                                <p className="text-sm text-muted-foreground">No deals found for this customer.</p>
+                                <p className="text-sm text-muted-foreground">No deals found for this company.</p>
                             )}
                         </CardContent>
                     </Card>

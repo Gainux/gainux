@@ -31,7 +31,7 @@ import LeadDetailsPage from "@/modules/crm/pages/LeadDetailsPage";
 
 import DealDetailsPage from "@/modules/crm/pages/DealDetailsPage";
 
-// import CRMDashboard from "@/modules/crm/pages/CRMDashboard";
+import QuotationsPage from "@/modules/crm/pages/QuotationsPage";
 
 import CustomersPage from "@/modules/crm/pages/CustomersPage";
 import CustomerDetailsPage from "@/modules/crm/pages/CustomerDetailsPage";
@@ -101,6 +101,7 @@ function App() {
                     <Route path="/crm/customers/:id" element={<CustomerDetailsPage />} />
                     <Route path="/crm/deals" element={<DealsPage />} />
                     <Route path="/crm/deals/:id" element={<DealDetailsPage />} />
+                    <Route path="/crm/quotes" element={<QuotationsPage />} />
                     <Route path="/crm/*" element={<ComingSoonPage title="Sales & CRM" />} />
                   </Route>
 

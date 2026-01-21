@@ -10,8 +10,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import type { Deal, Customer } from "@/modules/crm/types";
-import { customerService } from "@/modules/crm/services/customerService";
+import { crmService } from "@/modules/crm/services/crmService";
+import type { Deal, Contact } from "@/modules/crm/types";
 
 interface DealFormProps {
     initialData?: Deal | null;
@@ -21,43 +21,48 @@ interface DealFormProps {
 
 export function DealForm({ initialData, onSubmit, onCancel }: DealFormProps) {
     const [title, setTitle] = useState(initialData?.title || "");
-    const [company, setCompany] = useState(initialData?.company || "");
+    const [company, setCompany] = useState(initialData?.company?.name || ""); // company is now object
     const [value, setValue] = useState(initialData?.value?.toString() || "");
-    const [stage, setStage] = useState<Deal["stage"]>(initialData?.stage || "new");
+    const [stage, setStage] = useState<Deal["stage"]>((initialData?.stage as Deal["stage"]) || "lead");
     const [expectedCloseDate, setExpectedCloseDate] = useState(initialData?.expectedCloseDate || "");
-    const [customerId, setCustomerId] = useState(initialData?.customerId || "");
-    const [customers, setCustomers] = useState<Customer[]>([]);
+    const [contactId, setContactId] = useState(initialData?.contactId || "");
+    const [contacts, setContacts] = useState<Contact[]>([]);
 
     useEffect(() => {
-        const fetchCustomers = async () => {
+        const fetchContacts = async () => {
             try {
-                const data = await customerService.getCustomers();
-                setCustomers(data);
+                const data = await crmService.getContacts();
+                setContacts(data);
             } catch (error) {
-                console.error("Failed to fetch customers", error);
+                console.error("Failed to fetch contacts", error);
             }
         };
-        fetchCustomers();
+        fetchContacts();
     }, []);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         onSubmit({
             title,
-            company,
+            // We might want to handle company creation or lookup separately,
+            // for now, we just pass the stage and value.
+            // If we want to link company, we'd need its ID.
+            // But the form just takes a string for company name currently in UI.
+            // If the user selected a contact, that contact belongs to a company.
             value: parseFloat(value) || 0,
             stage,
             expectedCloseDate,
-            customerId: customerId || undefined, // Send undefined if empty string
+            contactId: contactId || undefined,
+            // Assuming we don't resolve company name to ID here for simplicity unless matched.
+            // Ideally we should select Company from dropdown too.
         });
     };
 
-    const handleCustomerChange = (id: string) => {
-        setCustomerId(id);
-        // Optional: Auto-fill company name if customer is selected
-        const selectedCustomer = customers.find(c => c.id === id);
-        if (selectedCustomer && selectedCustomer.company) {
-            setCompany(selectedCustomer.company);
+    const handleContactChange = (id: string) => {
+        setContactId(id);
+        const selectedContact = contacts.find(c => c.id === id);
+        if (selectedContact && selectedContact.company) {
+            setCompany(selectedContact.company.name);
         }
     };
 
@@ -75,15 +80,15 @@ export function DealForm({ initialData, onSubmit, onCancel }: DealFormProps) {
             </div>
 
             <div className="space-y-2">
-                <Label htmlFor="customer">Customer (Optional)</Label>
-                <Select value={customerId} onValueChange={handleCustomerChange}>
+                <Label htmlFor="contact">Contact (Optional)</Label>
+                <Select value={contactId} onValueChange={handleContactChange}>
                     <SelectTrigger>
-                        <SelectValue placeholder="Select a customer" />
+                        <SelectValue placeholder="Select a contact" />
                     </SelectTrigger>
                     <SelectContent>
-                        {customers.map((c) => (
+                        {contacts.map((c) => (
                             <SelectItem key={c.id} value={c.id}>
-                                {c.name} {c.company ? `(${c.company})` : ''}
+                                {c.firstName} {c.lastName} {c.company ? `(${c.company.name})` : ''}
                             </SelectItem>
                         ))}
                     </SelectContent>

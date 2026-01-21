@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import KanbanBoard from "../components/KanbanBoard";
 import type { Deal } from "../types";
-import { dealService } from "../services/dealService";
+import { crmService } from "../services/crmService";
 import { Button } from "@/components/ui/button";
 import { Plus, Loader2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -30,7 +30,7 @@ export default function DealsPage() {
     const fetchDeals = async () => {
         try {
             setLoading(true);
-            const fetchedDeals = await dealService.getDeals();
+            const fetchedDeals = await crmService.getDeals();
             setDeals(fetchedDeals);
         } catch (err: any) {
             console.error("Error fetching deals:", err);
@@ -46,7 +46,7 @@ export default function DealsPage() {
 
     const handleCreate = async (dealData: Partial<Deal>) => {
         try {
-            const newDeal = await dealService.createDeal(dealData);
+            const newDeal = await crmService.createDeal(dealData);
             setDeals([newDeal, ...deals]);
             setOpen(false);
         } catch (err: any) {
@@ -63,7 +63,7 @@ export default function DealsPage() {
     const handleUpdate = async (updates: Partial<Deal>) => {
         if (!editDeal) return;
         try {
-            const updatedDeal = await dealService.updateDeal(editDeal.id, updates);
+            const updatedDeal = await crmService.updateDeal(editDeal.id, updates);
             setDeals(deals.map(d => d.id === editDeal.id ? updatedDeal : d));
             setEditOpen(false);
             setEditDeal(null);
@@ -75,7 +75,7 @@ export default function DealsPage() {
 
     const handleDealMove = async (dealId: string, newStage: string) => {
         try {
-            await dealService.updateDealStage(dealId, newStage);
+            await crmService.updateDealStage(dealId, newStage);
             const updatedDeals = deals.map(d =>
                 d.id === dealId ? { ...d, stage: newStage as Deal["stage"] } : d
             );

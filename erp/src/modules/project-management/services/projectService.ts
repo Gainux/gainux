@@ -8,9 +8,9 @@ const mapToProject = (data: any): Project => ({
     name: data.name,
     description: data.description,
     clientId: data.client_id,
-    client: data.customers ? {
-        id: data.customers.id,
-        name: data.customers.name
+    client: data.companies ? {
+        id: data.companies.id,
+        name: data.companies.name
     } : undefined,
     status: data.status,
     startDate: data.start_date,
@@ -65,7 +65,7 @@ export const projectService = {
             .from('projects')
             .select(`
                 *,
-                customers (id, name)
+                companies (id, name)
             `)
             .order('created_at', { ascending: false });
 
@@ -78,7 +78,7 @@ export const projectService = {
             .from('projects')
             .select(`
                 *,
-                customers (id, name)
+                companies (id, name)
             `)
             .eq('id', id)
             .single();

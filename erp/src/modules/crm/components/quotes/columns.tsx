@@ -1,40 +1,42 @@
 
 import type { ColumnDef } from "@tanstack/react-table"
-import type { Lead } from "@/modules/crm/types"
+import type { Quote } from "@/modules/crm/types"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { MoreHorizontal } from "lucide-react"
-import { Link } from "react-router-dom"
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuLabel,
-    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-export const columns: ColumnDef<Lead>[] = [
+export const columns: ColumnDef<Quote>[] = [
     {
-        accessorKey: "firstName",
-        header: "Name",
-        cell: ({ row }) => `${row.original.firstName} ${row.original.lastName}`
+        accessorKey: "quoteNumber",
+        header: "Quote #",
     },
     {
-        accessorKey: "companyName",
-        header: "Company",
+        accessorKey: "company.name", // Assuming deep access works or handle in cell
+        header: "Customer",
+        cell: ({ row }) => {
+            const company = row.original.company;
+            const contact = row.original.contact;
+            return company?.name || (contact ? `${contact.firstName} ${contact.lastName}` : "-");
+        }
     },
     {
-        accessorKey: "email",
-        header: "Email",
-    },
-    {
-        accessorKey: "phone",
-        header: "Phone",
-    },
-    {
-        accessorKey: "source",
-        header: "Source",
+        accessorKey: "totalAmount",
+        header: "Amount",
+        cell: ({ row }) => {
+            const amount = parseFloat(row.getValue("totalAmount"))
+            const formatted = new Intl.NumberFormat("en-US", {
+                style: "currency",
+                currency: row.original.currency,
+            }).format(amount)
+            return <div className="font-medium">{formatted}</div>
+        },
     },
     {
         accessorKey: "status",
@@ -42,23 +44,23 @@ export const columns: ColumnDef<Lead>[] = [
         cell: ({ row }) => {
             const status = row.getValue("status") as string
             return (
-                <Badge variant={status === "qualified" ? "default" : "secondary"}>
+                <Badge variant={status === "accepted" ? "default" : status === "rejected" ? "destructive" : "secondary"}>
                     {status}
                 </Badge>
             )
         },
     },
     {
-        accessorKey: "createdAt",
-        header: "Created At",
+        accessorKey: "issueDate",
+        header: "Date",
         cell: ({ row }) => {
-            return new Date(row.getValue("createdAt")).toLocaleDateString()
-        },
+            return new Date(row.getValue("issueDate")).toLocaleDateString()
+        }
     },
     {
         id: "actions",
         cell: ({ row }) => {
-            const lead = row.original
+            const quote = row.original
 
             return (
                 <DropdownMenu>
@@ -71,15 +73,11 @@ export const columns: ColumnDef<Lead>[] = [
                     <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuItem
-                            onClick={() => navigator.clipboard.writeText(lead.email)}
+                            onClick={() => navigator.clipboard.writeText(quote.quoteNumber)}
                         >
-                            Copy Email
+                            Copy Quote Number
                         </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem asChild>
-                            <Link to={`/crm/leads/${lead.id}`}>View Details</Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>Edit Lead</DropdownMenuItem>
+                        {/* Add edit/view details later */}
                     </DropdownMenuContent>
                 </DropdownMenu>
             )

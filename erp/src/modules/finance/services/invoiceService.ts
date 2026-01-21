@@ -52,7 +52,7 @@ export const invoiceService = {
             .select(`
                 *,
                 invoice_items(*),
-                customers(name, email, company)
+                companies(id, name, address, phone, website)
             `)
             .eq("id", id)
             .single();
@@ -78,7 +78,7 @@ export const invoiceService = {
                 unitPrice: parseFloat(item.unit_price),
                 amount: parseFloat(item.amount),
             })) || [],
-            customer: data.customers
+            customer: data.companies
         } as Invoice & { customer: any };
     },
 
