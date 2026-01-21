@@ -63,6 +63,10 @@ import BudgetDetails from "./modules/finance/pages/BudgetDetails";
 import AssetList from "./modules/finance/pages/AssetList";
 import AssetDetails from "./modules/finance/pages/AssetDetails";
 import TaxRates from "./modules/finance/pages/TaxRates";
+import RecruitmentPage from "./modules/recruitment/pages/RecruitmentPage";
+import { PublicJobLayout } from "./modules/recruitment/public/PublicJobLayout";
+import PublicJobBoard from "./modules/recruitment/public/PublicJobBoard";
+import PublicJobDetails from "./modules/recruitment/public/PublicJobDetails";
 
 const TaxReportPage = lazy(() => import('./modules/finance/pages/TaxReportPage'));
 
@@ -74,6 +78,13 @@ function App() {
           <Router>
             <Routes>
               <Route path="/login" element={<LoginPage />} />
+
+              {/* Public Career Pages */}
+              <Route element={<PublicJobLayout />}>
+                <Route path="/careers/:orgId" element={<PublicJobBoard />} />
+                <Route path="/careers/:orgId/jobs/:jobId" element={<PublicJobDetails />} />
+              </Route>
+
               <Route element={<ProtectedRoute />}>
                 <Route element={<AppLayout />}>
                   <Route path="/" element={<Dashboard />} />
@@ -98,6 +109,7 @@ function App() {
                     <Route path="/hrm/org-structure" element={<OrgStructurePage />} />
                     <Route path="/hrm/payroll" element={<PayrollPage />} />
                     <Route path="/hrm/payroll/:id" element={<PayrollRunDetails />} />
+                    <Route path="/hrm/recruitment" element={<RecruitmentPage />} />
                     <Route path="/hrm/*" element={<ComingSoonPage title="Human Resources" />} />
                   </Route>
 
