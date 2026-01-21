@@ -20,6 +20,7 @@ import ExpenseList from "./modules/finance/pages/ExpenseList";
 import GeneralLedgerPage from "./modules/finance/pages/GeneralLedgerPage";
 import CreateBill from "./modules/finance/pages/CreateBill";
 import PayablesPage from "./modules/finance/pages/PayablesPage";
+import BankList from "./modules/finance/pages/BankList";
 import VendorList from "./modules/procurement/pages/VendorList";
 
 import LeadDetailsPage from "@/modules/crm/pages/LeadDetailsPage";
@@ -51,6 +52,7 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import LoginPage from "@/pages/auth/LoginPage";
 import ProfilePage from "@/pages/auth/ProfilePage";
 import SettingsPage from "@/pages/SettingsPage";
+import BankDetails from "./modules/finance/pages/BankDetails";
 
 function App() {
   return (
@@ -97,6 +99,8 @@ function App() {
                     <Route path="/finance/payables/create" element={<CreateBill />} />
                     <Route path="/finance/payables" element={<PayablesPage />} />
                     <Route path="/finance/expenses" element={<ExpenseList />} />
+                    <Route path="/finance/banking" element={<BankList />} />
+                    <Route path="/finance/banking/:id" element={<BankDetails />} />
                     <Route path="/finance/*" element={<ComingSoonPage title="Finance & Accounting" />} />
                   </Route>
 

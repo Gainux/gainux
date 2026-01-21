@@ -136,6 +136,20 @@ export interface BillItem {
     created_at?: string;
 }
 
+export interface BankAccount {
+    id: string;
+    org_id: string;
+    accountName: string; // account_name
+    accountNumber?: string; // account_number
+    bankName?: string; // bank_name
+    currency: string;
+    balance: number;
+    glAccountId?: string; // gl_account_id
+    isActive: boolean; // is_active
+    created_at?: string;
+    updated_at?: string;
+}
+
 export const ACCOUNT_TYPES: AccountTypeOption[] = [
     { value: 'asset', label: 'Asset' },
     { value: 'liability', label: 'Liability' },
