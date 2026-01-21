@@ -6,7 +6,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
-import { Mail, Phone, Calendar, Link as LinkIcon, Briefcase } from "lucide-react";
+import { Mail, Phone, Link as LinkIcon, Briefcase } from "lucide-react";
 import type { RecruitCandidate } from "../types";
 
 interface CandidateDetailsDialogProps {

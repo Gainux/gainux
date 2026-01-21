@@ -1,7 +1,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import JobListPage from "./JobListPage";
 import CandidateListPage from "./CandidateListPage";
-// import PipelineBoard from "./PipelineBoard"; // Coming soon
+import PipelineBoard from "./PipelineBoard";
 
 export default function RecruitmentPage() {
     return (
@@ -21,10 +21,8 @@ export default function RecruitmentPage() {
                 <TabsContent value="candidates" className="space-y-4">
                     <CandidateListPage />
                 </TabsContent>
-                <TabsContent value="pipeline" className="space-y-4">
-                    <div className="flex items-center justify-center p-8 border rounded-lg bg-muted/10 border-dashed">
-                        <p className="text-muted-foreground">Kanban board coming soon</p>
-                    </div>
+                <TabsContent value="pipeline" className="space-y-4 h-[calc(100vh-220px)]">
+                    <PipelineBoard />
                 </TabsContent>
             </Tabs>
         </div>

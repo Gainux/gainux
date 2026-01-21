@@ -198,7 +198,9 @@ export const recruitmentService = {
                 firstName: row.candidate.first_name,
                 lastName: row.candidate.last_name,
                 resumeUrl: row.candidate.resume_url,
-                portfolioUrl: row.candidate.portfolio_url
+                portfolioUrl: row.candidate.portfolio_url,
+                createdAt: row.candidate.created_at,
+                updatedAt: row.candidate.updated_at
             }
         }));
     },
