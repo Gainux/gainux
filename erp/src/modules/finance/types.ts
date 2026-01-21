@@ -157,3 +157,51 @@ export const ACCOUNT_TYPES: AccountTypeOption[] = [
     { value: 'revenue', label: 'Revenue' },
     { value: 'expense', label: 'Expense' },
 ];
+
+export interface Budget {
+    id: string;
+    org_id: string;
+    name: string;
+    description?: string;
+    startDate: string; // start_date in DB, mapped
+    endDate: string;   // end_date in DB, mapped
+    created_by?: string;
+    created_at?: string;
+    updated_at?: string;
+}
+
+export interface BudgetItem {
+    id: string;
+    budget_id: string;
+    account_id: string;
+    amount: number;
+    period_type: 'total' | 'monthly';
+    created_at?: string;
+    updated_at?: string;
+    account?: Account;
+}
+
+export interface FixedAsset {
+    id: string;
+    org_id: string;
+    assetName: string; // asset_name
+    assetCode?: string; // asset_code
+    description?: string;
+    purchaseDate: string; // purchase_date
+    purchaseCost: number; // purchase_cost
+    salvageValue: number; // salvage_value
+    usefulLifeYears: number; // useful_life_years
+    depreciationMethod: 'STRAIGHT_LINE' | 'DECLINING_BALANCE'; // depreciation_method
+    status: 'active' | 'disposed' | 'written_off';
+    currentValue?: number; // current_value
+    accumulatedDepreciation?: number; // accumulated_depreciation
+    created_at?: string;
+    updated_at?: string;
+}
+
+export interface DepreciationScheduleItem {
+    year: number;
+    openingValue: number;
+    depreciationAmount: number;
+    closingValue: number;
+}

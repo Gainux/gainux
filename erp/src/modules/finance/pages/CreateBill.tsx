@@ -15,9 +15,11 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { billService } from "../services/billService";
 import { vendorService } from "@/modules/procurement/services/vendorService";
-import type { Vendor, BillItem } from "../types";
+import { taxService } from "../services/taxService";
+import type { Vendor, BillItem, TaxRate } from "../types";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function CreateBill() {
     const navigate = useNavigate();
@@ -25,12 +27,15 @@ export default function CreateBill() {
     const orgId = profile?.org_id;
 
     const [vendors, setVendors] = useState<Vendor[]>([]);
+    const [taxRates, setTaxRates] = useState<TaxRate[]>([]);
     const [vendorId, setVendorId] = useState("");
 
     // Bill Details
     const [vendorInvoiceNumber, setVendorInvoiceNumber] = useState("");
     const [issueDate, setIssueDate] = useState(new Date().toISOString().split('T')[0]);
     const [dueDate, setDueDate] = useState("");
+    const [applyTax, setApplyTax] = useState(false);
+    const [taxRate, setTaxRate] = useState("0");
     const [notes, setNotes] = useState("");
 
     // Items
@@ -41,17 +46,21 @@ export default function CreateBill() {
 
     useEffect(() => {
         if (orgId) {
-            fetchVendors();
+            fetchData();
         }
     }, [orgId]);
 
-    const fetchVendors = async () => {
+    const fetchData = async () => {
         try {
-            const data = await vendorService.getVendors(orgId!);
-            setVendors(data);
+            const [vendorsData, taxRatesData] = await Promise.all([
+                vendorService.getVendors(orgId!),
+                taxService.getTaxRates(orgId!)
+            ]);
+            setVendors(vendorsData);
+            setTaxRates(taxRatesData);
         } catch (err) {
-            console.error("Error fetching vendors:", err);
-            toast.error("Failed to load vendors");
+            console.error("Error fetching data:", err);
+            toast.error("Failed to load initial data");
         }
     };
 
@@ -82,11 +91,9 @@ export default function CreateBill() {
 
     const calculateTotals = () => {
         const subtotal = items.reduce((sum, item) => sum + (item.amount || 0), 0);
-        // For simplicity, we'll assume price includes tax or tax is 0 for now, 
-        // OR we can add a simple tax field later. Let's stick to subtotal = total for MVP
-        // unless we add tax input.
-        const total = subtotal;
-        return { subtotal, total };
+        const tax = applyTax ? subtotal * (parseFloat(taxRate) / 100) : 0;
+        const total = subtotal + tax;
+        return { subtotal, tax, total };
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -104,7 +111,7 @@ export default function CreateBill() {
 
         try {
             setLoading(true);
-            const { subtotal, total } = calculateTotals();
+            const { subtotal, tax, total } = calculateTotals();
 
             if (!orgId) {
                 toast.error("Organization ID not found");
@@ -119,8 +126,8 @@ export default function CreateBill() {
                 dueDate,
                 status: 'draft',
                 subtotal,
-                taxRate: 0, // Simplified
-                taxAmount: 0,
+                taxRate: applyTax ? parseFloat(taxRate) : 0,
+                taxAmount: tax,
                 total,
                 currency: 'INR',
                 notes,
@@ -136,7 +143,7 @@ export default function CreateBill() {
         }
     };
 
-    const { total } = calculateTotals();
+    const { subtotal, tax, total } = calculateTotals();
 
     return (
         <div className="flex-1 space-y-4 p-8 pt-6">
@@ -200,6 +207,38 @@ export default function CreateBill() {
                                             onChange={(e) => setDueDate(e.target.value)}
                                             required
                                         />
+                                    </div>
+                                    <div className="md:col-span-2 space-y-3">
+                                        <div className="flex items-center space-x-2">
+                                            <Checkbox
+                                                id="applyTax"
+                                                checked={applyTax}
+                                                onCheckedChange={(checked) => setApplyTax(checked as boolean)}
+                                            />
+                                            <Label htmlFor="applyTax" className="cursor-pointer">
+                                                Apply Tax
+                                            </Label>
+                                        </div>
+                                        {applyTax && (
+                                            <div className="space-y-2">
+                                                <Label htmlFor="taxRate">Tax Rate</Label>
+                                                <Select
+                                                    value={taxRate}
+                                                    onValueChange={setTaxRate}
+                                                >
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select Tax Rate" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {taxRates.map(rate => (
+                                                            <SelectItem key={rate.id} value={rate.rate.toString()}>
+                                                                {rate.name} ({rate.rate}%)
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </CardContent>
@@ -295,6 +334,17 @@ export default function CreateBill() {
                                 <CardTitle>Summary</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
+                                <div className="flex justify-between">
+                                    <span className="text-muted-foreground">Subtotal:</span>
+                                    <span className="font-medium">₹{subtotal.toFixed(2)}</span>
+                                </div>
+                                {applyTax && (
+                                    <div className="flex justify-between">
+                                        <span className="text-muted-foreground">Tax ({taxRate}%):</span>
+                                        <span className="font-medium">₹{tax?.toFixed(2)}</span>
+                                    </div>
+                                )}
+                                <div className="h-px bg-border" />
                                 <div className="flex justify-between text-lg font-bold">
                                     <span>Total:</span>
                                     <span>₹{total.toFixed(2)}</span>

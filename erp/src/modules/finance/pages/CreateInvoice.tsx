@@ -16,8 +16,9 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { invoiceService } from "../services/invoiceService";
 import { customerService } from "@/modules/crm/services/customerService";
+import { taxService } from "../services/taxService";
 import type { Customer } from "@/modules/crm/types";
-import type { InvoiceItem } from "../types";
+import type { InvoiceItem, TaxRate } from "../types";
 
 import { useAuth } from "@/context/AuthContext";
 
@@ -27,11 +28,12 @@ export default function CreateInvoice() {
     const orgId = profile?.org_id;
 
     const [customers, setCustomers] = useState<Customer[]>([]);
+    const [taxRates, setTaxRates] = useState<TaxRate[]>([]);
     const [customerId, setCustomerId] = useState("");
     const [issueDate, setIssueDate] = useState(new Date().toISOString().split('T')[0]);
     const [dueDate, setDueDate] = useState("");
     const [applyGst, setApplyGst] = useState(true);
-    const [taxRate, setTaxRate] = useState("18");
+    const [taxRate, setTaxRate] = useState("0");
     const [notes, setNotes] = useState("");
     const [items, setItems] = useState<Partial<InvoiceItem>[]>([
         { description: "", quantity: 1, unitPrice: 0, amount: 0 }
@@ -39,15 +41,26 @@ export default function CreateInvoice() {
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        fetchCustomers();
-    }, []);
+        if (orgId) {
+            fetchData();
+        }
+    }, [orgId]);
 
-    const fetchCustomers = async () => {
+    const fetchData = async () => {
         try {
-            const data = await customerService.getCustomers();
-            setCustomers(data);
+            const [customersData, taxRatesData] = await Promise.all([
+                customerService.getCustomers(),
+                taxService.getTaxRates(orgId!)
+            ]);
+            setCustomers(customersData);
+            setTaxRates(taxRatesData);
+
+            // Set default tax rate if available (e.g., first one or one marked as default)
+            if (taxRatesData.length > 0) {
+                setTaxRate(taxRatesData[0].rate.toString());
+            }
         } catch (err) {
-            console.error("Error fetching customers:", err);
+            console.error("Error fetching data:", err);
         }
     };
 
@@ -192,19 +205,27 @@ export default function CreateInvoice() {
                                                 onCheckedChange={(checked) => setApplyGst(checked as boolean)}
                                             />
                                             <Label htmlFor="applyGst" className="cursor-pointer">
-                                                Apply GST
+                                                Apply Tax
                                             </Label>
                                         </div>
                                         {applyGst && (
                                             <div className="space-y-2">
-                                                <Label htmlFor="taxRate">GST Rate (%)</Label>
-                                                <Input
-                                                    id="taxRate"
-                                                    type="number"
-                                                    step="0.01"
+                                                <Label htmlFor="taxRate">Tax Rate</Label>
+                                                <Select
                                                     value={taxRate}
-                                                    onChange={(e) => setTaxRate(e.target.value)}
-                                                />
+                                                    onValueChange={setTaxRate}
+                                                >
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select Tax Rate" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {taxRates.map(rate => (
+                                                            <SelectItem key={rate.id} value={rate.rate.toString()}>
+                                                                {rate.name} ({rate.rate}%)
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
                                             </div>
                                         )}
                                     </div>

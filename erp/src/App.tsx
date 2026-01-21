@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import AppLayout from "./components/layout/AppLayout";
 import { ModuleProvider } from "@/context/ModuleContext";
@@ -53,6 +54,13 @@ import LoginPage from "@/pages/auth/LoginPage";
 import ProfilePage from "@/pages/auth/ProfilePage";
 import SettingsPage from "@/pages/SettingsPage";
 import BankDetails from "./modules/finance/pages/BankDetails";
+import BudgetList from "./modules/finance/pages/BudgetList";
+import BudgetDetails from "./modules/finance/pages/BudgetDetails";
+import AssetList from "./modules/finance/pages/AssetList";
+import AssetDetails from "./modules/finance/pages/AssetDetails";
+import TaxRates from "./modules/finance/pages/TaxRates";
+
+const TaxReportPage = lazy(() => import('./modules/finance/pages/TaxReportPage'));
 
 function App() {
   return (
@@ -101,6 +109,9 @@ function App() {
                     <Route path="/finance/expenses" element={<ExpenseList />} />
                     <Route path="/finance/banking" element={<BankList />} />
                     <Route path="/finance/banking/:id" element={<BankDetails />} />
+                    <Route path="/finance/budgeting" element={<BudgetList />} />
+                    <Route path="/finance/budgeting/:id" element={<BudgetDetails />} />
+
                     <Route path="/finance/*" element={<ComingSoonPage title="Finance & Accounting" />} />
                   </Route>
 
@@ -126,7 +137,8 @@ function App() {
 
                   {/* Assets (EAM) */}
                   <Route element={<ModuleGuard moduleId="assets" />}>
-                    <Route path="/assets/*" element={<ComingSoonPage title="Asset Management" />} />
+                    <Route path="/finance/assets" element={<AssetList />} />
+                    <Route path="/finance/assets/:id" element={<AssetDetails />} />
                   </Route>
 
                   {/* Logistics */}
@@ -137,6 +149,22 @@ function App() {
                   {/* Quality */}
                   <Route element={<ModuleGuard moduleId="quality" />}>
                     <Route path="/quality/*" element={<ComingSoonPage title="Quality & Compliance" />} />
+                  </Route>
+
+                  {/* Tax & Compliance */}
+                  <Route element={<ModuleGuard moduleId="finance" />}>
+                    <Route path="/finance/tax" element={<TaxRates />} />
+                  </Route>
+
+                  {/* Tax & Compliance */}
+                  {/* Tax & Compliance */}
+                  <Route element={<ModuleGuard moduleId="finance" />}>
+                    <Route path="/finance/tax" element={<TaxRates />} />
+                    <Route path="/finance/tax/report" element={
+                      <Suspense fallback={<div className="p-8">Loading report...</div>}>
+                        <TaxReportPage />
+                      </Suspense>
+                    } />
                   </Route>
 
                   {/* Analytics */}
