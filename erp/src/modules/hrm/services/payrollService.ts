@@ -96,6 +96,17 @@ export const payrollService = {
         return (data || []).map(mapDbToPayrollRun);
     },
 
+    async getPayrollRunById(id: string): Promise<PayrollRun | null> {
+        const { data, error } = await supabase
+            .from('payroll_runs')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+        if (error) throw error;
+        return data ? mapDbToPayrollRun(data) : null;
+    },
+
     async createPayrollRun(orgId: string, month: number, year: number, userId: string): Promise<PayrollRun> {
         const { data, error } = await supabase
             .from('payroll_runs')
@@ -114,8 +125,41 @@ export const payrollService = {
         return mapDbToPayrollRun(data);
     },
 
+    async deletePayrollRun(runId: string): Promise<void> {
+        const { error } = await supabase
+            .from('payroll_runs')
+            .delete()
+            .eq('id', runId);
+
+        if (error) throw error;
+    },
+
     async generatePayslips(payrollRunId: string, orgId: string): Promise<Payslip[]> {
-        // Get all active employees
+        // 1. Get Organization Settings for Leave Policy
+        const { data: org, error: orgError } = await supabase
+            .from('organizations')
+            .select('settings')
+            .eq('id', orgId)
+            .single();
+
+        if (orgError) throw orgError;
+
+        const paidLeavesPerYear = org.settings?.leave_policy?.paid_leaves || 0;
+        const monthlyLeaveAllowance = paidLeavesPerYear / 12;
+
+        // 2. Get Payroll Run Details for Month/Year
+        const { data: run, error: runError } = await supabase
+            .from('payroll_runs')
+            .select('month, year')
+            .eq('id', payrollRunId)
+            .single();
+
+        if (runError) throw runError;
+
+        const startDate = new Date(Date.UTC(run.year, run.month - 1, 1)).toISOString();
+        const endDate = new Date(Date.UTC(run.year, run.month, 0)).toISOString(); // Last day of month
+
+        // 3. Get all active employees
         const { data: employees, error: empError } = await supabase
             .from('employees')
             .select('id')
@@ -124,14 +168,49 @@ export const payrollService = {
 
         if (empError) throw empError;
 
+        // 4. Fetch Attendance for the Month
+        // We use a raw query here to aggregate absent days efficiently, or just fetch all logs
+        // unique key is employee_id, date.
+        const { data: attendanceLogs, error: attError } = await supabase
+            .from('attendance_logs')
+            .select('employee_id, status')
+            .eq('org_id', orgId)
+            .gte('date', startDate)
+            .lte('date', endDate);
+
+        if (attError) throw attError;
+
+        // Group attendance by employee
+        const attendanceMap = new Map<string, { absent: number, present: number }>();
+        attendanceLogs?.forEach(log => {
+            const stats = attendanceMap.get(log.employee_id) || { absent: 0, present: 0 };
+            if (log.status === 'absent') stats.absent++;
+            else if (log.status === 'present') stats.present++;
+            attendanceMap.set(log.employee_id, stats);
+        });
+
         const payslips: Payslip[] = [];
 
         for (const emp of employees || []) {
             const salary = await this.getSalaryStructure(emp.id);
 
             if (salary) {
+                // Calculate LOP
+                const stats = attendanceMap.get(emp.id) || { absent: 0, present: 0 };
+                // Logic: If absent days > monthly allowance, deduct salary
+                // Note: deeply simplified. Real payroll considers working days, weekends, holidays etc.
+                // Assuming 30 days fixed for calculation base
+                const daysInMonth = 30;
+                const perDaySalary = (salary.basicSalary + salary.hra + salary.allowances) / daysInMonth;
+
+                // Allow carry forward? No, simple monthly cap for now as per "allowance" logic
+                // If paidLeavesPerYear is 12, monthly is 1. If absent 2 days, 1 day LOP.
+                const billableAbsentDays = Math.max(0, stats.absent - monthlyLeaveAllowance);
+                const lopDeduction = billableAbsentDays * perDaySalary;
+
                 const grossSalary = salary.basicSalary + salary.hra + salary.allowances;
-                const netSalary = grossSalary - salary.deductions;
+                const totalDeductions = salary.deductions + lopDeduction;
+                const netSalary = grossSalary - totalDeductions;
 
                 const { data, error } = await supabase
                     .from('payslips')
@@ -143,7 +222,7 @@ export const payrollService = {
                         hra: salary.hra,
                         allowances: salary.allowances,
                         gross_salary: grossSalary,
-                        deductions: salary.deductions,
+                        deductions: totalDeductions, // Includes LOP
                         tax: 0, // Simplified for MVP
                         net_salary: netSalary,
                         status: 'generated'

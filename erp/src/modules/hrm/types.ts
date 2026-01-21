@@ -58,6 +58,7 @@ export interface AttendanceLog {
     checkIn?: string;
     checkOut?: string;
     status: 'present' | 'absent' | 'late' | 'half-day' | 'on-leave';
+    leaveType?: 'paid' | 'sick' | 'unpaid' | 'casual' | 'other';
     notes?: string;
     createdAt: string;
     updatedAt: string;

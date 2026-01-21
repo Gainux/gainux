@@ -9,6 +9,7 @@ const mapDbToAttendance = (row: any): AttendanceLog => ({
     checkIn: row.check_in,
     checkOut: row.check_out,
     status: row.status,
+    leaveType: row.leave_type,
     notes: row.notes,
     createdAt: row.created_at,
     updatedAt: row.updated_at
@@ -21,6 +22,7 @@ const mapAttendanceToDb = (attendance: Partial<AttendanceLog>) => ({
     check_in: attendance.checkIn,
     check_out: attendance.checkOut,
     status: attendance.status,
+    leave_type: attendance.leaveType,
     notes: attendance.notes
 });
 

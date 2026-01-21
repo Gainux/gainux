@@ -90,7 +90,7 @@ export default function TaxReportPage() {
                             ₹{report.totalTaxCollected.toFixed(2)}
                         </div>
                         <p className="text-xs text-muted-foreground">
-                            on Sales of ₹{report.totalSales.toFixed(2)}
+                            <TableCell>{report.taxAmount || '0'}</TableCell>es.toFixed(2)}
                         </p>
                     </CardContent>
                 </Card>

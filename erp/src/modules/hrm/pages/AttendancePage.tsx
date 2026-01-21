@@ -58,6 +58,7 @@ export default function AttendancePage() {
         firstName: string;
         lastName: string;
         status: string;
+        leaveType?: string;
         checkIn: string;
         checkOut: string;
         notes: string;
@@ -154,6 +155,7 @@ export default function AttendancePage() {
             firstName: record.employee.firstName,
             lastName: record.employee.lastName,
             status: att?.status || 'present',
+            leaveType: att?.leaveType || 'unpaid',
             checkIn: att?.checkIn ? format(new Date(att.checkIn), 'HH:mm') : '',
             checkOut: att?.checkOut ? format(new Date(att.checkOut), 'HH:mm') : '',
             notes: att?.notes || ''
@@ -176,6 +178,7 @@ export default function AttendancePage() {
                 employeeId: editingRecord.employeeId,
                 date: date,
                 status: editingRecord.status as any,
+                leaveType: editingRecord.status === 'absent' ? (editingRecord.leaveType as any) : undefined,
                 checkIn: constructDateTime(editingRecord.checkIn),
                 checkOut: constructDateTime(editingRecord.checkOut),
                 notes: editingRecord.notes
@@ -667,6 +670,28 @@ export default function AttendancePage() {
                                             </SelectContent>
                                         </Select>
                                     </div>
+
+                                    {/* Leave Type Selector when Absent */}
+                                    {editingRecord.status === 'absent' && (
+                                        <div className="grid grid-cols-4 items-center gap-4 animate-in fade-in slide-in-from-top-1 duration-200">
+                                            <Label htmlFor="leaveType" className="text-right">Leave Type</Label>
+                                            <Select
+                                                value={editingRecord.leaveType}
+                                                onValueChange={(val) => setEditingRecord({ ...editingRecord, leaveType: val })}
+                                            >
+                                                <SelectTrigger className="col-span-3">
+                                                    <SelectValue placeholder="Select leave type" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="unpaid">Unpaid Leave</SelectItem>
+                                                    <SelectItem value="paid">Paid Leave</SelectItem>
+                                                    <SelectItem value="sick">Sick Leave</SelectItem>
+                                                    <SelectItem value="casual">Casual Leave</SelectItem>
+                                                    <SelectItem value="other">Other</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    )}
                                     <div className="grid grid-cols-4 items-center gap-4">
                                         <Label htmlFor="checkIn" className="text-right">Check In</Label>
                                         <Input

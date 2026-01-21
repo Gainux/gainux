@@ -14,6 +14,8 @@ import EmployeeList from "./modules/hrm/pages/EmployeeList";
 import EmployeeDetailsPage from "./modules/hrm/pages/EmployeeDetailsPage";
 import OrgStructurePage from "./modules/hrm/pages/OrgStructurePage";
 import AttendancePage from "./modules/hrm/pages/AttendancePage";
+import PayrollPage from "./modules/hrm/pages/PayrollPage";
+import PayrollRunDetails from "./modules/hrm/pages/PayrollRunDetails";
 import InvoiceList from "./modules/finance/pages/InvoiceList";
 import CreateInvoice from "./modules/finance/pages/CreateInvoice";
 import InvoiceDetails from "./modules/finance/pages/InvoiceDetails";
@@ -94,6 +96,8 @@ function App() {
                     <Route path="/hrm/employees" element={<EmployeeList />} />
                     <Route path="/hrm/employees/:id" element={<EmployeeDetailsPage />} />
                     <Route path="/hrm/org-structure" element={<OrgStructurePage />} />
+                    <Route path="/hrm/payroll" element={<PayrollPage />} />
+                    <Route path="/hrm/payroll/:id" element={<PayrollRunDetails />} />
                     <Route path="/hrm/*" element={<ComingSoonPage title="Human Resources" />} />
                   </Route>
 

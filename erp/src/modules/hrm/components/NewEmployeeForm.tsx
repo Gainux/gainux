@@ -14,12 +14,13 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { employeeService } from "../services/employeeService";
+import { payrollService } from "../services/payrollService";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
 import type { Department, Designation } from "../types";
 import { toast } from "sonner";
 
-export function NewEmployeeForm() {
+export function NewEmployeeForm({ employeeId, onSuccess }: { employeeId?: string, onSuccess?: () => void }) {
     const navigate = useNavigate();
     const { profile } = useAuth();
     const [loading, setLoading] = useState(false);
@@ -40,6 +41,13 @@ export function NewEmployeeForm() {
         status: 'active' as const,
     });
 
+    const [salaryDetails, setSalaryDetails] = useState({
+        basicSalary: '',
+        hra: '',
+        allowances: '',
+        deductions: ''
+    });
+
     const [createLoginAccount, setCreateLoginAccount] = useState(false);
     const [password, setPassword] = useState('');
 
@@ -48,6 +56,12 @@ export function NewEmployeeForm() {
             loadFormData();
         }
     }, [profile?.org_id]);
+
+    useEffect(() => {
+        if (employeeId && profile?.org_id) {
+            loadEmployeeData(employeeId);
+        }
+    }, [employeeId, profile?.org_id]);
 
     const loadFormData = async () => {
         if (!profile?.org_id) return;
@@ -65,10 +79,50 @@ export function NewEmployeeForm() {
         }
     };
 
+    const loadEmployeeData = async (id: string) => {
+        try {
+            setLoading(true);
+            const [employee, salary] = await Promise.all([
+                employeeService.getEmployeeById(id),
+                payrollService.getSalaryStructure(id)
+            ]);
+
+            if (employee) {
+                setFormData({
+                    employeeCode: employee.employeeCode,
+                    firstName: employee.firstName,
+                    lastName: employee.lastName,
+                    email: employee.email,
+                    phone: employee.phone || '',
+                    dateOfBirth: employee.dateOfBirth || '',
+                    dateOfJoining: employee.dateOfJoining,
+                    departmentId: employee.departmentId || '',
+                    designationId: employee.designationId || '',
+                    employmentType: employee.employmentType,
+                    status: employee.status,
+                });
+            }
+
+            if (salary) {
+                setSalaryDetails({
+                    basicSalary: salary.basicSalary.toString(),
+                    hra: salary.hra.toString(),
+                    allowances: salary.allowances.toString(),
+                    deductions: salary.deductions.toString()
+                });
+            }
+        } catch (error) {
+            console.error("Failed to load employee data", error);
+            toast.error("Failed to load employee details");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!profile?.org_id || !profile?.id) {
+        if (!profile?.org_id) {
             toast.error("User profile not loaded");
             return;
         }
@@ -79,7 +133,7 @@ export function NewEmployeeForm() {
             return;
         }
 
-        if (createLoginAccount && !password) {
+        if (createLoginAccount && !password && !employeeId) {
             toast.error("Please enter a password for the login account");
             return;
         }
@@ -94,8 +148,8 @@ export function NewEmployeeForm() {
         try {
             let userId: string | undefined = undefined;
 
-            // Step 1: Create auth user if requested
-            if (createLoginAccount) {
+            // Step 1: Create auth user if requested (ONLY for new employees)
+            if (!employeeId && createLoginAccount) {
                 const { data: authData, error: authError } = await supabase.auth.signUp({
                     email: formData.email,
                     password: password,
@@ -121,7 +175,7 @@ export function NewEmployeeForm() {
                 });
             }
 
-            // Step 3: Create employee record
+            // Step 3: Create or Update employee record
             const employeeData = {
                 ...formData,
                 departmentId: formData.departmentId || undefined,
@@ -129,17 +183,37 @@ export function NewEmployeeForm() {
                 phone: formData.phone || undefined,
                 dateOfBirth: formData.dateOfBirth || undefined,
                 orgId: profile.org_id,
-                userId: userId,
             };
 
-            await employeeService.createEmployee(employeeData as any);
+            let savedEmployee;
 
-            toast.success(
-                createLoginAccount
-                    ? "Employee created with login account!"
-                    : "Employee created successfully"
-            );
-            navigate('/hrm/employees');
+            if (employeeId) {
+                savedEmployee = await employeeService.updateEmployee(employeeId, employeeData);
+                toast.success("Employee updated successfully");
+            } else {
+                savedEmployee = await employeeService.createEmployee({ ...employeeData, userId } as any);
+                toast.success(createLoginAccount ? "Employee created with login account!" : "Employee created successfully");
+            }
+
+            // Step 4: Save Salary Structure (if changed or new)
+            // For now, always save if there are values, as setSalaryStructure handles versioning
+            if (salaryDetails.basicSalary || salaryDetails.hra || salaryDetails.allowances || salaryDetails.deductions) {
+                await payrollService.setSalaryStructure({
+                    orgId: profile.org_id,
+                    employeeId: savedEmployee.id,
+                    basicSalary: Number(salaryDetails.basicSalary) || 0,
+                    hra: Number(salaryDetails.hra) || 0,
+                    allowances: Number(salaryDetails.allowances) || 0,
+                    deductions: Number(salaryDetails.deductions) || 0,
+                    effectiveFrom: formData.dateOfJoining || new Date().toISOString()
+                });
+            }
+
+            if (onSuccess) {
+                onSuccess();
+            } else {
+                navigate('/hrm/employees');
+            }
         } catch (error: any) {
             console.error("Failed to save employee", error);
             toast.error(error.message || "Failed to save employee");
@@ -150,6 +224,10 @@ export function NewEmployeeForm() {
 
     const handleChange = (field: string, value: string) => {
         setFormData(prev => ({ ...prev, [field]: value }));
+    };
+
+    const handleSalaryChange = (field: string, value: string) => {
+        setSalaryDetails(prev => ({ ...prev, [field]: value }));
     };
 
     return (
@@ -364,6 +442,64 @@ export function NewEmployeeForm() {
                                         </p>
                                     </div>
                                 )}
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Salary Information */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Salary Information</CardTitle>
+                            <CardDescription>Compensation details</CardDescription>
+                        </CardHeader>
+                        <CardContent className="grid gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="basicSalary">Basic Salary</Label>
+                                    <Input
+                                        id="basicSalary"
+                                        type="number"
+                                        min="0"
+                                        value={salaryDetails.basicSalary}
+                                        onChange={(e) => handleSalaryChange('basicSalary', e.target.value)}
+                                        placeholder="0.00"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="hra">HRA</Label>
+                                    <Input
+                                        id="hra"
+                                        type="number"
+                                        min="0"
+                                        value={salaryDetails.hra}
+                                        onChange={(e) => handleSalaryChange('hra', e.target.value)}
+                                        placeholder="0.00"
+                                    />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="allowances">Allowances</Label>
+                                    <Input
+                                        id="allowances"
+                                        type="number"
+                                        min="0"
+                                        value={salaryDetails.allowances}
+                                        onChange={(e) => handleSalaryChange('allowances', e.target.value)}
+                                        placeholder="0.00"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="deductions">Deductions</Label>
+                                    <Input
+                                        id="deductions"
+                                        type="number"
+                                        min="0"
+                                        value={salaryDetails.deductions}
+                                        onChange={(e) => handleSalaryChange('deductions', e.target.value)}
+                                        placeholder="0.00"
+                                    />
+                                </div>
                             </div>
                         </CardContent>
                     </Card>

@@ -14,7 +14,23 @@ const mapDbToEmployee = (row: any): Employee => ({
     dateOfBirth: row.date_of_birth,
     dateOfJoining: row.date_of_joining,
     departmentId: row.department_id,
+    department: row.department ? {
+        id: row.department.id,
+        orgId: row.department.org_id,
+        name: row.department.name,
+        description: row.department.description,
+        managerId: row.department.manager_id,
+        createdAt: row.department.created_at,
+        updatedAt: row.department.updated_at
+    } : undefined,
     designationId: row.designation_id,
+    designation: row.designation ? {
+        id: row.designation.id,
+        orgId: row.designation.org_id,
+        title: row.designation.title,
+        description: row.designation.description,
+        createdAt: row.designation.created_at
+    } : undefined,
     managerId: row.manager_id,
     employmentType: row.employment_type,
     status: row.status,
@@ -40,27 +56,95 @@ const mapEmployeeToDb = (employee: Partial<Employee>) => ({
     status: employee.status
 });
 
+
 export const employeeService = {
     async getEmployees(orgId: string): Promise<Employee[]> {
-        const { data, error } = await supabase
+        const { data: employees, error } = await supabase
             .from('employees')
             .select('*')
             .eq('org_id', orgId)
             .order('first_name');
 
         if (error) throw error;
-        return (data || []).map(mapDbToEmployee);
+
+        // Fetch relations manually to avoid join issues
+        const { data: departments } = await supabase.from('departments').select('*').eq('org_id', orgId);
+        const { data: designations } = await supabase.from('designations').select('*').eq('org_id', orgId);
+
+        return (employees || []).map(row => {
+            const emp = mapDbToEmployee(row);
+            if (departments) {
+                const dept = departments.find(d => d.id === row.department_id);
+                if (dept) {
+                    emp.department = {
+                        id: dept.id,
+                        orgId: dept.org_id,
+                        name: dept.name,
+                        description: dept.description,
+                        managerId: dept.manager_id,
+                        createdAt: dept.created_at,
+                        updatedAt: dept.updated_at
+                    };
+                }
+            }
+            if (designations) {
+                const desig = designations.find(d => d.id === row.designation_id);
+                if (desig) {
+                    emp.designation = {
+                        id: desig.id,
+                        orgId: desig.org_id,
+                        title: desig.title,
+                        description: desig.description,
+                        createdAt: desig.created_at
+                    };
+                }
+            }
+            return emp;
+        });
     },
 
     async getEmployeeById(id: string): Promise<Employee | null> {
-        const { data, error } = await supabase
+        const { data: employee, error } = await supabase
             .from('employees')
             .select('*')
             .eq('id', id)
             .single();
 
         if (error) throw error;
-        return data ? mapDbToEmployee(data) : null;
+        if (!employee) return null;
+
+        const emp = mapDbToEmployee(employee);
+
+        // Fetch relations
+        if (employee.department_id) {
+            const { data: dept } = await supabase.from('departments').select('*').eq('id', employee.department_id).single();
+            if (dept) {
+                emp.department = {
+                    id: dept.id,
+                    orgId: dept.org_id,
+                    name: dept.name,
+                    description: dept.description,
+                    managerId: dept.manager_id,
+                    createdAt: dept.created_at,
+                    updatedAt: dept.updated_at
+                };
+            }
+        }
+
+        if (employee.designation_id) {
+            const { data: desig } = await supabase.from('designations').select('*').eq('id', employee.designation_id).single();
+            if (desig) {
+                emp.designation = {
+                    id: desig.id,
+                    orgId: desig.org_id,
+                    title: desig.title,
+                    description: desig.description,
+                    createdAt: desig.created_at
+                };
+            }
+        }
+
+        return emp;
     },
 
     async createEmployee(employee: Omit<Employee, 'id' | 'createdAt' | 'updatedAt'>): Promise<Employee> {

@@ -1,19 +1,22 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Mail, Phone, MapPin, Building, Calendar, DollarSign, User } from "lucide-react";
+import { ArrowLeft, Mail, Phone, MapPin, Building, Calendar, DollarSign, User, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { employeeService } from "../services/employeeService";
+import { payrollService } from "../services/payrollService";
 import { NewEmployeeForm } from "../components/NewEmployeeForm";
-import type { Employee } from "../types";
+import type { Employee, SalaryStructure } from "../types";
 
 export default function EmployeeDetailsPage() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const [employee, setEmployee] = useState<Employee | null>(null);
+    const [salaryStructure, setSalaryStructure] = useState<SalaryStructure | null>(null);
     const [loading, setLoading] = useState(true);
+    const [isEditing, setIsEditing] = useState(false);
 
     useEffect(() => {
         if (id && id !== 'new') {
@@ -26,8 +29,12 @@ export default function EmployeeDetailsPage() {
     const loadEmployee = async (employeeId: string) => {
         try {
             setLoading(true);
-            const data = await employeeService.getEmployeeById(employeeId);
-            setEmployee(data);
+            const [empData, salaryData] = await Promise.all([
+                employeeService.getEmployeeById(employeeId),
+                payrollService.getSalaryStructure(employeeId)
+            ]);
+            setEmployee(empData);
+            setSalaryStructure(salaryData);
         } catch (error) {
             console.error("Failed to load employee", error);
         } finally {
@@ -41,6 +48,18 @@ export default function EmployeeDetailsPage() {
 
     if (id === 'new') {
         return <NewEmployeeForm />;
+    }
+
+    if (isEditing && id) {
+        return (
+            <NewEmployeeForm
+                employeeId={id}
+                onSuccess={() => {
+                    setIsEditing(false);
+                    loadEmployee(id);
+                }}
+            />
+        );
     }
 
     if (!employee) {
@@ -60,13 +79,29 @@ export default function EmployeeDetailsPage() {
         );
     };
 
+    // Calculate annual salary (Basic + HRA + Allowances) * 12
+    const calculateAnnualSalary = () => {
+        if (!salaryStructure) return 0;
+        const monthlyTotal =
+            (salaryStructure.basicSalary || 0) +
+            (salaryStructure.hra || 0) +
+            (salaryStructure.allowances || 0);
+        return monthlyTotal * 12;
+    };
+
     return (
         <div className="flex-1 space-y-4 p-8 pt-6">
-            <div className="flex items-center space-x-2 mb-4">
-                <Button variant="ghost" size="icon" onClick={() => navigate('/hrm/employees')}>
-                    <ArrowLeft className="h-4 w-4" />
+            <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-2">
+                    <Button variant="ghost" size="icon" onClick={() => navigate('/hrm/employees')}>
+                        <ArrowLeft className="h-4 w-4" />
+                    </Button>
+                    <h2 className="text-3xl font-bold tracking-tight">Employee Profile</h2>
+                </div>
+                <Button onClick={() => setIsEditing(true)}>
+                    <Pencil className="mr-2 h-4 w-4" />
+                    Edit Profile
                 </Button>
-                <h2 className="text-3xl font-bold tracking-tight">Employee Profile</h2>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -78,7 +113,7 @@ export default function EmployeeDetailsPage() {
                         </div>
                         <div className="space-y-1">
                             <CardTitle className="text-2xl">{employee.firstName} {employee.lastName}</CardTitle>
-                            <CardDescription className="text-base">{employee.jobTitle}</CardDescription>
+                            <CardDescription className="text-base">{employee.designation?.title || 'No Designation'}</CardDescription>
                             <div className="pt-2">
                                 {getStatusBadge(employee.status)}
                             </div>
@@ -99,26 +134,25 @@ export default function EmployeeDetailsPage() {
                                     <Phone className="h-4 w-4 text-muted-foreground" />
                                     <span>{employee.phone || 'N/A'}</span>
                                 </div>
-                                <div className="flex items-center gap-2 text-sm md:col-span-2">
-                                    <MapPin className="h-4 w-4 text-muted-foreground" />
-                                    <span>{employee.address || 'N/A'}</span>
-                                </div>
+                                {/* Address removed as it is not in the schema yet */}
                             </div>
                         </div>
 
                         <Separator />
 
-                        {/* Emergency Contact */}
+                        {/* Additional Info */}
                         <div>
-                            <h3 className="text-lg font-medium mb-4">Emergency Contact</h3>
-                            <div className="text-sm">
-                                {employee.emergencyContact ? (
-                                    <div className="whitespace-pre-wrap">{employee.emergencyContact}</div>
-                                ) : (
-                                    <span className="text-muted-foreground">No emergency contact info provided.</span>
-                                )}
+                            <h3 className="text-lg font-medium mb-4">Other Details</h3>
+                            <div className="grid grid-cols-1 gap-4 text-sm">
+                                <div>
+                                    <span className="text-muted-foreground">Employee Code:</span> <span className="font-medium">{employee.employeeCode}</span>
+                                </div>
+                                <div>
+                                    <span className="text-muted-foreground">Manager:</span> <span className="font-medium">N/A</span>
+                                </div>
                             </div>
                         </div>
+
                     </CardContent>
                 </Card>
 
@@ -139,27 +173,30 @@ export default function EmployeeDetailsPage() {
                         <div className="space-y-1">
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                 <Calendar className="h-4 w-4" />
-                                Hire Date
+                                Date of Joining
                             </div>
                             <div className="font-medium">
-                                {new Date(employee.hireDate).toLocaleDateString(undefined, {
+                                {employee.dateOfJoining ? new Date(employee.dateOfJoining).toLocaleDateString(undefined, {
                                     year: 'numeric',
                                     month: 'long',
                                     day: 'numeric'
-                                })}
+                                }) : 'N/A'}
                             </div>
                         </div>
 
                         <div className="space-y-1">
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                 <DollarSign className="h-4 w-4" />
-                                Annual Salary
+                                Annual Salary (Est.)
                             </div>
                             <div className="font-medium">
                                 {new Intl.NumberFormat('en-US', {
                                     style: 'currency',
                                     currency: 'USD'
-                                }).format(employee.salary)}
+                                }).format(calculateAnnualSalary())}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                                Base: {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(salaryStructure?.basicSalary || 0)} / mo
                             </div>
                         </div>
                     </CardContent>

@@ -33,6 +33,10 @@ export default function CompanySettingsPage() {
     const [currency, setCurrency] = useState("USD");
     const [taxId, setTaxId] = useState("");
 
+    // Leave Policy
+    const [paidLeaves, setPaidLeaves] = useState(0);
+    const [sickLeaves, setSickLeaves] = useState(0);
+
     // Branch Form
     const [newBranchName, setNewBranchName] = useState("");
     const [newBranchCode, setNewBranchCode] = useState("");
@@ -57,6 +61,12 @@ export default function CompanySettingsPage() {
             setOrgName(orgData.name || "");
             setCurrency(orgData.currency || "USD");
             setTaxId(orgData.tax_id || "");
+
+            // Populate Leave Policy from settings
+            if (orgData.settings?.leave_policy) {
+                setPaidLeaves(orgData.settings.leave_policy.paid_leaves || 0);
+                setSickLeaves(orgData.settings.leave_policy.sick_leaves || 0);
+            }
 
             // Extract from address JSONB if exists
             if (orgData.address) {
@@ -95,6 +105,13 @@ export default function CompanySettingsPage() {
                     state,
                     pincode,
                     gstin
+                },
+                settings: {
+                    ...org.settings,
+                    leave_policy: {
+                        paid_leaves: paidLeaves,
+                        sick_leaves: sickLeaves
+                    }
                 }
             });
 
@@ -391,6 +408,68 @@ export default function CompanySettingsPage() {
                     </CardContent>
                 </Card>
 
+                {/* Leave Policy Settings */}
+                <Card className="border-border/50 shadow-sm">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <Building className="h-5 w-5 text-primary" />
+                            Leave Policy
+                        </CardTitle>
+                        <CardDescription>Configure annual leave allowances involved in payroll calculation</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="paidLeaves">Paid Leaves (per year)</Label>
+                                <Input
+                                    id="paidLeaves"
+                                    type="number"
+                                    min="0"
+                                    value={paidLeaves}
+                                    onChange={(e) => setPaidLeaves(Number(e.target.value))}
+                                    placeholder="e.g. 12"
+                                />
+                                <p className="text-xs text-muted-foreground">Number of paid leaves allowed annually.</p>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="sickLeaves">Sick Leaves (per year)</Label>
+                                <Input
+                                    id="sickLeaves"
+                                    type="number"
+                                    min="0"
+                                    value={sickLeaves}
+                                    onChange={(e) => setSickLeaves(Number(e.target.value))}
+                                    placeholder="e.g. 10"
+                                />
+                                <p className="text-xs text-muted-foreground">Number of sick leaves allowed annually.</p>
+                            </div>
+                        </div>
+                        <div className="flex justify-end">
+                            {/* Save button already covered below or implicit? No, separate save for section or global?
+                                The page has a save button inside the Organization Card. 
+                                Better to have a unified save or separate. 
+                                The user's existing code has a save button inside the "Organization Information" card. 
+                                I should probably move the save button to be global or add one here.
+                                For now, I will reuse the handleSaveOrganization and add a save button here too, or relying on the first one is bad UX if it's far away.
+                                Let's add a save button here as well, calling the same function.
+                             */}
+                            <Button onClick={handleSaveOrganization} disabled={saving}>
+                                {saving ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Saving...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Save className="mr-2 h-4 w-4" />
+                                        Save Policy
+                                    </>
+                                )}
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
+
                 {/* Branches */}
                 <Card className="border-border/50 shadow-sm">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -488,6 +567,6 @@ export default function CompanySettingsPage() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-        </div>
+        </div >
     );
 }
