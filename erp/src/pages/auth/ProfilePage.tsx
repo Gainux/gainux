@@ -70,14 +70,14 @@ export default function ProfilePage() {
                                 <Label htmlFor="fullName">Full Name</Label>
                                 <Input
                                     id="fullName"
-                                    value={fullName}
-                                    onChange={(e) => setFullName(e.target.value)}
-                                    placeholder="Enter your full name"
+                                    value={profile?.full_name || fullName}
+                                    readOnly
+                                    className="bg-muted"
                                 />
+                                <p className="text-xs text-muted-foreground">
+                                    Profile details are managed by system administrators.
+                                </p>
                             </div>
-                            <Button type="submit" disabled={loading}>
-                                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Save Changes"}
-                            </Button>
                         </form>
                     </CardContent>
                 </Card>
@@ -100,10 +100,6 @@ export default function ProfilePage() {
                             </p>
                         </div>
                         <div className="space-y-1">
-                            <Label className="text-xs text-muted-foreground">Provider</Label>
-                            <p className="text-sm capitalize">{user.app_metadata.provider || "Email"}</p>
-                        </div>
-                        <div className="space-y-1">
                             <Label className="text-xs text-muted-foreground">Role</Label>
                             <p className="text-sm capitalize font-medium">{profile?.role || "User"}</p>
                         </div>
@@ -111,6 +107,15 @@ export default function ProfilePage() {
                             <Label className="text-xs text-muted-foreground">Organization ID</Label>
                             <p className="text-sm font-mono text-muted-foreground">{profile?.org_id || "None"}</p>
                         </div>
+
+                        {/* Show note if this is an Employee account using fallback */}
+                        {profile?.role === 'employee' && !profile.id && (
+                            <div className="pt-4 border-t">
+                                <p className="text-xs text-muted-foreground">
+                                    * This is an Employee account. Some details are managed by your administrator.
+                                </p>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
             </div>

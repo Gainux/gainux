@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { createClient } from "@supabase/supabase-js";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -150,7 +151,20 @@ export function NewEmployeeForm({ employeeId, onSuccess }: { employeeId?: string
 
             // Step 1: Create auth user if requested (ONLY for new employees)
             if (!employeeId && createLoginAccount) {
-                const { data: authData, error: authError } = await supabase.auth.signUp({
+                // Use a temporary client to avoid switching the current admin session
+                const tempSupabase = createClient(
+                    import.meta.env.VITE_SUPABASE_URL,
+                    import.meta.env.VITE_SUPABASE_ANON_KEY,
+                    {
+                        auth: {
+                            persistSession: false,
+                            autoRefreshToken: false,
+                            detectSessionInUrl: false
+                        }
+                    }
+                );
+
+                const { data: authData, error: authError } = await tempSupabase.auth.signUp({
                     email: formData.email,
                     password: password,
                     options: {
@@ -159,20 +173,29 @@ export function NewEmployeeForm({ employeeId, onSuccess }: { employeeId?: string
                             last_name: formData.lastName,
                         }
                     }
-                }); if (authError) throw new Error(`Failed to create login: ${authError.message}`);
+                });
+
+                if (authError) throw new Error(`Failed to create login: ${authError.message}`);
                 if (!authData.user) throw new Error("Failed to create user");
 
                 userId = authData.user.id;
 
-                // Step 2: Create profile with employee role
-                await supabase.from('profiles').insert({
-                    id: userId,
-                    email: formData.email,
-                    first_name: formData.firstName,
-                    last_name: formData.lastName,
-                    role: 'employee',
-                    org_id: profile.org_id,
+                // Step 2: Create/Update profile with employee role
+                // Use RPC to bypass RLS and ensure org_id is set
+                const { error: profileError } = await supabase.rpc('create_employee_profile', {
+                    target_id: userId,
+                    target_email: formData.email,
+                    target_first_name: formData.firstName,
+                    target_last_name: formData.lastName,
+                    target_org_id: null, // Keep org_id null in profiles for employees (sourced from employees table)
+                    target_role: 'employee',
+                    target_status: 'active'
                 });
+
+                if (profileError) {
+                    console.error("Profile creation failed:", profileError);
+                    throw new Error(`Failed to setup user profile: ${profileError.message}`);
+                }
             }
 
             // Step 3: Create or Update employee record
@@ -236,7 +259,9 @@ export function NewEmployeeForm({ employeeId, onSuccess }: { employeeId?: string
                 <Button variant="ghost" size="icon" onClick={() => navigate('/hrm/employees')}>
                     <ArrowLeft className="h-4 w-4" />
                 </Button>
-                <h2 className="text-3xl font-bold tracking-tight">Add New Employee</h2>
+                <h2 className="text-3xl font-bold tracking-tight">
+                    {employeeId ? 'Edit Employee' : 'Add New Employee'}
+                </h2>
             </div>
 
             <form onSubmit={handleSubmit}>
@@ -245,7 +270,9 @@ export function NewEmployeeForm({ employeeId, onSuccess }: { employeeId?: string
                     <Card>
                         <CardHeader>
                             <CardTitle>Personal Information</CardTitle>
-                            <CardDescription>Basic employee details</CardDescription>
+                            <CardDescription>
+                                {employeeId ? 'Update employee details' : 'Basic employee details'}
+                            </CardDescription>
                         </CardHeader>
                         <CardContent className="grid gap-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -257,6 +284,7 @@ export function NewEmployeeForm({ employeeId, onSuccess }: { employeeId?: string
                                         onChange={(e) => handleChange('employeeCode', e.target.value)}
                                         placeholder="EMP001"
                                         required
+                                        disabled={!!employeeId} // Typically shouldn't change employee code
                                     />
                                 </div>
                                 <div className="space-y-2">
@@ -414,35 +442,39 @@ export function NewEmployeeForm({ employeeId, onSuccess }: { employeeId?: string
                                 </div>
                             </div>
 
-                            {/* Login Account Section */}
-                            <div className="space-y-4 pt-4 border-t">
-                                <div className="flex items-center space-x-2">
-                                    <Checkbox
-                                        id="createLogin"
-                                        checked={createLoginAccount}
-                                        onCheckedChange={(checked) => setCreateLoginAccount(checked === true)}
-                                    />
-                                    <Label htmlFor="createLogin" className="text-sm font-medium cursor-pointer">
-                                        Create login account for this employee
-                                    </Label>
-                                </div>
+                            {/* </div> */}
 
-                                {createLoginAccount && (
-                                    <div className="space-y-2 ml-6">
-                                        <Label htmlFor="password">Password *</Label>
-                                        <Input
-                                            id="password"
-                                            type="password"
-                                            value={password}
-                                            onChange={(e) => setPassword(e.target.value)}
-                                            placeholder="Minimum 6 characters"
+                            {/* Login Account Section - Only show for new employees or if explicitly needed (can expand later) */}
+                            {!employeeId && (
+                                <div className="space-y-4 pt-4 border-t">
+                                    <div className="flex items-center space-x-2">
+                                        <Checkbox
+                                            id="createLogin"
+                                            checked={createLoginAccount}
+                                            onCheckedChange={(checked) => setCreateLoginAccount(checked === true)}
                                         />
-                                        <p className="text-sm text-muted-foreground">
-                                            Employee will receive an email to verify their account. Role will be set to "Employee".
-                                        </p>
+                                        <Label htmlFor="createLogin" className="text-sm font-medium cursor-pointer">
+                                            Create login account for this employee
+                                        </Label>
                                     </div>
-                                )}
-                            </div>
+
+                                    {createLoginAccount && (
+                                        <div className="space-y-2 ml-6">
+                                            <Label htmlFor="password">Password *</Label>
+                                            <Input
+                                                id="password"
+                                                type="password"
+                                                value={password}
+                                                onChange={(e) => setPassword(e.target.value)}
+                                                placeholder="Minimum 6 characters"
+                                            />
+                                            <p className="text-sm text-muted-foreground">
+                                                Employee will receive an email to verify their account. Role will be set to "Employee".
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
 
@@ -515,11 +547,11 @@ export function NewEmployeeForm({ employeeId, onSuccess }: { employeeId?: string
                             Cancel
                         </Button>
                         <Button type="submit" disabled={loading}>
-                            {loading ? 'Creating...' : 'Create Employee'}
+                            {loading ? 'Saving...' : (employeeId ? 'Update Employee' : 'Create Employee')}
                         </Button>
                     </div>
                 </div>
-            </form>
-        </div>
+            </form >
+        </div >
     );
 }

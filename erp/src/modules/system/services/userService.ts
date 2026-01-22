@@ -8,13 +8,15 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 const mapToSystemUser = (data: any): SystemUser => ({
     id: data.id,
+    auth_id: data.auth_id || data.id,
     email: data.email,
-    fullName: data.full_name,
+    full_name: data.full_name || (data.first_name && data.last_name ? `${data.first_name} ${data.last_name}` : data.first_name || data.last_name || null),
     role: data.role,
-    avatarUrl: data.avatar_url,
+    avatar_url: data.avatar_url,
     status: data.status,
-    createdAt: data.created_at,
-    updatedAt: data.updated_at
+    org_id: data.org_id,
+    created_at: data.created_at,
+    updated_at: data.updated_at
 });
 
 export const userService = {
@@ -86,8 +88,8 @@ export const userService = {
             password,
             options: {
                 data: {
-                    full_name: user.fullName,
-                    avatar_url: user.avatarUrl
+                    full_name: user.full_name,
+                    avatar_url: user.avatar_url
                 }
             }
         });
@@ -104,7 +106,7 @@ export const userService = {
             .insert({
                 auth_id: authUserId, // Link to the new auth user
                 email,
-                full_name: user.fullName,
+                full_name: user.full_name,
                 role: user.role || 'user',
                 status: user.status || 'active'
             })

@@ -70,6 +70,7 @@ import RecruitmentPage from "./modules/hrm/pages/RecruitmentPage";
 import { PublicJobLayout } from "./modules/recruitment/public/PublicJobLayout";
 import PublicJobBoard from "./modules/recruitment/public/PublicJobBoard";
 import PublicJobDetails from "./modules/recruitment/public/PublicJobDetails";
+import TrainingDashboard from "./modules/hrm/pages/training/TrainingDashboard";
 
 const TaxReportPage = lazy(() => import('./modules/finance/pages/TaxReportPage'));
 
@@ -117,6 +118,7 @@ function App() {
                     <Route path="/hrm/payroll" element={<PayrollPage />} />
                     <Route path="/hrm/payroll/:id" element={<PayrollRunDetails />} />
                     <Route path="/hrm/recruitment" element={<RecruitmentPage />} />
+                    <Route path="/hrm/lms" element={<TrainingDashboard />} />
                     <Route path="/hrm/performance" element={<PerformanceDashboard />} />
                     <Route path="/hrm/performance/employee/:id" element={<PerformanceDashboard />} />
                     <Route path="/hrm/performance/goals" element={<GoalListPage />} />

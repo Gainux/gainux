@@ -188,10 +188,9 @@ export const employeeService = {
     },
 
     async deleteEmployee(id: string): Promise<void> {
-        const { error } = await supabase
-            .from('employees')
-            .delete()
-            .eq('id', id);
+        const { error } = await supabase.rpc('delete_employee_and_auth_user', {
+            target_employee_id: id
+        });
 
         if (error) throw error;
     },

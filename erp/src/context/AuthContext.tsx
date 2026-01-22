@@ -12,6 +12,7 @@ interface AuthContextType {
     isAuthenticated: boolean;
     isAdmin: boolean;
     updateProfile: (data: Partial<SystemUser>) => Promise<void>;
+    logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -22,6 +23,7 @@ const AuthContext = createContext<AuthContextType>({
     isAuthenticated: false,
     isAdmin: false,
     updateProfile: async () => { },
+    logout: async () => { },
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -32,14 +34,63 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const fetchProfile = async (userId: string) => {
         try {
-            const { data, error } = await supabase
+            // 1. Try fetching from profiles
+            let { data: profileData, error } = await supabase
                 .from('profiles')
                 .select('*')
                 .eq('auth_id', userId)
                 .maybeSingle();
 
-            if (!error && data) {
-                setProfile(data);
+            if (error) {
+                // If fetching by auth_id fails, try fetching by id (common pattern is id=auth_uid)
+                const { data: profileById, error: errorById } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', userId)
+                    .maybeSingle();
+
+                if (!errorById && profileById) {
+                    profileData = profileById;
+                }
+            }
+
+            // 2. Fallback: If profile missing or org_id missing, check employees table
+            if (!profileData?.org_id) {
+                console.warn("AuthContext: Profile missing org_id, checking employees table fallback...");
+                const { data: employeeData } = await supabase
+                    .from('employees')
+                    .select('org_id, first_name, last_name')
+                    .eq('user_id', userId)
+                    .maybeSingle();
+
+                if (employeeData?.org_id) {
+                    console.log("AuthContext: Found employee data:", employeeData);
+                    if (profileData) {
+                        profileData.org_id = employeeData.org_id;
+                        // If role is employee, we prioritize employee table names for display consistency
+                        if (profileData.role === 'employee') {
+                            profileData.full_name = `${employeeData.first_name} ${employeeData.last_name}`;
+                        }
+                        // Optional: Heal the profile in DB asynchronously
+                        supabase.from('profiles').update({ org_id: employeeData.org_id }).eq('id', profileData.id).then();
+                    } else {
+                        // Create a temporary profile object if completely missing (rare but possible)
+                        profileData = {
+                            id: userId,
+                            auth_id: userId,
+                            email: user?.email || '',
+                            role: 'employee',
+                            status: 'active',
+                            org_id: employeeData.org_id,
+                            full_name: `${employeeData.first_name} ${employeeData.last_name}`,
+                            created_at: new Date().toISOString()
+                        } as SystemUser;
+                    }
+                }
+            }
+
+            if (profileData) {
+                setProfile(profileData);
             }
         } catch (error) {
             console.error('Error fetching profile:', error);
@@ -129,6 +180,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setProfile(prev => prev ? { ...prev, ...data } : null);
     };
 
+    const logout = async () => {
+        await supabase.auth.signOut();
+        setSession(null);
+        setUser(null);
+        setProfile(null);
+    };
+
     return (
         <AuthContext.Provider value={{
             session,
@@ -137,7 +195,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             loading,
             isAuthenticated: !!session,
             isAdmin: profile?.role === 'admin',
-            updateProfile
+            updateProfile,
+            logout
         }}>
             {children}
         </AuthContext.Provider>

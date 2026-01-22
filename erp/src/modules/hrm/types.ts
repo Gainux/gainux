@@ -257,3 +257,30 @@ export interface Interview {
     createdAt: string;
     updatedAt: string;
 }
+
+export interface Training {
+    id: string;
+    orgId: string;
+    title: string;
+    description?: string;
+    contentUrl?: string;
+    contentType: 'video' | 'document' | 'article' | 'quiz';
+    targetDepartmentId?: string;
+    targetDepartment?: Department;
+    targetDesignationId?: string;
+    targetDesignation?: Designation;
+    createdBy?: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface TrainingProgress {
+    id: string;
+    trainingId: string;
+    training?: Training;
+    employeeId: string;
+    status: 'not_started' | 'in_progress' | 'completed';
+    completedAt?: string;
+    createdAt: string;
+    updatedAt: string;
+}
