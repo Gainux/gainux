@@ -168,6 +168,7 @@ interface TaskBoardProps {
 export default function TaskBoard({ tasks: initialTasks, onTaskMove, onTaskEdit }: TaskBoardProps) {
     const [tasks, setTasks] = useState<Task[]>(initialTasks);
     const [activeId, setActiveId] = useState<string | null>(null);
+    const [startStatus, setStartStatus] = useState<string | null>(null);
 
     useEffect(() => {
         setTasks(initialTasks);
@@ -192,7 +193,10 @@ export default function TaskBoard({ tasks: initialTasks, onTaskMove, onTaskEdit 
     }
 
     function handleDragStart(event: DragStartEvent) {
-        setActiveId(event.active.id as string);
+        const { active } = event;
+        setActiveId(active.id as string);
+        const container = findContainer(active.id as string);
+        setStartStatus(container as string);
     }
 
     function handleDragOver(event: DragOverEvent) {
@@ -210,9 +214,6 @@ export default function TaskBoard({ tasks: initialTasks, onTaskMove, onTaskEdit 
 
         // Optimistic UI update during drag
         setTasks((prev) => {
-
-
-
             return prev.map(t => {
                 if (t.id === active.id) {
                     return { ...t, status: overContainer as TaskStatus };
@@ -224,13 +225,14 @@ export default function TaskBoard({ tasks: initialTasks, onTaskMove, onTaskEdit 
 
     function handleDragEnd(event: DragEndEvent) {
         const { active, over } = event;
-        const activeContainer = findContainer(active.id as string);
+        // activeContainer here will be the NEW container because of optimistic update in DragOver
+        // So we must use startStatus to check if it actually changed
         const overContainer = over ? findContainer(over.id as string) : null;
 
         if (
-            activeContainer &&
+            startStatus &&
             overContainer &&
-            (activeContainer !== overContainer)
+            (startStatus !== overContainer)
         ) {
             // Moved to different column
             onTaskMove(active.id as string, overContainer as TaskStatus);
@@ -241,6 +243,7 @@ export default function TaskBoard({ tasks: initialTasks, onTaskMove, onTaskEdit 
         }
 
         setActiveId(null);
+        setStartStatus(null);
     }
 
     // Get tasks for each column

@@ -108,7 +108,7 @@ export const employeeService = {
             .from('employees')
             .select('*')
             .eq('id', id)
-            .single();
+            .maybeSingle();
 
         if (error) throw error;
         if (!employee) return null;
@@ -117,7 +117,7 @@ export const employeeService = {
 
         // Fetch relations
         if (employee.department_id) {
-            const { data: dept } = await supabase.from('departments').select('*').eq('id', employee.department_id).single();
+            const { data: dept } = await supabase.from('departments').select('*').eq('id', employee.department_id).maybeSingle();
             if (dept) {
                 emp.department = {
                     id: dept.id,
@@ -132,7 +132,7 @@ export const employeeService = {
         }
 
         if (employee.designation_id) {
-            const { data: desig } = await supabase.from('designations').select('*').eq('id', employee.designation_id).single();
+            const { data: desig } = await supabase.from('designations').select('*').eq('id', employee.designation_id).maybeSingle();
             if (desig) {
                 emp.designation = {
                     id: desig.id,
@@ -143,6 +143,23 @@ export const employeeService = {
                 };
             }
         }
+
+        return emp;
+    },
+
+    async getEmployeeByUserId(userId: string): Promise<Employee | null> {
+        const { data: employee, error } = await supabase
+            .from('employees')
+            .select('*')
+            .eq('user_id', userId)
+            .maybeSingle();
+
+        if (error && error.code !== 'PGRST116') throw error; // PGRST116 is "Row not found"
+        if (!employee) return null;
+
+        const emp = mapDbToEmployee(employee);
+        // We can fetch relations if needed, similar to getEmployeeById
+        // For performance dashboard, we usually just need the ID, but let's be consistent.
 
         return emp;
     },

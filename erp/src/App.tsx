@@ -16,6 +16,9 @@ import OrgStructurePage from "./modules/hrm/pages/OrgStructurePage";
 import AttendancePage from "./modules/hrm/pages/AttendancePage";
 import PayrollPage from "./modules/hrm/pages/PayrollPage";
 import PayrollRunDetails from "./modules/hrm/pages/PayrollRunDetails";
+import PerformanceDashboard from "./modules/hrm/pages/performance/PerformanceDashboard";
+import GoalListPage from "./modules/hrm/pages/performance/GoalListPage";
+import ReviewListPage from "./modules/hrm/pages/performance/ReviewListPage";
 import InvoiceList from "./modules/finance/pages/InvoiceList";
 import CreateInvoice from "./modules/finance/pages/CreateInvoice";
 import InvoiceDetails from "./modules/finance/pages/InvoiceDetails";
@@ -63,7 +66,7 @@ import BudgetDetails from "./modules/finance/pages/BudgetDetails";
 import AssetList from "./modules/finance/pages/AssetList";
 import AssetDetails from "./modules/finance/pages/AssetDetails";
 import TaxRates from "./modules/finance/pages/TaxRates";
-import RecruitmentPage from "./modules/recruitment/pages/RecruitmentPage";
+import RecruitmentPage from "./modules/hrm/pages/RecruitmentPage";
 import { PublicJobLayout } from "./modules/recruitment/public/PublicJobLayout";
 import PublicJobBoard from "./modules/recruitment/public/PublicJobBoard";
 import PublicJobDetails from "./modules/recruitment/public/PublicJobDetails";
@@ -114,13 +117,16 @@ function App() {
                     <Route path="/hrm/payroll" element={<PayrollPage />} />
                     <Route path="/hrm/payroll/:id" element={<PayrollRunDetails />} />
                     <Route path="/hrm/recruitment" element={<RecruitmentPage />} />
+                    <Route path="/hrm/performance" element={<PerformanceDashboard />} />
+                    <Route path="/hrm/performance/employee/:id" element={<PerformanceDashboard />} />
+                    <Route path="/hrm/performance/goals" element={<GoalListPage />} />
+                    <Route path="/hrm/performance/reviews" element={<ReviewListPage />} />
                     <Route path="/hrm/*" element={<ComingSoonPage title="Human Resources" />} />
                   </Route>
 
                   {/* Finance Module */}
                   <Route element={<ModuleGuard moduleId="finance" />}>
-                    import CreateBill from "./modules/finance/pages/CreateBill";
-                    import PayablesPage from "./modules/finance/pages/PayablesPage";
+
 
                     <Route path="/finance/gl" element={<GeneralLedgerPage />} />
                     <Route path="/finance/invoices/create" element={<CreateInvoice />} />
@@ -134,11 +140,13 @@ function App() {
                     <Route path="/finance/banking/:id" element={<BankDetails />} />
                     <Route path="/finance/budgeting" element={<BudgetList />} />
                     <Route path="/finance/budgeting/:id" element={<BudgetDetails />} />
+                    <Route path="/finance/assets" element={<AssetList />} />
+                    <Route path="/finance/assets/:id" element={<AssetDetails />} />
 
                     <Route path="/finance/*" element={<ComingSoonPage title="Finance & Accounting" />} />
                   </Route>
 
-                  import VendorList from "./modules/procurement/pages/VendorList";
+
 
                   {/* Procurement & Supply Chain */}
                   <Route element={<ModuleGuard moduleId="supply-chain" />}>
@@ -160,11 +168,11 @@ function App() {
                     <Route path="/projects/*" element={<ComingSoonPage title="Project Management" />} />
                   </Route>
 
-                  {/* Assets (EAM) */}
-                  <Route element={<ModuleGuard moduleId="assets" />}>
+                  {/* Assets (EAM) - merged with Finance for now as per Sidebar */}
+                  {/* <Route element={<ModuleGuard moduleId="assets" />}>
                     <Route path="/finance/assets" element={<AssetList />} />
                     <Route path="/finance/assets/:id" element={<AssetDetails />} />
-                  </Route>
+                  </Route> */}
 
                   {/* Logistics */}
                   <Route element={<ModuleGuard moduleId="logistics" />}>

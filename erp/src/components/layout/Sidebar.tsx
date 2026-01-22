@@ -43,11 +43,8 @@ import {
     ClipboardCheck,
     FileSpreadsheet,
     ShieldAlert,
-    BadgeCent,
-    Repeat,
     FileCheck,
     Landmark,
-    ScrollText,
     Box
 } from "lucide-react";
 import { useModules } from "@/context/ModuleContext";
