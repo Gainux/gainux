@@ -15,6 +15,7 @@ import EmployeeDetailsPage from "./modules/hrm/pages/EmployeeDetailsPage";
 import OrgStructurePage from "./modules/hrm/pages/OrgStructurePage";
 import AttendancePage from "./modules/hrm/pages/AttendancePage";
 import PayrollPage from "./modules/hrm/pages/PayrollPage";
+import LeavesPage from "./modules/hrm/pages/LeavesPage";
 import PayrollRunDetails from "./modules/hrm/pages/PayrollRunDetails";
 import PerformanceDashboard from "./modules/hrm/pages/performance/PerformanceDashboard";
 import GoalListPage from "./modules/hrm/pages/performance/GoalListPage";
@@ -112,6 +113,7 @@ function App() {
                   {/* HRM Module */}
                   <Route element={<ModuleGuard moduleId="hrm" />}>
                     <Route path="/hrm/attendance" element={<AttendancePage />} />
+                    <Route path="/hrm/leaves" element={<LeavesPage />} />
                     <Route path="/hrm/employees" element={<EmployeeList />} />
                     <Route path="/hrm/employees/:id" element={<EmployeeDetailsPage />} />
                     <Route path="/hrm/org-structure" element={<OrgStructurePage />} />

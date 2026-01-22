@@ -44,7 +44,8 @@ export const leaveService = {
         const { data, error } = await supabase
             .from('leave_types')
             .select('*')
-            .eq('org_id', orgId)
+            // Fetch types specific to this org OR global types (null org_id)
+            .or(`org_id.eq.${orgId},org_id.is.null`)
             .order('name');
 
         if (error) throw error;
@@ -120,7 +121,13 @@ export const leaveService = {
 
         // Update leave balance
         const request = mapDbToLeaveRequest(data);
-        await this.updateLeaveBalance(request.employeeId, request.leaveTypeId, request.daysCount, new Date().getFullYear());
+        await this.updateLeaveBalance(
+            request.orgId,
+            request.employeeId,
+            request.leaveTypeId,
+            request.daysCount,
+            new Date(request.startDate).getFullYear()
+        );
 
         return request;
     },
@@ -167,7 +174,7 @@ export const leaveService = {
         return mapDbToLeaveBalance(data);
     },
 
-    async updateLeaveBalance(employeeId: string, leaveTypeId: string, daysTaken: number, year: number): Promise<void> {
+    async updateLeaveBalance(orgId: string, employeeId: string, leaveTypeId: string, daysTaken: number, year: number): Promise<void> {
         const { data: existing } = await supabase
             .from('leave_balances')
             .select('*')
@@ -177,8 +184,8 @@ export const leaveService = {
             .single();
 
         if (existing) {
-            const newDaysTaken = existing.days_taken + daysTaken;
-            const newDaysRemaining = existing.days_remaining - daysTaken;
+            const newDaysTaken = Number(existing.days_taken) + Number(daysTaken);
+            const newDaysRemaining = Number(existing.days_remaining) - Number(daysTaken);
 
             await supabase
                 .from('leave_balances')
@@ -187,6 +194,27 @@ export const leaveService = {
                     days_remaining: newDaysRemaining
                 })
                 .eq('id', existing.id);
+        } else {
+            // Balance record doesn't exist, we need to fetch the leave type to know the default allowance
+            const { data: leaveType } = await supabase
+                .from('leave_types')
+                .select('days_allowed_per_year')
+                .eq('id', leaveTypeId)
+                .single();
+
+            if (leaveType) {
+                const totalAllowed = Number(leaveType.days_allowed_per_year);
+                await supabase
+                    .from('leave_balances')
+                    .insert({
+                        org_id: orgId,
+                        employee_id: employeeId,
+                        leave_type_id: leaveTypeId,
+                        year,
+                        days_taken: daysTaken,
+                        days_remaining: totalAllowed - daysTaken
+                    });
+            }
         }
     }
 };

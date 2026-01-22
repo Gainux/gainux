@@ -172,6 +172,12 @@ export function Sidebar({ className, isCollapsed = false, onToggle }: SidebarPro
                     active: pathname.startsWith("/hrm/attendance"),
                 },
                 {
+                    href: "/hrm/leaves",
+                    label: "Leaves",
+                    icon: Calendar,
+                    active: pathname.startsWith("/hrm/leaves"),
+                },
+                {
                     href: "/hrm/payroll",
                     label: "Payroll",
                     icon: Wallet,
