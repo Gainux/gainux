@@ -38,8 +38,8 @@ export function NewEmployeeForm({ employeeId, onSuccess }: { employeeId?: string
         dateOfJoining: new Date().toISOString().split('T')[0],
         departmentId: '',
         designationId: '',
-        employmentType: 'full-time' as const,
-        status: 'active' as const,
+        employmentType: 'full-time' as 'full-time' | 'part-time' | 'contract' | 'intern',
+        status: 'active' as 'active' | 'inactive' | 'terminated',
     });
 
     const [salaryDetails, setSalaryDetails] = useState({
@@ -49,8 +49,9 @@ export function NewEmployeeForm({ employeeId, onSuccess }: { employeeId?: string
         deductions: ''
     });
 
-    const [createLoginAccount, setCreateLoginAccount] = useState(false);
+    const [createLoginAccount, setCreateLoginAccount] = useState(true);
     const [password, setPassword] = useState('');
+    const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
     useEffect(() => {
         if (profile?.org_id) {
@@ -102,6 +103,11 @@ export function NewEmployeeForm({ employeeId, onSuccess }: { employeeId?: string
                     employmentType: employee.employmentType,
                     status: employee.status,
                 });
+                setCurrentUserId(employee.userId || null);
+                // If they already have a login, don't check the create box by default
+                if (employee.userId) {
+                    setCreateLoginAccount(false);
+                }
             }
 
             if (salary) {
@@ -115,6 +121,28 @@ export function NewEmployeeForm({ employeeId, onSuccess }: { employeeId?: string
         } catch (error) {
             console.error("Failed to load employee data", error);
             toast.error("Failed to load employee details");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDeleteLogin = async () => {
+        if (!employeeId || !currentUserId) return;
+
+        if (!confirm("Are you sure you want to remove the login access for this employee? They will no longer be able to sign in.")) {
+            return;
+        }
+
+        try {
+            setLoading(true);
+            // Updating employee with userId: null will unlink the auth user
+            await employeeService.updateEmployee(employeeId, { userId: null } as any);
+            setCurrentUserId(null);
+            setCreateLoginAccount(true); // Reset to allow creation again
+            toast.success("Login access removed successfully");
+        } catch (error: any) {
+            console.error("Failed to remove login", error);
+            toast.error("Failed to remove login access");
         } finally {
             setLoading(false);
         }
@@ -134,12 +162,12 @@ export function NewEmployeeForm({ employeeId, onSuccess }: { employeeId?: string
             return;
         }
 
-        if (createLoginAccount && !password && !employeeId) {
+        if (createLoginAccount && !currentUserId && !password) {
             toast.error("Please enter a password for the login account");
             return;
         }
 
-        if (createLoginAccount && password.length < 6) {
+        if (createLoginAccount && !currentUserId && password.length < 6) {
             toast.error("Password must be at least 6 characters");
             return;
         }
@@ -149,8 +177,8 @@ export function NewEmployeeForm({ employeeId, onSuccess }: { employeeId?: string
         try {
             let userId: string | undefined = undefined;
 
-            // Step 1: Create auth user if requested (ONLY for new employees)
-            if (!employeeId && createLoginAccount) {
+            // Step 1: Create auth user if requested (For new employees OR existing employees without login)
+            if (createLoginAccount && !currentUserId) {
                 // Use a temporary client to avoid switching the current admin session
                 const tempSupabase = createClient(
                     import.meta.env.VITE_SUPABASE_URL,
@@ -187,7 +215,7 @@ export function NewEmployeeForm({ employeeId, onSuccess }: { employeeId?: string
                     target_email: formData.email,
                     target_first_name: formData.firstName,
                     target_last_name: formData.lastName,
-                    target_org_id: null, // Keep org_id null in profiles for employees (sourced from employees table)
+                    target_org_id: profile.org_id,
                     target_role: 'employee',
                     target_status: 'active'
                 });
@@ -206,15 +234,18 @@ export function NewEmployeeForm({ employeeId, onSuccess }: { employeeId?: string
                 phone: formData.phone || undefined,
                 dateOfBirth: formData.dateOfBirth || undefined,
                 orgId: profile.org_id,
+                ...(userId ? { userId } : {}) // Properly attach new userId if created
             };
 
             let savedEmployee;
 
             if (employeeId) {
                 savedEmployee = await employeeService.updateEmployee(employeeId, employeeData);
+                // Also update local currentUserId if we just added one
+                if (userId) setCurrentUserId(userId);
                 toast.success("Employee updated successfully");
             } else {
-                savedEmployee = await employeeService.createEmployee({ ...employeeData, userId } as any);
+                savedEmployee = await employeeService.createEmployee({ ...employeeData, userId: userId || '' } as any);
                 toast.success(createLoginAccount ? "Employee created with login account!" : "Employee created successfully");
             }
 
@@ -234,7 +265,7 @@ export function NewEmployeeForm({ employeeId, onSuccess }: { employeeId?: string
 
             if (onSuccess) {
                 onSuccess();
-            } else {
+            } else if (!employeeId) {
                 navigate('/hrm/employees');
             }
         } catch (error: any) {
@@ -442,39 +473,57 @@ export function NewEmployeeForm({ employeeId, onSuccess }: { employeeId?: string
                                 </div>
                             </div>
 
-                            {/* </div> */}
-
-                            {/* Login Account Section - Only show for new employees or if explicitly needed (can expand later) */}
-                            {!employeeId && (
-                                <div className="space-y-4 pt-4 border-t">
-                                    <div className="flex items-center space-x-2">
-                                        <Checkbox
-                                            id="createLogin"
-                                            checked={createLoginAccount}
-                                            onCheckedChange={(checked) => setCreateLoginAccount(checked === true)}
-                                        />
-                                        <Label htmlFor="createLogin" className="text-sm font-medium cursor-pointer">
-                                            Create login account for this employee
-                                        </Label>
-                                    </div>
-
-                                    {createLoginAccount && (
-                                        <div className="space-y-2 ml-6">
-                                            <Label htmlFor="password">Password *</Label>
-                                            <Input
-                                                id="password"
-                                                type="password"
-                                                value={password}
-                                                onChange={(e) => setPassword(e.target.value)}
-                                                placeholder="Minimum 6 characters"
+                            {/* Login Account Section */}
+                            <div className="space-y-4 pt-4 border-t">
+                                {!currentUserId ? (
+                                    <>
+                                        <div className="flex items-center space-x-2">
+                                            <Checkbox
+                                                id="createLogin"
+                                                checked={createLoginAccount}
+                                                onCheckedChange={(checked) => setCreateLoginAccount(checked === true)}
                                             />
+                                            <Label htmlFor="createLogin" className="text-sm font-medium cursor-pointer">
+                                                Create login account for this employee
+                                            </Label>
+                                        </div>
+
+                                        {createLoginAccount && (
+                                            <div className="space-y-2 ml-6">
+                                                <Label htmlFor="password">Password *</Label>
+                                                <Input
+                                                    id="password"
+                                                    type="password"
+                                                    value={password}
+                                                    onChange={(e) => setPassword(e.target.value)}
+                                                    placeholder="Minimum 6 characters"
+                                                />
+                                                <p className="text-sm text-muted-foreground">
+                                                    Employee will receive an email to verify their account. Role will be set to "Employee".
+                                                </p>
+                                            </div>
+                                        )}
+                                    </>
+                                ) : (
+                                    <div className="flex items-center justify-between bg-muted/30 p-4 rounded-md border">
+                                        <div className="space-y-1">
+                                            <Label className="text-base">Login Account Active</Label>
                                             <p className="text-sm text-muted-foreground">
-                                                Employee will receive an email to verify their account. Role will be set to "Employee".
+                                                This employee has an active login account linked.
                                             </p>
                                         </div>
-                                    )}
-                                </div>
-                            )}
+                                        <Button
+                                            type="button"
+                                            variant="destructive"
+                                            size="sm"
+                                            onClick={handleDeleteLogin}
+                                            disabled={loading}
+                                        >
+                                            Remove Login Access
+                                        </Button>
+                                    </div>
+                                )}
+                            </div>
                         </CardContent>
                     </Card>
 

@@ -78,6 +78,13 @@ const TaxReportPage = lazy(() => import('./modules/finance/pages/TaxReportPage')
 import ResourcePlanPage from "./modules/project-management/pages/ResourcePlanPage";
 import TimesheetsPage from "./modules/project-management/pages/TimesheetsPage";
 
+
+import EssDashboard from "./modules/ess/pages/EssDashboard";
+import MyLeavesPage from "./modules/ess/pages/MyLeavesPage";
+import MyAttendancePage from "./modules/ess/pages/MyAttendancePage";
+
+import MyPerformancePage from "./modules/ess/pages/MyPerformancePage";
+
 function App() {
   return (
     <ThemeProvider>
@@ -97,6 +104,12 @@ function App() {
                 <Route element={<AppLayout />}>
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/analytics" element={<AnalyticsPage />} />
+
+                  {/* Employee Self Service (ESS) */}
+                  <Route path="/ess/dashboard" element={<EssDashboard />} />
+                  <Route path="/ess/leaves" element={<MyLeavesPage />} />
+                  <Route path="/ess/attendance" element={<MyAttendancePage />} />
+                  <Route path="/ess/performance" element={<MyPerformancePage />} />
 
                   {/* CRM Module */}
                   <Route element={<ModuleGuard moduleId="crm" />}>

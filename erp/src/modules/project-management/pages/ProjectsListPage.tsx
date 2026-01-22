@@ -26,6 +26,7 @@ import { ProjectForm } from "../components/ProjectForm";
 
 export default function ProjectsListPage() {
     const { profile, user } = useAuth();
+    const navigate = useNavigate();
     const [projects, setProjects] = useState<Project[]>([]);
     const [loading, setLoading] = useState(true);
     const [createOpen, setCreateOpen] = useState(false);

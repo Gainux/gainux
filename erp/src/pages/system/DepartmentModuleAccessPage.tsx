@@ -24,7 +24,6 @@ import { toast } from "sonner";
 
 // Available modules in the ERP
 const AVAILABLE_MODULES = [
-    { id: 'overview', name: 'Overview', description: 'Dashboard and System Overview' },
     { id: 'finance', name: 'Finance & Accounting', description: 'General Ledger, Invoicing, Expenses, Tax, and Banking' },
     { id: 'hrm', name: 'Human Resources (HCM)', description: 'Employee Management, Payroll, Attendance, and Recruitment' },
     { id: 'sales', name: 'Sales & CRM', description: 'Lead Management, Opportunities, Customers, and Sales Orders' },

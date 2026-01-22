@@ -22,9 +22,13 @@ import TaskBoard from "../components/TaskBoard";
 import { TaskForm } from "../components/TaskForm";
 import { ProjectForm } from "../components/ProjectForm";
 
+import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/lib/supabase";
+
 export default function ProjectDetailsPage() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const { profile, user } = useAuth(); // Get auth context
 
     const [project, setProject] = useState<Project | null>(null);
     const [tasks, setTasks] = useState<Task[]>([]);
@@ -40,13 +44,35 @@ export default function ProjectDetailsPage() {
         if (!id) return;
         setLoading(true);
         try {
+            // First, determine if we need to filter by employee ID
+            let employeeId: string | undefined;
+            if (profile?.role === 'employee' && user?.id) {
+                const { data: employee } = await supabase
+                    .from('employees')
+                    .select('id')
+                    .eq('user_id', user.id)
+                    .single();
+                if (employee) {
+                    employeeId = employee.id;
+                }
+            }
+
             const [projData, taskData, allocData] = await Promise.all([
                 projectService.getProjectById(id),
                 projectService.getProjectTasks(id),
                 projectService.getResourceAllocations(id)
             ]);
+
             setProject(projData);
-            setTasks(taskData);
+
+            // Filter tasks if employeeId is found
+            if (employeeId) {
+                const filteredTasks = taskData.filter(t => t.assigneeId === employeeId);
+                setTasks(filteredTasks);
+            } else {
+                setTasks(taskData);
+            }
+
             setAllocations(allocData);
         } catch (error) {
             console.error("Failed to fetch project details", error);

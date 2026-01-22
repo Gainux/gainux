@@ -78,12 +78,42 @@ export function Sidebar({ className, isCollapsed = false, onToggle }: SidebarPro
 
     const routeGroups = [
         {
+            title: "Employee Service",
+            moduleId: 'overview', // Accessible to all
+            routes: [
+                {
+                    href: "/ess/dashboard",
+                    label: "Dashboard",
+                    icon: LayoutDashboard,
+                    active: pathname === "/ess/dashboard",
+                },
+                {
+                    href: "/ess/leaves",
+                    label: "My Leaves",
+                    icon: Calendar,
+                    active: pathname === "/ess/leaves",
+                },
+                {
+                    href: "/ess/attendance",
+                    label: "My Attendance",
+                    icon: Clock,
+                    active: pathname === "/ess/attendance",
+                },
+                {
+                    href: "/ess/performance",
+                    label: "My Performance",
+                    icon: Activity,
+                    active: pathname === "/ess/performance",
+                },
+            ]
+        },
+        {
             title: "Overview",
             moduleId: 'overview',
             routes: [
                 {
                     href: "/",
-                    label: "Dashboard",
+                    label: "Admin Dashboard",
                     icon: LayoutDashboard,
                     active: pathname === "/",
                 },
@@ -327,7 +357,7 @@ export function Sidebar({ className, isCollapsed = false, onToggle }: SidebarPro
                     icon: Clock,
                     active: pathname.startsWith("/projects/timesheets"),
                 },
-            ]
+            ].filter(route => route.label !== "Resource Plan" || isAdmin)
         },
         {
             title: "Asset Management",
@@ -557,7 +587,12 @@ export function Sidebar({ className, isCollapsed = false, onToggle }: SidebarPro
                 },
             ]
         }
-    ].filter(group => isModuleEnabled(group.moduleId as any) && (group.moduleId !== 'system' || isAdmin));
+    ].filter(group => {
+        if (group.title === "Employee Service") return !isAdmin;
+        if (group.title === "Overview") return isAdmin;
+        if (group.moduleId === 'system') return isAdmin;
+        return isModuleEnabled(group.moduleId as any);
+    });
 
     return (
         <div className={cn("pb-12 bg-sidebar h-full overflow-y-auto relative", className)}>
