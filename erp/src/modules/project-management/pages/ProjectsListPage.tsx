@@ -19,11 +19,13 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Plus, Loader2, Calendar, DollarSign, Users } from "lucide-react";
 import { projectService } from "../services/projectService";
+import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/lib/supabase";
 import type { Project } from "../types";
 import { ProjectForm } from "../components/ProjectForm";
 
 export default function ProjectsListPage() {
-    const navigate = useNavigate();
+    const { profile, user } = useAuth();
     const [projects, setProjects] = useState<Project[]>([]);
     const [loading, setLoading] = useState(true);
     const [createOpen, setCreateOpen] = useState(false);
@@ -33,7 +35,22 @@ export default function ProjectsListPage() {
     const fetchProjects = async () => {
         setLoading(true);
         try {
-            const data = await projectService.getProjects();
+            let employeeId: string | undefined;
+
+            if (profile?.role === 'employee' && user?.id) {
+                // We need the employee ID (from employees table), not the auth ID
+                const { data: employee } = await supabase
+                    .from('employees')
+                    .select('id')
+                    .eq('user_id', user.id)
+                    .single();
+
+                if (employee) {
+                    employeeId = employee.id;
+                }
+            }
+
+            const data = await projectService.getProjects(employeeId);
             setProjects(data);
         } catch (error) {
             console.error("Failed to fetch projects", error);
@@ -43,8 +60,10 @@ export default function ProjectsListPage() {
     };
 
     useEffect(() => {
-        fetchProjects();
-    }, []);
+        if (profile) {
+            fetchProjects();
+        }
+    }, [profile]);
 
     const handleCreate = async (data: Partial<Project>) => {
         try {

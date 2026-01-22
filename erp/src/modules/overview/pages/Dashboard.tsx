@@ -3,19 +3,30 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { dashboardService, type DashboardMetrics } from "../services/dashboardService";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, DollarSign, Briefcase, Users, TrendingUp, Activity } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import EmployeeDashboard from "./EmployeeDashboard";
 
 
 export default function Dashboard() {
+    const { profile } = useAuth();
     const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        loadMetrics();
-    }, []);
+        // If employee, we don't need to load admin metrics
+        if (profile?.role === 'employee') {
+            setLoading(false);
+            return;
+        }
 
-    const loadMetrics = async () => {
+        if (profile?.org_id) {
+            loadMetrics(profile.org_id);
+        }
+    }, [profile?.org_id, profile?.role]);
+
+    const loadMetrics = async (orgId: string) => {
         try {
-            const data = await dashboardService.getDashboardMetrics();
+            const data = await dashboardService.getDashboardMetrics(orgId);
             setMetrics(data);
         } catch (error) {
             console.error("Failed to load dashboard metrics", error);
@@ -30,6 +41,10 @@ export default function Dashboard() {
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
         );
+    }
+
+    if (profile?.role === 'employee') {
+        return <EmployeeDashboard />;
     }
 
     if (!metrics) return null;

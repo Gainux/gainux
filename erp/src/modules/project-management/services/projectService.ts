@@ -60,17 +60,32 @@ const mapToMember = (data: any): ProjectMember => ({
 
 export const projectService = {
     // Projects
-    async getProjects() {
-        const { data, error } = await supabase
-            .from('projects')
-            .select(`
-                *,
-                companies (id, name)
-            `)
-            .order('created_at', { ascending: false });
+    async getProjects(employeeId?: string) {
+        if (employeeId) {
+            const { data, error } = await supabase
+                .from('projects')
+                .select(`
+                    *,
+                    companies (id, name),
+                    resource_allocations!inner(employee_id)
+                `)
+                .eq('resource_allocations.employee_id', employeeId)
+                .order('created_at', { ascending: false });
 
-        if (error) throw error;
-        return data.map(mapToProject);
+            if (error) throw error;
+            return data.map(mapToProject);
+        } else {
+            const { data, error } = await supabase
+                .from('projects')
+                .select(`
+                    *,
+                    companies (id, name)
+                `)
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+            return data.map(mapToProject);
+        }
     },
 
     async getProjectById(id: string) {

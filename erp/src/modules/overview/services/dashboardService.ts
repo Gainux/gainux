@@ -32,7 +32,7 @@ export interface DashboardMetrics {
 }
 
 export const dashboardService = {
-    async getDashboardMetrics(): Promise<DashboardMetrics> {
+    async getDashboardMetrics(orgId: string): Promise<DashboardMetrics> {
         // Fetch all data in parallel
         const [
             financialMetrics,
@@ -44,8 +44,8 @@ export const dashboardService = {
             invoiceService.getFinancialMetrics(),
             dealService.getDeals(),
             projectService.getProjects(),
-            employeeService.getEmployees(),
-            userService.getUsers()
+            employeeService.getEmployees(orgId),
+            userService.getUsers() // Users might be global or needing filter, checking userService later
         ]);
 
         // CRM Metrics

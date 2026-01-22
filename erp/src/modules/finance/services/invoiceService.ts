@@ -342,19 +342,27 @@ export const invoiceService = {
         return this.getInvoiceById(id);
     },
 
-    async getFinancialMetrics() {
+    async getFinancialMetrics(orgId?: string) {
         // Get all invoices
-        const { data: invoices, error: invoicesError } = await supabase
+        let invoicesQuery = supabase
             .from("invoices")
             .select("status, total");
+
+        if (orgId) invoicesQuery = invoicesQuery.eq("org_id", orgId);
+
+        const { data: invoices, error: invoicesError } = await invoicesQuery;
 
         if (invoicesError) throw invoicesError;
 
         // Get all expenses
-        const { data: expenses, error: expensesError } = await supabase
+        let expensesQuery = supabase
             .from("expenses")
             .select("amount, status")
             .eq("status", "approved");
+
+        if (orgId) expensesQuery = expensesQuery.eq("org_id", orgId);
+
+        const { data: expenses, error: expensesError } = await expensesQuery;
 
         if (expensesError) throw expensesError;
 
