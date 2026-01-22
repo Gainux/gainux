@@ -17,18 +17,24 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { invoiceService } from "../services/invoiceService";
 import { crmService } from "@/modules/crm/services/crmService";
+import { taxService } from "../services/taxService";
 import type { Company } from "@/modules/crm/types";
-import type { InvoiceItem } from "../types";
+import type { InvoiceItem, TaxRate } from "../types";
+import { useAuth } from "@/context/AuthContext";
 
 export default function EditInvoice() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { profile } = useAuth();
+    const orgId = profile?.org_id;
+
     const [companies, setCompanies] = useState<Company[]>([]);
+    const [taxRates, setTaxRates] = useState<TaxRate[]>([]);
     const [customerId, setCustomerId] = useState("");
     const [issueDate, setIssueDate] = useState("");
     const [dueDate, setDueDate] = useState("");
     const [applyGst, setApplyGst] = useState(true);
-    const [taxRate, setTaxRate] = useState("18");
+    const [taxRate, setTaxRate] = useState("0");
     const [notes, setNotes] = useState("");
     const [items, setItems] = useState<Partial<InvoiceItem>[]>([
         { description: "", quantity: 1, unitPrice: 0, amount: 0 }
@@ -43,12 +49,14 @@ export default function EditInvoice() {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const [companiesData, invoiceData] = await Promise.all([
+            const [companiesData, invoiceData, taxRatesData] = await Promise.all([
                 crmService.getCompanies(),
-                id ? invoiceService.getInvoiceById(id) : null
+                id ? invoiceService.getInvoiceById(id) : null,
+                orgId ? taxService.getTaxRates(orgId) : Promise.resolve([])
             ]);
 
             setCompanies(companiesData);
+            setTaxRates(taxRatesData);
 
             if (invoiceData) {
                 setCustomerId(invoiceData.customerId || "");
@@ -209,14 +217,22 @@ export default function EditInvoice() {
                                         </div>
                                         {applyGst && (
                                             <div className="space-y-2">
-                                                <Label htmlFor="taxRate">GST Rate (%)</Label>
-                                                <Input
-                                                    id="taxRate"
-                                                    type="number"
-                                                    step="0.01"
+                                                <Label htmlFor="taxRate">GST Rate</Label>
+                                                <Select
                                                     value={taxRate}
-                                                    onChange={(e) => setTaxRate(e.target.value)}
-                                                />
+                                                    onValueChange={setTaxRate}
+                                                >
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select Tax Rate" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {taxRates.map(rate => (
+                                                            <SelectItem key={rate.id} value={rate.rate.toString()}>
+                                                                {rate.name} ({rate.rate}%)
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
                                             </div>
                                         )}
                                     </div>

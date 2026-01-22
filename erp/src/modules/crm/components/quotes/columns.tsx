@@ -2,17 +2,9 @@
 import type { ColumnDef } from "@tanstack/react-table"
 import type { Quote } from "@/modules/crm/types"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { MoreHorizontal } from "lucide-react"
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { QuoteRowActions } from "./QuoteRowActions"
 
-export const columns: ColumnDef<Quote>[] = [
+export const getColumns = (onUpdate: () => void): ColumnDef<Quote>[] => [
     {
         accessorKey: "quoteNumber",
         header: "Quote #",
@@ -54,33 +46,14 @@ export const columns: ColumnDef<Quote>[] = [
         accessorKey: "issueDate",
         header: "Date",
         cell: ({ row }) => {
-            return new Date(row.getValue("issueDate")).toLocaleDateString()
+            const dateStr = row.getValue("issueDate") as string;
+            if (!dateStr) return "-";
+            const date = new Date(dateStr);
+            return isNaN(date.getTime()) ? "-" : date.toLocaleDateString();
         }
     },
     {
         id: "actions",
-        cell: ({ row }) => {
-            const quote = row.original
-
-            return (
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Open menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem
-                            onClick={() => navigator.clipboard.writeText(quote.quoteNumber)}
-                        >
-                            Copy Quote Number
-                        </DropdownMenuItem>
-                        {/* Add edit/view details later */}
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            )
-        },
+        cell: ({ row }) => <QuoteRowActions row={row} onUpdate={onUpdate} />,
     },
 ]

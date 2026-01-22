@@ -29,6 +29,7 @@ export interface Company {
     industry?: string;
     website?: string;
     phone?: string;
+    email?: string;
     address?: string;
     createdAt: string;
     updatedAt: string;
@@ -71,6 +72,7 @@ export interface Deal {
     };
     createdAt: string;
     updatedAt: string;
+    requirements?: any[];
 }
 
 export interface CRMActivity {

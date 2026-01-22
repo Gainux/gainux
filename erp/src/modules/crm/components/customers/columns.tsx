@@ -1,7 +1,7 @@
 
 import type { ColumnDef } from "@tanstack/react-table"
+import { Link } from "react-router-dom"
 import type { Company } from "@/modules/crm/types"
-import { Badge } from "@/components/ui/badge"
 import { CustomerRowActions } from "./CustomerRowActions"
 
 export const columns: ColumnDef<Company>[] = [
@@ -10,9 +10,12 @@ export const columns: ColumnDef<Company>[] = [
         header: "Company Name",
         cell: ({ row }) => {
             return (
-                <a href={`/crm/customers/${row.original.id}`} className="font-medium text-blue-600 hover:underline">
+                <Link
+                    to={`/crm/customers/${row.original.id}`}
+                    className="font-medium hover:underline text-foreground"
+                >
                     {row.getValue("name")}
-                </a>
+                </Link>
             )
         }
     },

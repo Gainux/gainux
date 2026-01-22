@@ -84,8 +84,10 @@ function SortableDealCard({ deal, onEdit, onClick }: { deal: Deal; onEdit: (deal
                     </div>
                 </CardHeader>
                 <CardContent className="p-4 pt-0 pl-10">
-                    <p className="text-xs text-muted-foreground">{deal.company}</p>
-                    <Badge variant="outline" className="mt-2">{deal.formattedValue}</Badge>
+                    <p className="text-xs text-muted-foreground">{deal.company?.name}</p>
+                    <Badge variant="outline" className="mt-2">
+                        {new Intl.NumberFormat('en-IN', { style: 'currency', currency: deal.currency || 'INR' }).format(deal.value || 0)}
+                    </Badge>
                 </CardContent>
             </Card>
         </div>
@@ -281,8 +283,10 @@ export default function KanbanBoard({ deals: initialDeals, onDealMove, onDealEdi
                             <CardTitle className="text-sm font-medium">{activeDeal.title}</CardTitle>
                         </CardHeader>
                         <CardContent className="p-4 pt-0">
-                            <p className="text-xs text-muted-foreground">{activeDeal.company}</p>
-                            <Badge variant="outline" className="mt-2">{activeDeal.formattedValue}</Badge>
+                            <p className="text-xs text-muted-foreground">{activeDeal.company?.name}</p>
+                            <Badge variant="outline" className="mt-2">
+                                {new Intl.NumberFormat('en-IN', { style: 'currency', currency: activeDeal.currency || 'INR' }).format(activeDeal.value || 0)}
+                            </Badge>
                         </CardContent>
                     </Card>
                 ) : null}

@@ -1,7 +1,7 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { DataTable } from "@/modules/crm/components/leads/data-table"; // Reusing generic
-import { columns } from "@/modules/crm/components/quotes/columns";
+import { getColumns } from "@/modules/crm/components/quotes/columns";
 import type { Quote } from "@/modules/crm/types";
 import { crmService } from "@/modules/crm/services/crmService";
 import { Button } from "@/components/ui/button";
@@ -23,7 +23,7 @@ export default function QuotationsPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const fetchQuotes = async () => {
+    const fetchQuotes = useCallback(async () => {
         try {
             setLoading(true);
             const quotes = await crmService.getQuotes();
@@ -34,7 +34,9 @@ export default function QuotationsPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
+    const columns = useMemo(() => getColumns(fetchQuotes), [fetchQuotes]);
 
     useEffect(() => {
         fetchQuotes();

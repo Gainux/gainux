@@ -101,13 +101,16 @@ export default function DealDetailsPage() {
                         <h1 className="text-2xl font-bold tracking-tight">{deal.title}</h1>
                         <div className="flex items-center gap-2 text-muted-foreground">
                             <Briefcase className="h-4 w-4" />
-                            <span>{deal.company}</span>
+                            <Briefcase className="h-4 w-4" />
+                            <span>{deal.company?.name}</span>
                         </div>
                     </div>
                     <div className="ml-auto flex items-center gap-4">
                         <div className="text-right">
                             <p className="text-sm text-muted-foreground">Value</p>
-                            <p className="text-xl font-bold">{deal.formattedValue}</p>
+                            <p className="text-xl font-bold">
+                                {new Intl.NumberFormat('en-IN', { style: 'currency', currency: deal.currency || 'INR' }).format(deal.value || 0)}
+                            </p>
                         </div>
                     </div>
                 </div>

@@ -31,6 +31,7 @@ const mapToCompany = (data: any): Company => ({
     industry: data.industry,
     website: data.website,
     phone: data.phone,
+    email: data.email,
     address: data.address,
     createdAt: data.created_at,
     updatedAt: data.updated_at
@@ -244,6 +245,10 @@ export const crmService = {
         if (updates.stage !== undefined) dbUpdates.stage = updates.stage;
         if (updates.probability !== undefined) dbUpdates.probability = updates.probability;
         if (updates.expectedCloseDate !== undefined) dbUpdates.expected_close_date = updates.expectedCloseDate;
+        if (updates.companyId !== undefined) dbUpdates.company_id = updates.companyId;
+        if (updates.contactId !== undefined) dbUpdates.contact_id = updates.contactId;
+        if (updates.leadId !== undefined) dbUpdates.lead_id = updates.leadId;
+        if (updates.ownerId !== undefined) dbUpdates.owner_id = updates.ownerId;
 
         const { data, error } = await supabase
             .from('deals')
@@ -283,6 +288,7 @@ export const crmService = {
                 industry: company.industry,
                 website: company.website,
                 phone: company.phone,
+                email: company.email,
                 address: company.address
             })
             .select()
@@ -309,6 +315,7 @@ export const crmService = {
         if (updates.industry !== undefined) dbUpdates.industry = updates.industry;
         if (updates.website !== undefined) dbUpdates.website = updates.website;
         if (updates.phone !== undefined) dbUpdates.phone = updates.phone;
+        if (updates.email !== undefined) dbUpdates.email = updates.email;
         if (updates.address !== undefined) dbUpdates.address = updates.address;
 
         const { data, error } = await supabase

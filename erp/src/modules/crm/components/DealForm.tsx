@@ -11,7 +11,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { crmService } from "@/modules/crm/services/crmService";
-import type { Deal, Contact } from "@/modules/crm/types";
+import type { Deal, Contact, Company } from "@/modules/crm/types";
 
 interface DealFormProps {
     initialData?: Deal | null;
@@ -21,53 +21,57 @@ interface DealFormProps {
 
 export function DealForm({ initialData, onSubmit, onCancel }: DealFormProps) {
     const [title, setTitle] = useState(initialData?.title || "");
-    const [company, setCompany] = useState(initialData?.company?.name || ""); // company is now object
+    const [companyId, setCompanyId] = useState(initialData?.companyId || "");
     const [value, setValue] = useState(initialData?.value?.toString() || "");
     const [stage, setStage] = useState<Deal["stage"]>((initialData?.stage as Deal["stage"]) || "lead");
     const [expectedCloseDate, setExpectedCloseDate] = useState(initialData?.expectedCloseDate || "");
     const [contactId, setContactId] = useState(initialData?.contactId || "");
     const [contacts, setContacts] = useState<Contact[]>([]);
+    const [companies, setCompanies] = useState<Company[]>([]);
+    const [loadingContacts, setLoadingContacts] = useState(false);
 
     useEffect(() => {
-        const fetchContacts = async () => {
+        const fetchData = async () => {
             try {
-                const data = await crmService.getContacts();
-                setContacts(data);
+                setLoadingContacts(true);
+                const [contactsData, companiesData] = await Promise.all([
+                    crmService.getContacts(),
+                    crmService.getCompanies()
+                ]);
+                setContacts(contactsData);
+                setCompanies(companiesData);
             } catch (error) {
-                console.error("Failed to fetch contacts", error);
+                console.error("Failed to fetch data", error);
+            } finally {
+                setLoadingContacts(false);
             }
         };
-        fetchContacts();
+        fetchData();
     }, []);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         onSubmit({
             title,
-            // We might want to handle company creation or lookup separately,
-            // for now, we just pass the stage and value.
-            // If we want to link company, we'd need its ID.
-            // But the form just takes a string for company name currently in UI.
-            // If the user selected a contact, that contact belongs to a company.
             value: parseFloat(value) || 0,
             stage,
             expectedCloseDate,
             contactId: contactId || undefined,
-            // Assuming we don't resolve company name to ID here for simplicity unless matched.
-            // Ideally we should select Company from dropdown too.
+            companyId: companyId || undefined,
         });
     };
 
     const handleContactChange = (id: string) => {
         setContactId(id);
         const selectedContact = contacts.find(c => c.id === id);
-        if (selectedContact && selectedContact.company) {
-            setCompany(selectedContact.company.name);
+        if (selectedContact && selectedContact.companyId) {
+            setCompanyId(selectedContact.companyId);
         }
     };
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
+            {/* ... title input ... */}
             <div className="space-y-2">
                 <Label htmlFor="title">Deal Title</Label>
                 <Input
@@ -81,29 +85,42 @@ export function DealForm({ initialData, onSubmit, onCancel }: DealFormProps) {
 
             <div className="space-y-2">
                 <Label htmlFor="contact">Contact (Optional)</Label>
-                <Select value={contactId} onValueChange={handleContactChange}>
+                <Select
+                    value={contactId}
+                    onValueChange={handleContactChange}
+                    disabled={loadingContacts}
+                >
                     <SelectTrigger>
-                        <SelectValue placeholder="Select a contact" />
+                        <SelectValue placeholder={loadingContacts ? "Loading contacts..." : "Select a contact"} />
                     </SelectTrigger>
                     <SelectContent>
-                        {contacts.map((c) => (
-                            <SelectItem key={c.id} value={c.id}>
-                                {c.firstName} {c.lastName} {c.company ? `(${c.company.name})` : ''}
-                            </SelectItem>
-                        ))}
+                        {contacts.length === 0 ? (
+                            <SelectItem value="none" disabled>No contacts found</SelectItem>
+                        ) : (
+                            contacts.map((c) => (
+                                <SelectItem key={c.id} value={c.id}>
+                                    {c.firstName} {c.lastName} {c.company ? `(${c.company.name})` : ''}
+                                </SelectItem>
+                            ))
+                        )}
                     </SelectContent>
                 </Select>
             </div>
 
             <div className="space-y-2">
-                <Label htmlFor="company">Company</Label>
-                <Input
-                    id="company"
-                    value={company}
-                    onChange={(e) => setCompany(e.target.value)}
-                    required
-                    placeholder="Client Company Name"
-                />
+                <Label htmlFor="company">Company (Customer)</Label>
+                <Select value={companyId} onValueChange={setCompanyId}>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Select a company" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {companies.map((c) => (
+                            <SelectItem key={c.id} value={c.id}>
+                                {c.name}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
             </div>
             <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
