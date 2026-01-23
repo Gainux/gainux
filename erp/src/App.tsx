@@ -30,6 +30,18 @@ import CreateBill from "./modules/finance/pages/CreateBill";
 import PayablesPage from "./modules/finance/pages/PayablesPage";
 import BankList from "./modules/finance/pages/BankList";
 import VendorList from "./modules/procurement/pages/VendorList";
+import InventoryPage from "./modules/procurement/pages/InventoryPage";
+import WarehousePage from "./modules/procurement/pages/WarehousePage";
+import PurchaseOrderList from "./modules/procurement/pages/PurchaseOrderList";
+import PurchaseOrderDetails from "./modules/procurement/pages/PurchaseOrderDetails";
+import RFQListPage from "./modules/procurement/pages/RFQListPage";
+import RFQDetails from "./modules/procurement/pages/RFQDetails";
+
+import PatientList from "./modules/healthcare/pages/PatientList";
+import PatientDetails from "./modules/healthcare/pages/PatientDetails";
+import EncounterDetails from "./modules/healthcare/pages/EncounterDetails";
+import EncounterList from "./modules/healthcare/pages/EncounterList";
+import PharmacyDashboard from "./modules/healthcare/pages/PharmacyDashboard";
 
 import LeadDetailsPage from "@/modules/crm/pages/LeadDetailsPage";
 
@@ -168,7 +180,12 @@ function App() {
                   {/* Procurement & Supply Chain */}
                   <Route element={<ModuleGuard moduleId="supply-chain" />}>
                     <Route path="/procurement/vendors" element={<VendorList />} />
-                    <Route path="/procurement/*" element={<ComingSoonPage title="Procurement & Supply Chain" />} />
+                    <Route path="/procurement/inventory" element={<InventoryPage />} />
+                    <Route path="/procurement/warehouses" element={<WarehousePage />} />
+                    <Route path="/procurement/purchase-orders" element={<PurchaseOrderList />} />
+                    <Route path="/procurement/purchase-orders/:id" element={<PurchaseOrderDetails />} />
+                    <Route path="/procurement/rfq" element={<RFQListPage />} />
+                    <Route path="/procurement/rfq/:id" element={<RFQDetails />} />
                   </Route>
 
                   {/* Manufacturing */}
@@ -238,6 +255,11 @@ function App() {
                     <Route path="/retail/*" element={<ComingSoonPage title="Retail & POS" />} />
                   </Route>
                   <Route element={<ModuleGuard moduleId="healthcare" />}>
+                    <Route path="/healthcare/patients" element={<PatientList />} />
+                    <Route path="/healthcare/patients/:id" element={<PatientDetails />} />
+                    <Route path="/healthcare/appointments" element={<EncounterList />} />
+                    <Route path="/healthcare/encounters/:id" element={<EncounterDetails />} />
+                    <Route path="/healthcare/pharmacy" element={<PharmacyDashboard />} />
                     <Route path="/healthcare/*" element={<ComingSoonPage title="Healthcare (HIS)" />} />
                   </Route>
                   <Route element={<ModuleGuard moduleId="construction" />}>

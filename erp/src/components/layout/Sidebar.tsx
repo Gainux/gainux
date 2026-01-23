@@ -506,6 +506,12 @@ export function Sidebar({ className, isCollapsed = false, onToggle }: SidebarPro
                     label: "Appointments",
                     icon: Calendar,
                     active: pathname.startsWith("/healthcare/appointments"),
+                },
+                {
+                    href: "/healthcare/pharmacy",
+                    label: "Pharmacy Queue",
+                    icon: ClipboardCheck,
+                    active: pathname.startsWith("/healthcare/pharmacy"),
                 }
             ]
         },

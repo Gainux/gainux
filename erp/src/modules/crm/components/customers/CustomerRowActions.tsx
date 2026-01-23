@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MoreHorizontal, Pencil, Copy } from "lucide-react";
+import { MoreHorizontal, Pencil, Copy, Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -23,22 +23,35 @@ import type { Row } from "@tanstack/react-table";
 
 interface CustomerRowActionsProps<TData> {
     row: Row<TData>;
+    onUpdate?: () => void;
 }
 
-export function CustomerRowActions<TData>({ row }: CustomerRowActionsProps<TData>) {
+export function CustomerRowActions<TData>({ row, onUpdate }: CustomerRowActionsProps<TData>) {
     const company = row.original as unknown as Company;
     const [showEditDialog, setShowEditDialog] = useState(false);
 
     const handleEdit = async (data: Partial<Company>) => {
         try {
             await crmService.updateCompany(company.id, data);
-            window.location.reload();
+            onUpdate?.();
         } catch (error) {
             console.error("Failed to update company", error);
             alert("Failed to update company");
         }
         setShowEditDialog(false);
     };
+
+    const handleDelete = async () => {
+        if (confirm("Are you sure you want to delete this customer?")) {
+            try {
+                await crmService.deleteCompany(company.id);
+                onUpdate?.();
+            } catch (error) {
+                console.error("Failed to delete company", error);
+                alert("Failed to delete company");
+            }
+        }
+    }
 
     return (
         <>
@@ -61,6 +74,14 @@ export function CustomerRowActions<TData>({ row }: CustomerRowActionsProps<TData
                     <DropdownMenuItem onClick={() => setShowEditDialog(true)}>
                         <Pencil className="mr-2 h-4 w-4" />
                         Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                        className="text-red-600"
+                        onClick={handleDelete}
+                    >
+                        <Trash className="mr-2 h-4 w-4" />
+                        Delete
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>

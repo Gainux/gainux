@@ -4,7 +4,7 @@ import { Link } from "react-router-dom"
 import type { Company } from "@/modules/crm/types"
 import { CustomerRowActions } from "./CustomerRowActions"
 
-export const columns: ColumnDef<Company>[] = [
+export const getColumns = (onUpdate: () => void): ColumnDef<Company>[] => [
     {
         accessorKey: "name",
         header: "Company Name",
@@ -48,6 +48,6 @@ export const columns: ColumnDef<Company>[] = [
     },
     {
         id: "actions",
-        cell: ({ row }) => <CustomerRowActions row={row} />,
+        cell: ({ row }) => <CustomerRowActions row={row} onUpdate={onUpdate} />,
     },
 ]

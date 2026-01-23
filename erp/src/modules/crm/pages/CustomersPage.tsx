@@ -1,5 +1,5 @@
 import { DataTable } from "@/modules/crm/components/leads/data-table"
-import { columns } from "@/modules/crm/components/customers/columns"
+import { getColumns } from "@/modules/crm/components/customers/columns"
 import type { Company } from "@/modules/crm/types"
 
 import { useState, useEffect } from "react"
@@ -88,7 +88,7 @@ export default function CustomersPage() {
                         <Loader2 className="h-6 w-6 animate-spin" />
                     </div>
                 ) : (
-                    <DataTable columns={columns} data={data} searchKey="name" />
+                    <DataTable columns={getColumns(fetchCustomers)} data={data} searchKey="name" />
                 )}
             </div>
         </div>
