@@ -1,5 +1,6 @@
 import { invoiceService } from "@/modules/finance/services/invoiceService";
 import { dealService } from "@/modules/crm/services/dealService";
+import { salesOrderService } from "@/modules/crm/services/salesOrderService";
 import { projectService } from "@/modules/project-management/services/projectService";
 import { employeeService } from "@/modules/hrm/services/employeeService";
 import { userService } from "@/modules/system/services/userService";
@@ -16,6 +17,8 @@ export interface DashboardMetrics {
         activeDeals: number;
         pipelineValue: number;
         recentDeals: any[];
+        recentOrders: any[];
+        funnel: { name: string; value: number }[];
     };
     projects: {
         activeProjects: number;
@@ -37,12 +40,14 @@ export const dashboardService = {
         const [
             financialMetrics,
             deals,
+            orders,
             projects,
             employees,
             users
         ] = await Promise.all([
             invoiceService.getFinancialMetrics(),
             dealService.getDeals(),
+            salesOrderService.getOrders(), // Added
             projectService.getProjects(),
             employeeService.getEmployees(orgId),
             userService.getUsers() // Users might be global or needing filter, checking userService later
@@ -76,6 +81,14 @@ export const dashboardService = {
                 activeDeals: activeDeals.length,
                 pipelineValue,
                 recentDeals,
+                recentOrders: orders.slice(0, 5),
+                funnel: [
+                    { name: 'Lead', value: deals.filter(d => d.stage === 'lead').length },
+                    { name: 'Proposal', value: deals.filter(d => d.stage === 'proposal').length },
+                    { name: 'Negotiation', value: deals.filter(d => d.stage === 'negotiation').length },
+                    { name: 'Won', value: deals.filter(d => d.stage === 'won').length },
+                    { name: 'Lost', value: deals.filter(d => d.stage === 'lost').length }
+                ]
             },
             projects: {
                 activeProjects: activeProjects.length,

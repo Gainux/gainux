@@ -6,12 +6,15 @@ import {
     Calendar as CalendarIcon,
     CheckCircle2,
     XCircle,
+    Edit,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { dealService } from "@/modules/crm/services/dealService";
+import { DealForm } from "../components/DealForm";
 import type { Deal } from "@/modules/crm/types";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2 } from "lucide-react";
@@ -24,6 +27,7 @@ export default function DealDetailsPage() {
     const [deal, setDeal] = useState<Deal | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isEditOpen, setIsEditOpen] = useState(false);
 
     const fetchDeal = async () => {
         if (!id) return;
@@ -38,9 +42,21 @@ export default function DealDetailsPage() {
             }
         } catch (err: any) {
             console.error("Error fetching deal:", err);
-            setError(err.message);
+            setError(err.message || "Failed to load");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleUpdateDeal = async (updates: Partial<Deal>) => {
+        if (!id) return;
+        try {
+            await dealService.updateDeal(id, updates);
+            setIsEditOpen(false);
+            fetchDeal();
+        } catch (err: any) {
+            console.error(err);
+            alert("Failed to update deal");
         }
     };
 
@@ -101,8 +117,8 @@ export default function DealDetailsPage() {
                         <h1 className="text-2xl font-bold tracking-tight">{deal.title}</h1>
                         <div className="flex items-center gap-2 text-muted-foreground">
                             <Briefcase className="h-4 w-4" />
-                            <Briefcase className="h-4 w-4" />
-                            <span>{deal.company?.name}</span>
+                            {/* Safely access company name. Using optional chaining. */}
+                            <span>{deal.company?.name || "No Company"}</span>
                         </div>
                     </div>
                     <div className="ml-auto flex items-center gap-4">
@@ -112,6 +128,23 @@ export default function DealDetailsPage() {
                                 {new Intl.NumberFormat('en-IN', { style: 'currency', currency: deal.currency || 'INR' }).format(deal.value || 0)}
                             </p>
                         </div>
+                        <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+                            <DialogTrigger asChild>
+                                <Button variant="outline">
+                                    <Edit className="mr-2 h-4 w-4" /> Edit Deal
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
+                                <DialogHeader>
+                                    <DialogTitle>Edit Deal</DialogTitle>
+                                </DialogHeader>
+                                <DealForm
+                                    initialData={deal}
+                                    onSubmit={handleUpdateDeal}
+                                    onCancel={() => setIsEditOpen(false)}
+                                />
+                            </DialogContent>
+                        </Dialog>
                     </div>
                 </div>
 
@@ -152,17 +185,46 @@ export default function DealDetailsPage() {
                                 <CardTitle className="text-sm font-medium">Deal Info</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <div className="flex justify-between items-center">
-                                    <span className="text-sm text-muted-foreground">Expected Close</span>
-                                    <div className="flex items-center gap-2 text-sm font-medium">
-                                        <CalendarIcon className="h-4 w-4" />
-                                        {deal.expectedCloseDate || "-"}
+                                <div className="space-y-4">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-1">
+                                            <label className="text-sm font-medium text-muted-foreground">Expected Close</label>
+                                            <div className="flex items-center gap-2 text-sm">
+                                                <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                                                <span>{deal.expectedCloseDate || "-"}</span>
+                                            </div>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-sm font-medium text-muted-foreground">Stage</label>
+                                            <div><Badge variant="secondary" className="capitalize">{deal.stage}</Badge></div>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-sm font-medium text-muted-foreground">Probability</label>
+                                            <div className="text-sm">{deal.probability || 0}%</div>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-sm font-medium text-muted-foreground">Quantity</label>
+                                            <div className="text-sm">{deal.quantity || 1}</div>
+                                        </div>
                                     </div>
-                                </div>
-                                <Separator />
-                                <div className="flex justify-between items-center">
-                                    <span className="text-sm text-muted-foreground">Stage</span>
-                                    <Badge variant="secondary" className="capitalize">{deal.stage}</Badge>
+
+                                    <Separator />
+
+                                    <div className="space-y-3">
+                                        <div className="space-y-1">
+                                            <label className="text-sm font-medium text-muted-foreground">Company</label>
+                                            <div className="text-sm font-medium">{deal.company?.name || 'N/A'}</div>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-sm font-medium text-muted-foreground">Contact</label>
+                                            {/* Ensure contact is not rendered as object. Access properties. */}
+                                            <div className="text-sm">{deal.contact ? `${deal.contact.firstName} ${deal.contact.lastName}` : 'N/A'}</div>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-sm font-medium text-muted-foreground">Created</label>
+                                            <div className="text-sm text-muted-foreground">{new Date(deal.createdAt).toLocaleDateString()}</div>
+                                        </div>
+                                    </div>
                                 </div>
                             </CardContent>
                         </Card>

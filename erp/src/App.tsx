@@ -39,6 +39,8 @@ import QuotationsPage from "@/modules/crm/pages/QuotationsPage";
 
 import CustomersPage from "@/modules/crm/pages/CustomersPage";
 import CustomerDetailsPage from "@/modules/crm/pages/CustomerDetailsPage";
+import SalesOrderListPage from "@/modules/crm/pages/SalesOrderListPage";
+import SalesOrderFormPage from "@/modules/crm/pages/SalesOrderFormPage";
 
 import ProjectsListPage from "@/modules/project-management/pages/ProjectsListPage";
 import ProjectDetailsPage from "@/modules/project-management/pages/ProjectDetailsPage";
@@ -83,6 +85,15 @@ import MyAttendancePage from "./modules/ess/pages/MyAttendancePage";
 
 import MyPerformancePage from "./modules/ess/pages/MyPerformancePage";
 
+import WorkflowListPage from "./modules/automation/pages/WorkflowListPage";
+import WorkflowBuilderPage from "./modules/automation/pages/WorkflowBuilderPage";
+import BusinessRulesPage from "./modules/automation/pages/BusinessRulesPage";
+
+import IntegrationsLayout from "./modules/integrations/pages/IntegrationsLayout";
+import ConnectedAppsPage from "./modules/integrations/pages/ConnectedAppsPage";
+import ApiKeysPage from "./modules/integrations/pages/ApiKeysPage";
+import WebhooksPage from "./modules/integrations/pages/WebhooksPage";
+
 function App() {
   return (
     <ThemeProvider>
@@ -118,6 +129,9 @@ function App() {
                     <Route path="/crm/deals" element={<DealsPage />} />
                     <Route path="/crm/deals/:id" element={<DealDetailsPage />} />
                     <Route path="/crm/quotes" element={<QuotationsPage />} />
+                    <Route path="/crm/orders" element={<SalesOrderListPage />} />
+                    <Route path="/crm/orders/new" element={<SalesOrderFormPage />} />
+                    <Route path="/crm/orders/:id" element={<SalesOrderFormPage />} />
                     <Route path="/crm/*" element={<ComingSoonPage title="Sales & CRM" />} />
                   </Route>
 
@@ -205,12 +219,21 @@ function App() {
 
                   {/* Automation */}
                   <Route element={<ModuleGuard moduleId="automation" />}>
-                    <Route path="/automation/*" element={<ComingSoonPage title="Workflow & Automation" />} />
+                    <Route path="/automation/workflows" element={<WorkflowListPage />} />
+                    <Route path="/automation/workflows/new" element={<WorkflowBuilderPage />} />
+                    <Route path="/automation/workflows/:id" element={<WorkflowBuilderPage />} />
+                    <Route path="/automation/rules" element={<BusinessRulesPage />} />
+                    <Route path="/automation/*" element={<Navigate to="/automation/workflows" replace />} />
                   </Route>
 
                   {/* Integrations */}
                   <Route element={<ModuleGuard moduleId="integrations" />}>
-                    <Route path="/integrations/*" element={<ComingSoonPage title="API & Integrations" />} />
+                    <Route path="/integrations" element={<IntegrationsLayout />}>
+                      <Route index element={<Navigate to="/integrations/apps" replace />} />
+                      <Route path="apps" element={<ConnectedAppsPage />} />
+                      <Route path="api-keys" element={<ApiKeysPage />} />
+                      <Route path="webhooks" element={<WebhooksPage />} />
+                    </Route>
                   </Route>
 
 

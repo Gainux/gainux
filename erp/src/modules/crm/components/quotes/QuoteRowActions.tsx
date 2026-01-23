@@ -1,6 +1,8 @@
 import { useState } from "react";
-import { MoreHorizontal, Pencil, Copy } from "lucide-react";
+import { MoreHorizontal, Pencil, Copy, Download } from "lucide-react";
+import { pdfService } from "@/modules/crm/services/pdfService";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -29,6 +31,7 @@ interface QuoteRowActionsProps<TData> {
 export function QuoteRowActions<TData>({ row, onUpdate }: QuoteRowActionsProps<TData>) {
     const quote = row.original as unknown as Quote;
     const [showEditDialog, setShowEditDialog] = useState(false);
+    const navigate = useNavigate();
 
     const handleEdit = async (data: Partial<Quote>) => {
         try {
@@ -59,12 +62,21 @@ export function QuoteRowActions<TData>({ row, onUpdate }: QuoteRowActionsProps<T
                         <Copy className="mr-2 h-4 w-4" />
                         Copy Quote #
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => pdfService.generateQuotePDF(quote)}>
+                        <Download className="mr-2 h-4 w-4" />
+                        Download PDF
+                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => setShowEditDialog(true)}>
                         <Pencil className="mr-2 h-4 w-4" />
                         Edit Quote
                     </DropdownMenuItem>
-                    {/* Optionally add Delete here later */}
+                    <DropdownMenuItem
+                        onClick={() => navigate(`/crm/orders/new?quoteId=${quote.id}`)}
+                    >
+                        <Copy className="mr-2 h-4 w-4 transform rotate-180" /> {/* Flip copy for 'convert' look */}
+                        Convert to Order
+                    </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
 

@@ -7,6 +7,16 @@ import { useAuth } from "@/context/AuthContext";
 import EmployeeDashboard from "./EmployeeDashboard";
 
 
+import {
+    Bar,
+    BarChart,
+    ResponsiveContainer,
+    Tooltip,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+} from "recharts";
+
 export default function Dashboard() {
     const { profile } = useAuth();
     const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
@@ -120,69 +130,117 @@ export default function Dashboard() {
                 </Card>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-                {/* Recent Projects */}
-                <Card className="col-span-4">
-                    <CardHeader>
-                        <CardTitle>Recent Projects</CardTitle>
-                        <CardDescription>
-                            Your latest active and planned projects.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-8">
-                            {metrics.projects.recentProjects.map((project) => (
-                                <div key={project.id} className="flex items-center">
-                                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
-                                        <Activity className="h-5 w-5 text-primary" />
-                                    </div>
-                                    <div className="ml-4 space-y-1">
-                                        <p className="text-sm font-medium leading-none">{project.name}</p>
-                                        <p className="text-sm text-muted-foreground">
-                                            Client: {project.client?.name || 'Internal'}
-                                        </p>
-                                    </div>
-                                    <div className="ml-auto font-medium">
-                                        <Badge variant={
-                                            project.status === 'completed' ? 'secondary' :
-                                                project.status === 'in_progress' ? 'default' : 'outline'
-                                        }>
-                                            {project.status.replace('_', ' ')}
-                                        </Badge>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </CardContent>
-                </Card>
+            <Card className="col-span-3">
+                <CardHeader>
+                    <CardTitle>Sales Funnel</CardTitle>
+                    <CardDescription>Deal distribution by stage</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="h-[300px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={metrics.crm.funnel} layout="vertical">
+                                <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                                <XAxis type="number" hide />
+                                <YAxis dataKey="name" type="category" width={80} tick={{ fontSize: 12 }} />
+                                <Tooltip />
+                                <Bar dataKey="value" fill="#82ca9d" radius={[0, 4, 4, 0]} barSize={20} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                </CardContent>
+            </Card>
 
-                {/* Recent Deals */}
-                <Card className="col-span-3">
-                    <CardHeader>
-                        <CardTitle>Recent Opportunities</CardTitle>
-                        <CardDescription>
-                            Latest deals from the pipeline.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-8">
-                            {metrics.crm.recentDeals.map((deal) => (
-                                <div key={deal.id} className="flex items-center">
+            {/* Recent Projects */}
+            <Card className="col-span-4">
+                <CardHeader>
+                    <CardTitle>Recent Projects</CardTitle>
+                    <CardDescription>
+                        Your latest active and planned projects.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="space-y-8">
+                        {metrics.projects.recentProjects.map((project) => (
+                            <div key={project.id} className="flex items-center">
+                                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
+                                    <Activity className="h-5 w-5 text-primary" />
+                                </div>
+                                <div className="ml-4 space-y-1">
+                                    <p className="text-sm font-medium leading-none">{project.name}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Client: {project.client?.name || 'Internal'}
+                                    </p>
+                                </div>
+                                <div className="ml-auto font-medium">
+                                    <Badge variant={
+                                        project.status === 'completed' ? 'secondary' :
+                                            project.status === 'in_progress' ? 'default' : 'outline'
+                                    }>
+                                        {project.status.replace('_', ' ')}
+                                    </Badge>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Recent Orders */}
+            <Card className="col-span-3">
+                <CardHeader>
+                    <CardTitle>Recent Orders</CardTitle>
+                    <CardDescription>Latest confirmed sales orders</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="space-y-8">
+                        {metrics.crm.recentOrders?.length === 0 ? (
+                            <p className="text-sm text-muted-foreground">No recent orders found.</p>
+                        ) : (
+                            metrics.crm.recentOrders?.map((order) => (
+                                <div key={order.id} className="flex items-center">
                                     <div className="ml-4 space-y-1">
-                                        <p className="text-sm font-medium leading-none">{deal.title}</p>
+                                        <p className="text-sm font-medium leading-none">{order.orderNumber}</p>
                                         <p className="text-sm text-muted-foreground">
-                                            {deal.company}
+                                            {new Date(order.orderDate).toLocaleDateString()}
                                         </p>
                                     </div>
                                     <div className="ml-auto font-medium">
-                                        {deal.formattedValue}
+                                        {formatCurrency(order.totalAmount)}
                                     </div>
                                 </div>
-                            ))}
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
+                            ))
+                        )}
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Recent Deals */}
+            <Card className="col-span-4">
+                <CardHeader>
+                    <CardTitle>Recent Opportunities</CardTitle>
+                    <CardDescription>
+                        Latest deals from the pipeline.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="space-y-8">
+                        {metrics.crm.recentDeals.map((deal) => (
+                            <div key={deal.id} className="flex items-center">
+                                <div className="ml-4 space-y-1">
+                                    <p className="text-sm font-medium leading-none">{deal.title}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        {deal.company?.name || 'N/A'}
+                                    </p>
+                                </div>
+                                <div className="ml-auto font-medium">
+                                    {formatCurrency(Number(deal.value))}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </CardContent>
+            </Card>
         </div>
+
     );
 }

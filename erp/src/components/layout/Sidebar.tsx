@@ -248,6 +248,12 @@ export function Sidebar({ className, isCollapsed = false, onToggle }: SidebarPro
                     icon: FileText,
                     active: pathname.startsWith("/crm/quotes"),
                 },
+                {
+                    href: "/crm/orders",
+                    label: "Sales Orders",
+                    icon: ShoppingCart,
+                    active: pathname.startsWith("/crm/orders"),
+                },
             ]
         },
 

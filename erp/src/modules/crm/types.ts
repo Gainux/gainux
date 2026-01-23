@@ -37,6 +37,7 @@ export interface Company {
     website?: string;
     phone?: string;
     email?: string;
+    source?: string; // Track origin (e.g. converted from lead)
     address?: string; // Kept for backward compat if needed, but city/state/zip prefered
 
     // Detailed address fields
@@ -129,7 +130,7 @@ export interface Activity {
     date?: string;
 }
 
-export interface CRMActivity extends Activity { }
+export type CRMActivity = Activity;
 
 export interface QuoteItem {
     description: string;
@@ -154,7 +155,43 @@ export interface Quote {
     totalAmount: number;
     currency: string;
     notes?: string;
+
+    // Comprehensive fields
+    scopeOfWork?: string;
+    paymentTerms?: string;
+    terms?: string;
+    taxRate?: number;
+
     items: QuoteItem[];
     createdAt: string;
     updatedAt: string;
 }
+
+export interface SalesOrderItem {
+    description: string;
+    quantity: number;
+    unitPrice: number;
+    total: number;
+}
+
+export interface SalesOrder {
+    id: string;
+    orgId: string;
+    orderNumber: string;
+    quoteId?: string;
+    quote?: Quote;
+    dealId?: string;
+    companyId?: string;
+    company?: Company;
+    status: 'draft' | 'confirmed' | 'delivered' | 'cancelled';
+    totalAmount: number;
+    currency: string;
+    orderDate: string;
+    deliveryDate?: string;
+    billingAddress?: string;
+    shippingAddress?: string;
+    items: SalesOrderItem[];
+    createdAt: string;
+    updatedAt: string;
+}
+

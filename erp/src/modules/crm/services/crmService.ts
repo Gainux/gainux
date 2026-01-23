@@ -114,6 +114,21 @@ export const crmService = {
         return data.map(mapToLead);
     },
 
+
+    async getLeadById(id: string) {
+        const { data, error } = await supabase
+            .from('leads')
+            .select(`
+                *,
+                employees (id, first_name, last_name)
+            `)
+            .eq('id', id)
+            .single();
+
+        if (error) throw error;
+        return mapToLead(data);
+    },
+
     async createLead(lead: Partial<Lead>) {
         const { data: profile } = await supabase.auth.getUser();
         // Assuming profile fetch logic for org_id if needed, but RLS handles view.
@@ -173,6 +188,44 @@ export const crmService = {
     async deleteLead(id: string) {
         const { error } = await supabase.from('leads').delete().eq('id', id);
         if (error) throw error;
+    },
+
+    async convertLead(leadId: string, dealData: { title: string, value: number, expectedCloseDate?: string }) {
+        // 1. Get Lead Data
+        const lead = await this.getLeadById(leadId);
+
+        // 2. Create Company
+        const company = await this.createCompany({
+            name: lead.companyName || `${lead.firstName} ${lead.lastName}'s Company`,
+            email: lead.email,
+            phone: lead.phone,
+            source: lead.source // if supported
+        });
+
+        // 3. Create Contact
+        const contact = await this.createContact({
+            firstName: lead.firstName,
+            lastName: lead.lastName,
+            email: lead.email,
+            phone: lead.phone,
+            companyId: company.id
+        });
+
+        // 4. Create Deal
+        const deal = await this.createDeal({
+            title: dealData.title,
+            value: dealData.value,
+            expectedCloseDate: dealData.expectedCloseDate,
+            leadId: leadId,
+            companyId: company.id,
+            contactId: contact.id,
+            ownerId: lead.ownerId
+        });
+
+        // 5. Update Lead Status
+        await this.updateLead(leadId, { status: 'won' }); // or 'qualified' / 'converted'
+
+        return deal;
     },
 
     // Deals
@@ -444,7 +497,8 @@ export const crmService = {
                 orgId: item.org_id,
                 firstName: item.contact.first_name,
                 lastName: item.contact.last_name,
-                createdAt: '', updatedAt: ''
+                createdAt: item.created_at,
+                updatedAt: item.updated_at,
             } : undefined,
             issueDate: item.issue_date,
             validUntil: item.valid_until,
@@ -452,6 +506,12 @@ export const crmService = {
             totalAmount: item.total_amount,
             currency: item.currency,
             notes: item.notes,
+            // New fields
+            scopeOfWork: item.scope_of_work,
+            paymentTerms: item.payment_terms,
+            terms: item.terms,
+            taxRate: item.tax_rate,
+
             items: item.items || [],
             createdAt: item.created_at,
             updatedAt: item.updated_at,
@@ -486,7 +546,12 @@ export const crmService = {
                 total_amount: quote.totalAmount,
                 currency: quote.currency || 'USD',
                 notes: quote.notes,
-                items: quote.items
+                items: quote.items,
+                // New fields
+                scope_of_work: quote.scopeOfWork,
+                payment_terms: quote.paymentTerms,
+                terms: quote.terms,
+                tax_rate: quote.taxRate
             })
             .select()
             .single();
@@ -511,6 +576,11 @@ export const crmService = {
         if (updates.totalAmount) dbUpdates.total_amount = updates.totalAmount;
         if (updates.notes) dbUpdates.notes = updates.notes;
         if (updates.validUntil) dbUpdates.valid_until = updates.validUntil;
+        // New fields
+        if (updates.scopeOfWork !== undefined) dbUpdates.scope_of_work = updates.scopeOfWork;
+        if (updates.paymentTerms !== undefined) dbUpdates.payment_terms = updates.paymentTerms;
+        if (updates.terms !== undefined) dbUpdates.terms = updates.terms;
+        if (updates.taxRate !== undefined) dbUpdates.tax_rate = updates.taxRate;
 
         const { data, error } = await supabase
             .from('quotes')
