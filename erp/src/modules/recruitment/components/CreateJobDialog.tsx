@@ -55,9 +55,9 @@ export function CreateJobDialog({ open, onOpenChange, onSuccess, job }: CreateJo
     const { profile } = useAuth();
     const [departments, setDepartments] = useState<any[]>([]);
     const [designations, setDesignations] = useState<any[]>([]);
-    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const form = useForm<z.infer<typeof formSchema>>({
+
+    const form = useForm({
         resolver: zodResolver(formSchema),
         defaultValues: {
             title: "",
@@ -109,8 +109,6 @@ export function CreateJobDialog({ open, onOpenChange, onSuccess, job }: CreateJo
     const onSubmit = async (values: z.infer<typeof formSchema>) => {
         if (!profile?.org_id) return;
         try {
-            setIsSubmitting(true);
-
             if (job) {
                 // Update existing job
                 await recruitmentService.updateJob(job.id, {
@@ -132,8 +130,6 @@ export function CreateJobDialog({ open, onOpenChange, onSuccess, job }: CreateJo
         } catch (error) {
             console.error(error);
             toast.error(job ? "Failed to update job" : "Failed to post job");
-        } finally {
-            setIsSubmitting(false);
         }
     };
 
@@ -146,7 +142,7 @@ export function CreateJobDialog({ open, onOpenChange, onSuccess, job }: CreateJo
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                         <FormField
-                            control={form.control}
+                            control={form.control as any}
                             name="title"
                             render={({ field }) => (
                                 <FormItem>
@@ -161,7 +157,7 @@ export function CreateJobDialog({ open, onOpenChange, onSuccess, job }: CreateJo
 
                         <div className="grid grid-cols-2 gap-4">
                             <FormField
-                                control={form.control}
+                                control={form.control as any}
                                 name="departmentId"
                                 render={({ field }) => (
                                     <FormItem>
@@ -184,7 +180,7 @@ export function CreateJobDialog({ open, onOpenChange, onSuccess, job }: CreateJo
                             />
 
                             <FormField
-                                control={form.control}
+                                control={form.control as any}
                                 name="designationId"
                                 render={({ field }) => (
                                     <FormItem>
@@ -209,7 +205,7 @@ export function CreateJobDialog({ open, onOpenChange, onSuccess, job }: CreateJo
 
                         <div className="grid grid-cols-2 gap-4">
                             <FormField
-                                control={form.control}
+                                control={form.control as any}
                                 name="type"
                                 render={({ field }) => (
                                     <FormItem>
@@ -233,7 +229,7 @@ export function CreateJobDialog({ open, onOpenChange, onSuccess, job }: CreateJo
                             />
 
                             <FormField
-                                control={form.control}
+                                control={form.control as any}
                                 name="location"
                                 render={({ field }) => (
                                     <FormItem>
@@ -248,7 +244,7 @@ export function CreateJobDialog({ open, onOpenChange, onSuccess, job }: CreateJo
                         </div>
 
                         <FormField
-                            control={form.control}
+                            control={form.control as any}
                             name="description"
                             render={({ field }) => (
                                 <FormItem>
@@ -262,7 +258,7 @@ export function CreateJobDialog({ open, onOpenChange, onSuccess, job }: CreateJo
                         />
 
                         <FormField
-                            control={form.control}
+                            control={form.control as any}
                             name="status"
                             render={({ field }) => (
                                 <FormItem>

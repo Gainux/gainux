@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Shield, Key, Smartphone, AlertCircle, CheckCircle, Loader2, LogOut } from "lucide-react";
+import { Shield, Key, Smartphone, AlertCircle, CheckCircle, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 
@@ -17,7 +17,7 @@ export default function SecuritySettingsPage() {
     const [loading, setLoading] = useState(false);
 
     // Password Change State
-    const [currentPassword, setCurrentPassword] = useState("");
+    const [, setCurrentPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [passwordError, setPasswordError] = useState("");

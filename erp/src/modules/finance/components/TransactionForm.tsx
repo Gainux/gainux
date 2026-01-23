@@ -56,14 +56,14 @@ export function TransactionForm({
     onSuccess,
     bankAccountId,
     bankGlAccountId,
-    bankAccountName,
+    // bankAccountName,
     preselectedType = 'deposit'
 }: TransactionFormProps) {
     const { profile } = useAuth();
     const [submitting, setSubmitting] = useState(false);
     const [accounts, setAccounts] = useState<Account[]>([]);
 
-    const form = useForm<z.infer<typeof formSchema>>({
+    const form = useForm<any>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             type: preselectedType,

@@ -148,7 +148,7 @@ export default function ExpenseList() {
     };
 
     // Helper: Can user approve?
-    const canApprove = isAdmin || profile?.role === 'owner';
+    const canApprove = isAdmin || (profile?.role as any) === 'owner';
 
     return (
         <div className="flex-1 space-y-4 p-8 pt-6">

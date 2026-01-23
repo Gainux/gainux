@@ -21,7 +21,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { employeeService } from "../services/employeeService";
 import { useAuth } from "@/context/AuthContext";
-import type { Employee, Department, Designation } from "../types";
+import type { Employee, Department } from "../types";
 import { toast } from "sonner";
 
 export default function EmployeeList() {
@@ -29,7 +29,7 @@ export default function EmployeeList() {
     const { profile } = useAuth();
     const [employees, setEmployees] = useState<Employee[]>([]);
     const [departments, setDepartments] = useState<Department[]>([]);
-    const [designations, setDesignations] = useState<Designation[]>([]);
+
     const [loading, setLoading] = useState(true);
 
     // Filters
@@ -48,15 +48,13 @@ export default function EmployeeList() {
 
         try {
             setLoading(true);
-            const [employeesData, departmentsData, designationsData] = await Promise.all([
+            const [employeesData, departmentsData] = await Promise.all([
                 employeeService.getEmployees(profile.org_id),
-                employeeService.getDepartments(profile.org_id),
-                employeeService.getDesignations(profile.org_id)
+                employeeService.getDepartments(profile.org_id)
             ]);
 
             setEmployees(employeesData);
             setDepartments(departmentsData);
-            setDesignations(designationsData);
         } catch (error) {
             console.error("Failed to load data", error);
             toast.error("Failed to load employees");

@@ -14,9 +14,8 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { billService } from "../services/billService";
-import { vendorService } from "@/modules/procurement/services/vendorService";
 import { taxService } from "../services/taxService";
-import type { Vendor, BillItem, TaxRate } from "../types";
+import type { BillItem, TaxRate } from "../types";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -26,7 +25,7 @@ export default function CreateBill() {
     const { profile } = useAuth();
     const orgId = profile?.org_id;
 
-    const [vendors, setVendors] = useState<Vendor[]>([]);
+    // const [vendors, setVendors] = useState<Vendor[]>([]);
     const [taxRates, setTaxRates] = useState<TaxRate[]>([]);
     const [vendorId, setVendorId] = useState("");
 
@@ -52,11 +51,11 @@ export default function CreateBill() {
 
     const fetchData = async () => {
         try {
-            const [vendorsData, taxRatesData] = await Promise.all([
-                vendorService.getVendors(orgId!),
+            const [taxRatesData] = await Promise.all([
+                // vendorService.getVendors(orgId!),
                 taxService.getTaxRates(orgId!)
             ]);
-            setVendors(vendorsData);
+            // setVendors(vendorsData);
             setTaxRates(taxRatesData);
         } catch (err) {
             console.error("Error fetching data:", err);
@@ -165,19 +164,14 @@ export default function CreateBill() {
                             <CardContent className="space-y-4">
                                 <div className="grid gap-4 md:grid-cols-2">
                                     <div className="space-y-2">
-                                        <Label htmlFor="vendor">Vendor *</Label>
-                                        <Select value={vendorId} onValueChange={setVendorId} required>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Select vendor" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {vendors.map(v => (
-                                                    <SelectItem key={v.id} value={v.id}>
-                                                        {v.name}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                                        <Label htmlFor="vendor">Vendor (ID)</Label>
+                                        <Input
+                                            value={vendorId}
+                                            onChange={(e) => setVendorId(e.target.value)}
+                                            placeholder="Vendor ID"
+                                            required
+                                        />
+                                        {/* Reference to vendors list removed */}
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="vendorRef">Vendor Invoice #</Label>

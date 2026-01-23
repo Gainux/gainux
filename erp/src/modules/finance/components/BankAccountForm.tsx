@@ -55,7 +55,7 @@ export default function BankAccountForm({
     const { profile } = useAuth();
     const [submitting, setSubmitting] = useState(false);
 
-    const form = useForm<z.infer<typeof formSchema>>({
+    const form = useForm<any>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             accountName: "",

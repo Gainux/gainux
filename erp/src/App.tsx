@@ -29,19 +29,7 @@ import GeneralLedgerPage from "./modules/finance/pages/GeneralLedgerPage";
 import CreateBill from "./modules/finance/pages/CreateBill";
 import PayablesPage from "./modules/finance/pages/PayablesPage";
 import BankList from "./modules/finance/pages/BankList";
-import VendorList from "./modules/procurement/pages/VendorList";
-import InventoryPage from "./modules/procurement/pages/InventoryPage";
-import WarehousePage from "./modules/procurement/pages/WarehousePage";
-import PurchaseOrderList from "./modules/procurement/pages/PurchaseOrderList";
-import PurchaseOrderDetails from "./modules/procurement/pages/PurchaseOrderDetails";
-import RFQListPage from "./modules/procurement/pages/RFQListPage";
-import RFQDetails from "./modules/procurement/pages/RFQDetails";
 
-import PatientList from "./modules/healthcare/pages/PatientList";
-import PatientDetails from "./modules/healthcare/pages/PatientDetails";
-import EncounterDetails from "./modules/healthcare/pages/EncounterDetails";
-import EncounterList from "./modules/healthcare/pages/EncounterList";
-import PharmacyDashboard from "./modules/healthcare/pages/PharmacyDashboard";
 
 import LeadDetailsPage from "@/modules/crm/pages/LeadDetailsPage";
 
@@ -60,9 +48,7 @@ import AuditLogsPage from "@/modules/system/pages/AuditLogsPage";
 import UsersListPage from "@/modules/system/pages/UsersListPage";
 import SecuritySettingsPage from "@/modules/system/pages/SecuritySettingsPage";
 
-import ProductListPage from "@/modules/marketplace/pages/ProductListPage";
-import ProductDetailsPage from "@/modules/marketplace/pages/ProductDetailsPage";
-import OrderListPage from "@/modules/marketplace/pages/OrderListPage";
+
 
 
 
@@ -71,7 +57,7 @@ import { ThemeProvider } from "@/context/ThemeContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import LoginPage from "@/pages/auth/LoginPage";
 import ProfilePage from "@/pages/auth/ProfilePage";
-import DepartmentModuleAccessPage from "@/pages/system/DepartmentModuleAccessPage";
+
 import SettingsPage from "@/pages/SettingsPage";
 import BankDetails from "./modules/finance/pages/BankDetails";
 import BudgetList from "./modules/finance/pages/BudgetList";
@@ -177,21 +163,6 @@ function App() {
 
 
 
-                  {/* Procurement & Supply Chain */}
-                  <Route element={<ModuleGuard moduleId="supply-chain" />}>
-                    <Route path="/procurement/vendors" element={<VendorList />} />
-                    <Route path="/procurement/inventory" element={<InventoryPage />} />
-                    <Route path="/procurement/warehouses" element={<WarehousePage />} />
-                    <Route path="/procurement/purchase-orders" element={<PurchaseOrderList />} />
-                    <Route path="/procurement/purchase-orders/:id" element={<PurchaseOrderDetails />} />
-                    <Route path="/procurement/rfq" element={<RFQListPage />} />
-                    <Route path="/procurement/rfq/:id" element={<RFQDetails />} />
-                  </Route>
-
-                  {/* Manufacturing */}
-                  <Route element={<ModuleGuard moduleId="manufacturing" />}>
-                    <Route path="/manufacturing/*" element={<ComingSoonPage title="Manufacturing" />} />
-                  </Route>
 
                   {/* Projects Module */}
                   <Route element={<ModuleGuard moduleId="projects" />}>
@@ -208,15 +179,7 @@ function App() {
                     <Route path="/finance/assets/:id" element={<AssetDetails />} />
                   </Route> */}
 
-                  {/* Logistics */}
-                  <Route element={<ModuleGuard moduleId="logistics" />}>
-                    <Route path="/logistics/*" element={<ComingSoonPage title="Logistics & Distribution" />} />
-                  </Route>
 
-                  {/* Quality */}
-                  <Route element={<ModuleGuard moduleId="quality" />}>
-                    <Route path="/quality/*" element={<ComingSoonPage title="Quality & Compliance" />} />
-                  </Route>
 
                   {/* Tax & Compliance */}
                   <Route element={<ModuleGuard moduleId="finance" />}>
@@ -250,30 +213,7 @@ function App() {
                     <Route path="/integrations/*" element={<ComingSoonPage title="API & Integrations" />} />
                   </Route>
 
-                  {/* Industry Specific */}
-                  <Route element={<ModuleGuard moduleId="retail" />}>
-                    <Route path="/retail/*" element={<ComingSoonPage title="Retail & POS" />} />
-                  </Route>
-                  <Route element={<ModuleGuard moduleId="healthcare" />}>
-                    <Route path="/healthcare/patients" element={<PatientList />} />
-                    <Route path="/healthcare/patients/:id" element={<PatientDetails />} />
-                    <Route path="/healthcare/appointments" element={<EncounterList />} />
-                    <Route path="/healthcare/encounters/:id" element={<EncounterDetails />} />
-                    <Route path="/healthcare/pharmacy" element={<PharmacyDashboard />} />
-                    <Route path="/healthcare/*" element={<ComingSoonPage title="Healthcare (HIS)" />} />
-                  </Route>
-                  <Route element={<ModuleGuard moduleId="construction" />}>
-                    <Route path="/construction/*" element={<ComingSoonPage title="Construction" />} />
-                  </Route>
 
-                  {/* Marketplace Module */}
-                  <Route element={<ModuleGuard moduleId="marketplace" />}>
-                    <Route path="/marketplace/products" element={<ProductListPage />} />
-                    <Route path="/marketplace/products/new" element={<ProductDetailsPage />} />
-                    <Route path="/marketplace/products/:id" element={<ProductDetailsPage />} />
-                    <Route path="/marketplace/orders" element={<OrderListPage />} />
-                    <Route path="/marketplace/*" element={<ComingSoonPage title="Marketplace & Add-ons" />} />
-                  </Route>
 
                   {/* System Module (Settings & Users) */}
                   <Route element={<ModuleGuard moduleId="system" />}>
@@ -282,7 +222,7 @@ function App() {
                       <Route path="/system/company" element={<CompanySettingsPage />} />
                       <Route path="/system/audit" element={<AuditLogsPage />} />
                       <Route path="/system/security" element={<SecuritySettingsPage />} />
-                      <Route path="/system/department-access" element={<DepartmentModuleAccessPage />} />
+
                       <Route path="/settings" element={<SettingsPage />} />
                       <Route path="/system/*" element={<ComingSoonPage title="System Settings" />} />
                     </Route>

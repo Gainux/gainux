@@ -30,7 +30,7 @@ export function UserDialog({ user, onSave, onCancel }: UserDialogProps) {
             setRole(user.role);
             setStatus(user.status);
             setEmail(user.email);
-            setFullName(user.fullName || "");
+            setFullName(user.full_name || "");
         } else {
             // Reset for create mode
             setRole("user");
@@ -46,7 +46,7 @@ export function UserDialog({ user, onSave, onCancel }: UserDialogProps) {
         onSave({
             id: user?.id, // ID only exists if editing
             email,
-            fullName,
+            full_name: fullName,
             password: !user ? password : undefined, // Only send password if creating
             role: role as any,
             status: status as any

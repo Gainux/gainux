@@ -10,42 +10,29 @@ import {
     BarChart,
     Briefcase,
     FolderKanban,
-    Truck,
-    Factory,
-    Wrench,
-    Map,
-    ShieldCheck,
     LineChart,
     Workflow,
     Plug,
-    Store,
     Activity,
-    HardHat,
     ChevronDown,
     ChevronRight,
     PanelLeftClose,
     PanelLeftOpen,
     FileText,
-    Calculator,
     Building,
     UserCheck,
     Calendar,
-    ClipboardList,
     Wallet,
-    Package,
     Clock,
     Shield,
     Zap,
-    Layers,
     Receipt,
     Scale,
     GraduationCap,
-    ClipboardCheck,
     FileSpreadsheet,
     ShieldAlert,
     FileCheck,
-    Landmark,
-    Box
+    Landmark
 } from "lucide-react";
 import { useModules } from "@/context/ModuleContext";
 import { useAuth } from "@/context/AuthContext";
@@ -263,78 +250,7 @@ export function Sidebar({ className, isCollapsed = false, onToggle }: SidebarPro
                 },
             ]
         },
-        {
-            title: "Procurement & Supply",
-            moduleId: 'supply-chain',
-            routes: [
-                {
-                    href: "/procurement/vendors",
-                    label: "Vendor Mgmt",
-                    icon: Users,
-                    active: pathname.startsWith("/procurement/vendors"),
-                },
-                {
-                    href: "/procurement/rfq",
-                    label: "RFQs",
-                    icon: FileText,
-                    active: pathname.startsWith("/procurement/rfq"),
-                },
-                {
-                    href: "/procurement/purchase-orders",
-                    label: "Purchase Orders",
-                    icon: ClipboardList,
-                    active: pathname.startsWith("/procurement/purchase-orders"),
-                },
-                {
-                    href: "/procurement/inventory",
-                    label: "Inventory",
-                    icon: Package,
-                    active: pathname.startsWith("/procurement/inventory"),
-                },
-                {
-                    href: "/procurement/warehouses",
-                    label: "Warehouses",
-                    icon: Box,
-                    active: pathname.startsWith("/procurement/warehouses"),
-                },
-            ]
-        },
-        {
-            title: "Manufacturing",
-            moduleId: 'manufacturing',
-            routes: [
-                {
-                    href: "/manufacturing/bom",
-                    label: "Bill of Materials",
-                    icon: Layers,
-                    active: pathname.startsWith("/manufacturing/bom"),
-                },
-                {
-                    href: "/manufacturing/planning",
-                    label: "Production Plan",
-                    icon: Calendar,
-                    active: pathname.startsWith("/manufacturing/planning"),
-                },
-                {
-                    href: "/manufacturing/shop-floor",
-                    label: "Shop Floor",
-                    icon: Factory,
-                    active: pathname.startsWith("/manufacturing/shop-floor"),
-                },
-                {
-                    href: "/manufacturing/quality",
-                    label: "Quality Control",
-                    icon: ClipboardCheck,
-                    active: pathname.startsWith("/manufacturing/quality"),
-                },
-                {
-                    href: "/manufacturing/costing",
-                    label: "Job Costing",
-                    icon: Calculator,
-                    active: pathname.startsWith("/manufacturing/costing"),
-                },
-            ]
-        },
+
         {
             title: "Project Management",
             moduleId: 'projects',
@@ -359,66 +275,7 @@ export function Sidebar({ className, isCollapsed = false, onToggle }: SidebarPro
                 },
             ].filter(route => route.label !== "Resource Plan" || isAdmin)
         },
-        {
-            title: "Asset Management",
-            moduleId: 'assets',
-            routes: [
-                {
-                    href: "/assets/dashboard",
-                    label: "Asset Register",
-                    icon: Wrench,
-                    active: pathname.startsWith("/assets/dashboard"),
-                },
-                {
-                    href: "/assets/maintenance",
-                    label: "Maintenance",
-                    icon: Wrench,
-                    active: pathname.startsWith("/assets/maintenance"),
-                },
-            ]
-        },
-        {
-            title: "Logistics",
-            moduleId: 'logistics',
-            routes: [
-                {
-                    href: "/logistics/tms",
-                    label: "Transport Mgmt",
-                    icon: Truck,
-                    active: pathname.startsWith("/logistics/tms"),
-                },
-                {
-                    href: "/logistics/shipments",
-                    label: "Shipments",
-                    icon: Map,
-                    active: pathname.startsWith("/logistics/shipments"),
-                },
-            ]
-        },
-        {
-            title: "Quality & Risk",
-            moduleId: 'quality',
-            routes: [
-                {
-                    href: "/quality/qms",
-                    label: "QMS",
-                    icon: ShieldCheck,
-                    active: pathname.startsWith("/quality/qms"),
-                },
-                {
-                    href: "/quality/inspections",
-                    label: "Inspections",
-                    icon: ClipboardCheck,
-                    active: pathname.startsWith("/quality/inspections"),
-                },
-                {
-                    href: "/quality/compliance",
-                    label: "Compliance",
-                    icon: Shield,
-                    active: pathname.startsWith("/quality/compliance"),
-                },
-            ]
-        },
+
         {
             title: "BI & Analytics",
             moduleId: 'analytics',
@@ -479,78 +336,7 @@ export function Sidebar({ className, isCollapsed = false, onToggle }: SidebarPro
                 },
             ]
         },
-        {
-            title: "Retail (POS)",
-            moduleId: 'retail',
-            routes: [
-                {
-                    href: "/retail/pos",
-                    label: "Point of Sale",
-                    icon: Store,
-                    active: pathname.startsWith("/retail/pos"),
-                }
-            ]
-        },
-        {
-            title: "Healthcare (HIS)",
-            moduleId: 'healthcare',
-            routes: [
-                {
-                    href: "/healthcare/patients",
-                    label: "Patients",
-                    icon: Activity,
-                    active: pathname.startsWith("/healthcare/patients"),
-                },
-                {
-                    href: "/healthcare/appointments",
-                    label: "Appointments",
-                    icon: Calendar,
-                    active: pathname.startsWith("/healthcare/appointments"),
-                },
-                {
-                    href: "/healthcare/pharmacy",
-                    label: "Pharmacy Queue",
-                    icon: ClipboardCheck,
-                    active: pathname.startsWith("/healthcare/pharmacy"),
-                }
-            ]
-        },
-        {
-            title: "Construction",
-            moduleId: 'construction',
-            routes: [
-                {
-                    href: "/construction/sites",
-                    label: "Site Management",
-                    icon: HardHat,
-                    active: pathname.startsWith("/construction/sites"),
-                },
-                {
-                    href: "/construction/boq",
-                    label: "BOQ",
-                    icon: FileText,
-                    active: pathname.startsWith("/construction/boq"),
-                }
-            ]
-        },
-        {
-            title: "Marketplace",
-            moduleId: 'marketplace',
-            routes: [
-                {
-                    href: "/marketplace/products",
-                    label: "App Store",
-                    icon: Store,
-                    active: pathname.startsWith("/marketplace/products"),
-                },
-                {
-                    href: "/marketplace/orders",
-                    label: "My Apps",
-                    icon: Box,
-                    active: pathname.startsWith("/marketplace/orders"),
-                },
-            ]
-        },
+
         {
             title: "System & Security",
             moduleId: 'system',
@@ -573,12 +359,7 @@ export function Sidebar({ className, isCollapsed = false, onToggle }: SidebarPro
                     icon: ShieldAlert,
                     active: pathname.startsWith("/system/security"),
                 },
-                {
-                    href: "/system/department-access",
-                    label: "Department Access",
-                    icon: Users,
-                    active: pathname.startsWith("/system/department"),
-                },
+
                 {
                     href: "/system/audit",
                     label: "Audit Logs",

@@ -1,4 +1,4 @@
-import { useNavigate, useLocation, Outlet } from "react-router-dom";
+import { useNavigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
@@ -6,7 +6,7 @@ import { Loader2 } from "lucide-react";
 export default function AdminGuard() {
     const { isAdmin, isAuthenticated, loading } = useAuth() as any; // Cast to any if loading not yet in type def
     const navigate = useNavigate();
-    const location = useLocation();
+    // const location = useLocation();
 
     // Check loading first to avoid premature redirect
     // We need to ensure AuthContext gives us a loading state or we handle it based on session null

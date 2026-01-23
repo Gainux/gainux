@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, Plus, Building, MapPin, Globe, CreditCard, Mail, Phone, Save } from "lucide-react";
 
@@ -167,7 +167,7 @@ export default function CompanySettingsPage() {
         setSaving(true);
         try {
             // 1. Create Organization
-            const newOrg = await companyService.createOrganization({
+            await companyService.createOrganization({
                 name: orgName,
                 currency: currency || "USD",
                 settings: {}

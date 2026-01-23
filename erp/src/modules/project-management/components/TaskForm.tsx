@@ -10,7 +10,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { supabase } from "@/lib/supabase";
+
 import type { Task } from "../types";
 
 interface TaskFormProps {

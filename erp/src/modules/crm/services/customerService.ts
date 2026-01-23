@@ -17,8 +17,7 @@ export const customerService = {
             .from("customers")
             .insert([
                 {
-                    name: customer.name,
-                    company: customer.company,
+                    name: customer.name || '',
                     email: customer.email,
                     status: customer.status || 'active',
                     total_revenue: customer.totalRevenue || '$0.00',

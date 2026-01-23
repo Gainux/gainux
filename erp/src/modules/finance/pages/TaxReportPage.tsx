@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 
 export default function TaxReportPage() {
     const { profile } = useAuth();
-    const [loading, setLoading] = useState(true);
+    const [, setLoading] = useState(true);
     const [report, setReport] = useState({
         totalSales: 0,
         totalTaxCollected: 0,
@@ -36,7 +36,7 @@ export default function TaxReportPage() {
     const fetchReport = async () => {
         try {
             setLoading(true);
-            const data = await taxService.getTaxReport(profile!.org_id, startDate, endDate);
+            const data = await taxService.getTaxReport(profile?.org_id || "", startDate, endDate);
             setReport(data);
         } catch (error) {
             console.error('Failed to load tax report', error);

@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { recruitmentService } from "../services/recruitmentService";
-import type { JobPosting, Candidate, JobApplication, Interview } from "../types";
+import type { JobPosting, Candidate } from "../types";
 import { toast } from "sonner";
 import JobForm from "../components/recruitment/JobForm";
 import CandidateList from "../components/recruitment/CandidateList";
@@ -13,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 
 export default function RecruitmentPage() {
-    const { user, profile } = useAuth();
+    const { profile } = useAuth();
     const [activeTab, setActiveTab] = useState("jobs");
     const [jobs, setJobs] = useState<JobPosting[]>([]);
     const [candidates, setCandidates] = useState<Candidate[]>([]);

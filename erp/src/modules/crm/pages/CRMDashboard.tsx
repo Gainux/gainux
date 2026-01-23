@@ -9,8 +9,6 @@ import {
 import {
     Bar,
     BarChart,
-    Line,
-    LineChart,
     ResponsiveContainer,
     Tooltip,
     XAxis,
@@ -19,7 +17,7 @@ import {
 } from "recharts";
 import { DollarSign, Users, Briefcase, TrendingUp } from "lucide-react";
 import { crmService } from "../services/crmService";
-import type { Deal, Lead } from "../types";
+// import type { Deal, Lead } from "../types";
 
 export default function CRMDashboard() {
     const [stats, setStats] = useState({

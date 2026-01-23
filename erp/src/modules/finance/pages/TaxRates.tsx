@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Plus, Shield, Pencil, Trash2, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
 import {
     Table,
     TableBody,
@@ -19,7 +19,6 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -66,8 +65,8 @@ export default function TaxRates() {
         try {
             setLoading(true);
             const [ratesData, accountsData] = await Promise.all([
-                taxService.getTaxRates(profile!.org_id),
-                financeService.getAccounts(profile!.org_id)
+                taxService.getTaxRates(profile?.org_id || ""),
+                financeService.getAccounts(profile?.org_id || "")
             ]);
             setRates(ratesData);
             setAccounts(accountsData);

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { format, addDays, subDays, startOfMonth, endOfMonth, addMonths, subMonths } from "date-fns";
-import { Calendar, Clock, UserCheck, Edit, Search, ChevronLeft, ChevronRight, LayoutGrid, List } from "lucide-react";
+import { Clock, UserCheck, Edit, Search, ChevronLeft, ChevronRight, LayoutGrid, List } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AttendanceGrid } from "../components/AttendanceGrid";
@@ -127,7 +127,7 @@ export default function AttendancePage() {
                 if (!empRecord) return;
 
                 await attendanceService.markAttendance({
-                    orgId: profile.org_id,
+                    orgId: profile?.org_id || "",
                     employeeId: id,
                     date: date,
                     status: status,
@@ -267,7 +267,7 @@ export default function AttendancePage() {
                     status: 'present',
                     date: date,
                     checkIn: '09:00',
-                    orgId: profile!.org_id,
+                    orgId: profile?.org_id || "",
                 })
             ));
             toast.success(`Marked ${unmarkedEmployees.length} employees as present`);
@@ -293,7 +293,7 @@ export default function AttendancePage() {
                     employeeId: e.employee.id,
                     status: 'absent',
                     date: date,
-                    orgId: profile!.org_id,
+                    orgId: profile?.org_id || "",
                 })
             ));
             toast.success(`Marked ${unmarkedEmployees.length} employees as absent`);

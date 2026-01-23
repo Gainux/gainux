@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Building2, Palette, Bell, Loader2, Blocks } from "lucide-react";
+import { Palette, Bell, Loader2, Blocks } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";

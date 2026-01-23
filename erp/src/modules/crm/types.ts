@@ -18,6 +18,13 @@ export interface Lead {
         lastName: string;
     };
     notes?: string;
+
+    // Compatibility fields
+    name?: string;
+    title?: string;
+    company?: string;
+    lastContacted?: string;
+
     createdAt: string;
     updatedAt: string;
 }
@@ -30,7 +37,19 @@ export interface Company {
     website?: string;
     phone?: string;
     email?: string;
-    address?: string;
+    address?: string; // Kept for backward compat if needed, but city/state/zip prefered
+
+    // Detailed address fields
+    city?: string;
+    state?: string;
+    zip?: string;
+    country?: string;
+
+    // Metrics
+    status?: string | 'active' | 'inactive';
+    totalRevenue?: number; // Should be number, service might be using string or formatting it
+    lastOrderDate?: string;
+
     createdAt: string;
     updatedAt: string;
 }
@@ -49,13 +68,22 @@ export interface Contact {
     updatedAt: string;
 }
 
+export type Customer = Company;
+
+export interface Requirement {
+    id: string;
+    title: string; // Added title
+    description: string;
+    priority: 'low' | 'medium' | 'high';
+}
+
 export interface Deal {
     id: string;
     orgId: string;
     title: string;
     value: number;
     currency: string;
-    stage: string; // 'lead' | 'proposal' | 'negotiation' | 'won' | 'lost'
+    stage: string;
     probability: number;
     quantity?: number;
     expectedCloseDate?: string;
@@ -65,6 +93,7 @@ export interface Deal {
     company?: Company;
     contactId?: string;
     contact?: Contact;
+    customerId?: string;
     ownerId?: string;
     owner?: {
         id: string;
@@ -73,15 +102,15 @@ export interface Deal {
     };
     createdAt: string;
     updatedAt: string;
-    requirements?: any[];
+    requirements?: Requirement[];
 }
 
-export interface CRMActivity {
+export interface Activity {
     id: string;
     orgId: string;
-    type: string; // 'Call', 'Email', 'Meeting', 'Note'
+    type: string;
     subject?: string;
-    description?: string;
+    description?: string; // Used as content
     dueDate?: string;
     completed: boolean;
     dealId?: string;
@@ -93,8 +122,14 @@ export interface CRMActivity {
         firstName: string;
         lastName: string;
     };
-    createdAt: string;
+    createdAt: string; // Used as date
+
+    // Virtual fields for UI compatibility if needed, but prefer mapping in component
+    content?: string;
+    date?: string;
 }
+
+export interface CRMActivity extends Activity { }
 
 export interface QuoteItem {
     description: string;

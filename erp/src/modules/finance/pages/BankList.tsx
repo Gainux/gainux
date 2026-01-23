@@ -28,7 +28,7 @@ export default function BankList() {
     const fetchAccounts = async () => {
         try {
             setLoading(true);
-            const data = await bankService.getBankAccounts(profile!.org_id);
+            const data = await bankService.getBankAccounts(profile?.org_id || "");
             setAccounts(data);
         } catch (error) {
             console.error("Failed to fetch bank accounts", error);

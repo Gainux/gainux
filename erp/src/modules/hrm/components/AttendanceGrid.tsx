@@ -91,7 +91,7 @@ export function AttendanceGrid({
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {employees.map(({ employee }, index) => (
+                        {employees.map(({ employee }) => (
                             <TableRow key={employee.id} className="hover:bg-muted/30 border-b last:border-0 group">
                                 <TableCell className="sticky left-0 bg-card z-10 border-r shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] py-3 pl-6 transition-colors">
                                     <div className="flex flex-col">

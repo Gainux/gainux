@@ -39,7 +39,7 @@ export function ActivityFeed({ activities }: ActivityFeedProps) {
                                     {getIcon(item.type)}
                                     <span className="capitalize">{item.type}</span>
                                     <span>•</span>
-                                    <span>{format(new Date(item.date), "MMM d, h:mm a")}</span>
+                                    <span>{format(new Date(item.date || item.createdAt || new Date()), "MMM d, h:mm a")}</span>
                                 </div>
                             </div>
                         </div>

@@ -1,6 +1,6 @@
 import { supabase } from '../../../lib/supabase';
 import { financeService } from './financeService';
-import type { BankAccount, JournalEntry } from '../types';
+import type { BankAccount } from '../types';
 
 export const bankService = {
 
@@ -134,7 +134,7 @@ export const bankService = {
         return journal;
     },
 
-    async getBankTransactions(orgId: string, glAccountId: string) {
+    async getBankTransactions(_orgId: string, glAccountId: string) {
         // Fetch all journal items for this GL Account to build history
         const { data, error } = await supabase
             .from('journal_entry_items')

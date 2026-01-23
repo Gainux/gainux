@@ -30,7 +30,8 @@ export function RequirementsList({ requirements, onUpdate }: RequirementsListPro
         const newReq: Requirement = {
             id: crypto.randomUUID(),
             title: title.trim(),
-            description: description.trim() || undefined,
+            description: description.trim() || "",
+            priority: 'medium',
         };
         await onUpdate([...requirements, newReq]);
         setTitle("");
@@ -42,7 +43,7 @@ export function RequirementsList({ requirements, onUpdate }: RequirementsListPro
         if (!editingReq || !title.trim()) return;
         const updated = requirements.map(req =>
             req.id === editingReq.id
-                ? { ...req, title: title.trim(), description: description.trim() || undefined }
+                ? { ...req, title: title.trim(), description: description.trim() || "" }
                 : req
         );
         await onUpdate(updated);

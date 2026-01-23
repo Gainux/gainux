@@ -71,7 +71,7 @@ export const columns: ColumnDef<Lead>[] = [
                     <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuItem
-                            onClick={() => navigator.clipboard.writeText(lead.email)}
+                            onClick={() => lead.email && navigator.clipboard.writeText(lead.email)}
                         >
                             Copy Email
                         </DropdownMenuItem>

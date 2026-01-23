@@ -5,13 +5,11 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
-    DialogFooter
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Printer, Download, Share2 } from "lucide-react";
+import { Printer } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import type { Payslip, Employee, PayrollRun } from "../types";
-import { useModules } from "@/context/ModuleContext";
 
 interface PayslipDialogProps {
     open: boolean;

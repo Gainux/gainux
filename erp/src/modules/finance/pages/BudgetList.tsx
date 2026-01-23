@@ -1,6 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
-import { useModules } from '@/context/ModuleContext';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

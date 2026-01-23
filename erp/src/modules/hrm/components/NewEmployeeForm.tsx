@@ -101,7 +101,7 @@ export function NewEmployeeForm({ employeeId, onSuccess }: { employeeId?: string
                     departmentId: employee.departmentId || '',
                     designationId: employee.designationId || '',
                     employmentType: employee.employmentType,
-                    status: employee.status,
+                    status: employee.status as any,
                 });
                 setCurrentUserId(employee.userId || null);
                 // If they already have a login, don't check the create box by default

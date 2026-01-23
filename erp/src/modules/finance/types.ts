@@ -100,9 +100,9 @@ export interface AccountTypeOption {
     label: string;
 }
 
-import type { Vendor } from "@/modules/procurement/types";
+// import type { Vendor } from "@/modules/procurement/types";
 
-export type { Vendor };
+// export type { Vendor };
 
 export interface Bill {
     id: string;
@@ -122,7 +122,7 @@ export interface Bill {
     items?: BillItem[];
     created_at: string;
     updated_at: string;
-    vendor?: Vendor; // For display
+    // vendor?: Vendor;
 }
 
 export interface BillItem {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
     Table,
     TableBody,
@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, FileText, Trash2, ArrowRight } from "lucide-react";
+import { Plus, Search, Trash2, ArrowRight } from "lucide-react";
 import { billService } from "../services/billService";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
@@ -71,8 +71,7 @@ export function BillList() {
     };
 
     const filteredBills = bills.filter(bill =>
-        bill.billNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        bill.vendor?.name.toLowerCase().includes(searchQuery.toLowerCase())
+        bill.billNumber.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     const getStatusVariant = (status: string) => {
@@ -139,7 +138,7 @@ export function BillList() {
                                             </div>
                                         )}
                                     </TableCell>
-                                    <TableCell className="font-medium">{bill.vendor?.name}</TableCell>
+                                    <TableCell className="font-medium">{bill.vendor_id || '-'}</TableCell>
                                     <TableCell>{format(new Date(bill.issueDate), 'MMM dd, yyyy')}</TableCell>
                                     <TableCell>{format(new Date(bill.dueDate), 'MMM dd, yyyy')}</TableCell>
                                     <TableCell className="text-right font-medium">

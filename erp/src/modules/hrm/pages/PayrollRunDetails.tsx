@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { format } from "date-fns";
+
 import {
     Table,
     TableBody,
@@ -10,12 +10,12 @@ import {
     TableRow
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Printer, FileText, Download } from "lucide-react";
+import { ArrowLeft, FileText } from "lucide-react";
 import { toast } from "sonner";
 
-import { useModules } from "@/context/ModuleContext";
+
 import { useAuth } from "@/context/AuthContext";
 import { payrollService } from "../services/payrollService";
 import type { Payslip, Employee, PayrollRun } from "../types";

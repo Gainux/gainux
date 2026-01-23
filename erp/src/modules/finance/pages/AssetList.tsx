@@ -2,8 +2,8 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Plus, Building2, Search, ArrowRight } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Plus, Building2, ArrowRight } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useNavigate } from 'react-router-dom';
 import { assetService } from '../services/assetService';
@@ -37,7 +37,7 @@ export default function AssetList() {
     const loadAssets = async () => {
         try {
             setLoading(true);
-            const data = await assetService.getAssets(profile!.org_id);
+            const data = await assetService.getAssets(profile?.org_id || "");
             setAssets(data);
         } catch (error) {
             console.error('Failed to load assets', error);

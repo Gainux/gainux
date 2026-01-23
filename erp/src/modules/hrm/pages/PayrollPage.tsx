@@ -15,17 +15,17 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Plus, Loader2, FileText, ChevronRight, Trash2 } from "lucide-react";
+import { Plus, Loader2, ChevronRight, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { useModules } from "@/context/ModuleContext";
+
 import { useAuth } from "@/context/AuthContext";
 import { payrollService } from "../services/payrollService";
 import type { PayrollRun } from "../types";
 
 export default function PayrollPage() {
     // const { currentOrg } = useModules();
-    const { profile, user } = useAuth();
+    const { profile } = useAuth();
     const [runs, setRuns] = useState<PayrollRun[]>([]);
     const [loading, setLoading] = useState(true);
     const [isRunDialogOpen, setIsRunDialogOpen] = useState(false);

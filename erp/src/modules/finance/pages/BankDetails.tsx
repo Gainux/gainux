@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, ArrowDownLeft, ArrowUpRight, Plus, Minus } from "lucide-react";
+import { ArrowLeft, Plus, Minus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -14,7 +14,7 @@ import {
 import { bankService } from "../services/bankService";
 import { useAuth } from "@/context/AuthContext";
 import { formatCurrency, cn } from "@/lib/utils";
-import type { BankAccount, JournalEntry } from "../types";
+import type { BankAccount } from "../types";
 import { format } from "date-fns";
 import { TransactionForm } from "../components/TransactionForm";
 
@@ -51,7 +51,7 @@ export default function BankDetails() {
         try {
             setLoading(true);
             // 1. Get Account Details
-            const accounts = await bankService.getBankAccounts(profile!.org_id);
+            const accounts = await bankService.getBankAccounts(profile?.org_id || "");
             const currentAccount = accounts.find(a => a.id === id);
 
             if (!currentAccount) {
@@ -62,7 +62,7 @@ export default function BankDetails() {
 
             // 2. Get Transactions
             if (currentAccount.glAccountId) {
-                const txns = await bankService.getBankTransactions(profile!.org_id, currentAccount.glAccountId);
+                const txns = await bankService.getBankTransactions(profile?.org_id || "", currentAccount.glAccountId);
                 // Cast the type or ensure usage matches
                 setTransactions(txns as BankTransaction[]);
             }

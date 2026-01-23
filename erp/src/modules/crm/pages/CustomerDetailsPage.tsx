@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, ArrowLeft, Building, Calendar, Edit, Globe, Phone, MapPin } from "lucide-react";
+import { Loader2, ArrowLeft, Building, Edit, Globe, Phone, MapPin } from "lucide-react";
 import {
     Dialog,
     DialogContent,

@@ -56,94 +56,35 @@ export const MODULES: ModuleConfig[] = [
         description: 'Lead Management, Opportunities, Customers, and Sales Orders',
         defaultEnabled: true,
     },
-    // 5. Procurement
-    {
-        id: 'supply-chain',
-        name: 'Procurement & Supply Chain',
-        description: 'Vendor Management, Purchase Orders, and Inventory',
-        defaultEnabled: false,
-    },
-    // 6. Manufacturing
-    {
-        id: 'manufacturing',
-        name: 'Manufacturing',
-        description: 'Production Planning, BOM, Shop Floor, and Quality Control',
-        defaultEnabled: false,
-    },
-    // 7. Projects
+    // 5. Projects
     {
         id: 'projects',
         name: 'Project Management',
         description: 'Project Costing, Timesheets, and Resource Allocation',
         defaultEnabled: true,
     },
-    // 8. Assets
-    {
-        id: 'assets',
-        name: 'Asset Management (EAM)',
-        description: 'Asset Lifecycle, Maintenance, and Work Orders',
-        defaultEnabled: false,
-    },
-    // 9. Logistics
-    {
-        id: 'logistics',
-        name: 'Logistics & Distribution',
-        description: 'Fleet Management, Route Planning, and Shipping',
-        defaultEnabled: false,
-    },
-    // 10. Quality
-    {
-        id: 'quality',
-        name: 'Quality & Compliance',
-        description: 'QMS, Audits, Risk Management, and Compliance',
-        defaultEnabled: false,
-    },
-    // 11. Analytics
+    // 6. Analytics
     {
         id: 'analytics',
         name: 'BI & Analytics',
         description: 'Advanced Reporting, OLAP, and Predictive Insights',
         defaultEnabled: true,
     },
-    // 12. Automation
+    // 7. Automation
     {
         id: 'automation',
         name: 'Workflow & Automation',
         description: 'Process Automation, Business Rules, and RPA',
         defaultEnabled: false,
     },
-    // 13. Integration / Marketplace
-    {
-        id: 'marketplace',
-        name: 'Marketplace & Add-ons',
-        description: 'Extensions, Plugins, and Third-party Integrations',
-        defaultEnabled: true,
-    },
+    // 8. Integrations
     {
         id: 'integrations',
         name: 'API & Integrations',
         description: 'Webhooks, API Management, and External Connectors',
         defaultEnabled: false,
     },
-    // 15. Industry Specific
-    {
-        id: 'retail',
-        name: 'Retail & POS',
-        description: 'Point of Sale, Loyalty, and Store Management',
-        defaultEnabled: false,
-    },
-    {
-        id: 'healthcare',
-        name: 'Healthcare (HIS)',
-        description: 'Patient Management, EMR Lite, and Clinic Operations',
-        defaultEnabled: false,
-    },
-    {
-        id: 'construction',
-        name: 'Construction',
-        description: 'BOQ, Contracts, and Site Management',
-        defaultEnabled: false,
-    },
+
     // System
     {
         id: 'system',
