@@ -29,6 +29,7 @@ export interface ClinicalEncounter {
     diagnosis?: string;
     notes?: string;
     status: 'scheduled' | 'in-progress' | 'completed' | 'cancelled';
+    departments_to_visit?: { id: string, name: string }[];
     created_at: string;
     updated_at: string;
 }

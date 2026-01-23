@@ -70,6 +70,50 @@ export const procurementService = {
         return data as InventoryStock[];
     },
 
+    async updateStock(itemId: string, warehouseId: string, quantityChange: number, orgId: string) {
+        // 1. Check if stock record exists
+        const { data: currentStock, error: fetchError } = await supabase
+            .from("inventory_stock")
+            .select("*")
+            .eq("item_id", itemId)
+            .eq("warehouse_id", warehouseId)
+            .maybeSingle();
+
+        if (fetchError) throw fetchError;
+
+        if (currentStock) {
+            // 2. Update existing
+            const newQuantity = (Number(currentStock.quantity_on_hand) || 0) + quantityChange;
+            const { data, error } = await supabase
+                .from("inventory_stock")
+                .update({
+                    quantity_on_hand: newQuantity,
+                    updated_at: new Date().toISOString()
+                })
+                .eq("id", currentStock.id)
+                .select()
+                .single();
+
+            if (error) throw error;
+            return data as InventoryStock;
+        } else {
+            // 3. Insert new
+            const { data, error } = await supabase
+                .from("inventory_stock")
+                .insert([{
+                    org_id: orgId,
+                    item_id: itemId,
+                    warehouse_id: warehouseId,
+                    quantity_on_hand: quantityChange
+                }])
+                .select()
+                .single();
+
+            if (error) throw error;
+            return data as InventoryStock;
+        }
+    },
+
     // --- Purchase Orders ---
     async getPurchaseOrders(orgId: string) {
         const { data, error } = await supabase

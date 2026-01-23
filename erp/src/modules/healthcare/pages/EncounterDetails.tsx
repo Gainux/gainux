@@ -14,6 +14,9 @@ import { healthcareService } from "../services/healthcareService";
 import { procurementService } from "../../procurement/services/procurementService";
 import { useAuth } from "@/context/AuthContext";
 import type { ClinicalEncounter, PrescriptionItem, Patient, Prescription } from "../types";
+import type { Department } from "../../hrm/types";
+import { Checkbox } from "@/components/ui/checkbox";
+import { employeeService } from "../../hrm/services/employeeService";
 import type { InventoryItem } from "../../procurement/types";
 import { format } from "date-fns";
 
@@ -42,6 +45,10 @@ export default function EncounterDetails() {
     const [prescriptionItems, setPrescriptionItems] = useState<Partial<PrescriptionItem>[]>([]);
     const [availableMedicines, setAvailableMedicines] = useState<InventoryItem[]>([]);
 
+    // Departments Data
+    const [availableDepartments, setAvailableDepartments] = useState<Department[]>([]);
+    const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
+
     useEffect(() => {
         if (profile?.org_id) {
             loadMetaData();
@@ -64,6 +71,10 @@ export default function EncounterDetails() {
                 const patientsData = await healthcareService.getPatients(profile?.org_id || '');
                 setAllPatients(patientsData);
             }
+
+            // Load departments
+            const depts = await employeeService.getDepartments(profile?.org_id || '');
+            setAvailableDepartments(depts);
         } catch (error) {
             console.error(error);
         }
@@ -108,6 +119,11 @@ export default function EncounterDetails() {
                         setPrescriptionItems(items);
                     }
                 }
+
+                // Load departments to visit
+                if (data.departments_to_visit) {
+                    setSelectedDepartments(data.departments_to_visit.map(d => d.id));
+                }
             }
         } catch (error) {
             console.error(error);
@@ -150,7 +166,11 @@ export default function EncounterDetails() {
                 chief_complaint: complaint,
                 diagnosis,
                 notes,
-                status
+                status,
+                departments_to_visit: selectedDepartments.map(id => {
+                    const dept = availableDepartments.find(d => d.id === id);
+                    return { id, name: dept?.name || '' };
+                })
             };
 
             let encounterId = id;
@@ -252,6 +272,40 @@ export default function EncounterDetails() {
                             <div className="space-y-2">
                                 <Label>Clinical Notes</Label>
                                 <Textarea className="min-h-[100px]" placeholder="Detailed observations..." value={notes} onChange={e => setNotes(e.target.value)} />
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Departments to Visit</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid grid-cols-2 gap-4">
+                                {availableDepartments.map(dept => (
+                                    <div key={dept.id} className="flex items-center space-x-2">
+                                        <Checkbox
+                                            id={`dept-${dept.id}`}
+                                            checked={selectedDepartments.includes(dept.id)}
+                                            onCheckedChange={(checked) => {
+                                                if (checked) {
+                                                    setSelectedDepartments([...selectedDepartments, dept.id]);
+                                                } else {
+                                                    setSelectedDepartments(selectedDepartments.filter(id => id !== dept.id));
+                                                }
+                                            }}
+                                        />
+                                        <label
+                                            htmlFor={`dept-${dept.id}`}
+                                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                        >
+                                            {dept.name}
+                                        </label>
+                                    </div>
+                                ))}
+                                {availableDepartments.length === 0 && (
+                                    <p className="text-sm text-muted-foreground col-span-2">No departments available.</p>
+                                )}
                             </div>
                         </CardContent>
                     </Card>

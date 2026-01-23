@@ -59,6 +59,7 @@ const mapToDeal = (data: any): Deal => ({
     currency: data.currency,
     stage: data.stage,
     probability: data.probability,
+    quantity: Number(data.quantity || 1),
     expectedCloseDate: data.expected_close_date,
     leadId: data.lead_id,
     lead: data.leads ? mapToLead(data.leads) : undefined,
@@ -225,6 +226,7 @@ export const crmService = {
                 currency: deal.currency || 'USD',
                 stage: deal.stage || 'lead',
                 probability: deal.probability || 0,
+                quantity: deal.quantity || 1,
                 expected_close_date: deal.expectedCloseDate,
                 lead_id: deal.leadId,
                 company_id: deal.companyId,
@@ -244,6 +246,7 @@ export const crmService = {
         if (updates.value !== undefined) dbUpdates.value = updates.value;
         if (updates.stage !== undefined) dbUpdates.stage = updates.stage;
         if (updates.probability !== undefined) dbUpdates.probability = updates.probability;
+        if (updates.quantity !== undefined) dbUpdates.quantity = updates.quantity;
         if (updates.expectedCloseDate !== undefined) dbUpdates.expected_close_date = updates.expectedCloseDate;
         if (updates.companyId !== undefined) dbUpdates.company_id = updates.companyId;
         if (updates.contactId !== undefined) dbUpdates.contact_id = updates.contactId;

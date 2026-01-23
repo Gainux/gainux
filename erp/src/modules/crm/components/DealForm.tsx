@@ -23,6 +23,7 @@ export function DealForm({ initialData, onSubmit, onCancel }: DealFormProps) {
     const [title, setTitle] = useState(initialData?.title || "");
     const [companyId, setCompanyId] = useState(initialData?.companyId || "");
     const [value, setValue] = useState(initialData?.value?.toString() || "");
+    const [quantity, setQuantity] = useState(initialData?.quantity?.toString() || "1");
     const [stage, setStage] = useState<Deal["stage"]>((initialData?.stage as Deal["stage"]) || "lead");
     const [expectedCloseDate, setExpectedCloseDate] = useState(initialData?.expectedCloseDate || "");
     const [contactId, setContactId] = useState(initialData?.contactId || "");
@@ -54,6 +55,7 @@ export function DealForm({ initialData, onSubmit, onCancel }: DealFormProps) {
         onSubmit({
             title,
             value: parseFloat(value) || 0,
+            quantity: parseFloat(quantity) || 1,
             stage,
             expectedCloseDate,
             contactId: contactId || undefined,
@@ -122,7 +124,7 @@ export function DealForm({ initialData, onSubmit, onCancel }: DealFormProps) {
                     </SelectContent>
                 </Select>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
                     <Label htmlFor="value">Value (₹)</Label>
                     <Input
@@ -132,6 +134,18 @@ export function DealForm({ initialData, onSubmit, onCancel }: DealFormProps) {
                         step="0.01"
                         value={value}
                         onChange={(e) => setValue(e.target.value)}
+                        required
+                    />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="quantity">Quantity</Label>
+                    <Input
+                        id="quantity"
+                        type="number"
+                        min="1"
+                        step="1"
+                        value={quantity}
+                        onChange={(e) => setQuantity(e.target.value)}
                         required
                     />
                 </div>

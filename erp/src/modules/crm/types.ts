@@ -57,6 +57,7 @@ export interface Deal {
     currency: string;
     stage: string; // 'lead' | 'proposal' | 'negotiation' | 'won' | 'lost'
     probability: number;
+    quantity?: number;
     expectedCloseDate?: string;
     leadId?: string;
     lead?: Lead;

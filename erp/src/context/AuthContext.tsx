@@ -122,15 +122,58 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         // 2. Listen for changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
             if (mounted) {
-                // If the session is the same, don't trigger a full reload of profile unless user changed
-                // But simplified: just set everything
+                const previousUser = user;
                 setSession(newSession);
                 setUser(newSession?.user ?? null);
-
                 if (newSession?.user) {
-                    // Only fetch profile if it's a different user or we don't have one
-                    // For simplicity in this fix, we await it to ensure consistency
-                    await fetchProfile(newSession.user.id);
+                    // Only fetch profile if it's a different user or if we don't have a profile yet
+                    // Check against previous user state (captured in closure or via ref if needed, but setState is async)
+                    // Better to rely on the fact that if we have a profile and the ID matches, we skip.
+
+                    // We need to access the current value of 'user' or 'profile'. 
+                    // Since this effect closes over 'user' and 'profile' from initial render (null), 
+                    // we should use a ref to track the current ID or trust that 'setUser' update will trigger the dependency elsewhere if we split logic.
+                    // But here we are doing it imperatively.
+                    // Let's use a simple check: compare with the user.id from the state setter if possible, or just use a ref for lastUserId.
+
+                    // Actually, simpler approach:
+                    // If we have a user and the new session user ID is same, SKIPP fetch.
+
+                    // To do this reliably without stale closures, let's use a check inside the fetchProfile or check against a Ref.
+                    // But wait, the previous code was `await fetchProfile`.
+
+                    // Let's change the logic:
+                    // Just set session/user.  Move profile fetching to a useEffect dependent on `user`.
+                    // BUT `initializeAuth` does it manually.
+
+                    // Let's stick to the plan: Check ID.
+                    // Since 'user' in this callback might be stale (from closure), we can't rely on it directly unless we add it to dependency array, which re-subscribes.
+                    // Re-subscribing is fine.
+
+                    // However, `supabase.auth.onAuthStateChange` fires on 'TOKEN_REFRESHED'.
+                    // We can check the event type.
+
+                    if (_event === 'TOKEN_REFRESHED') {
+                        console.log("Token refreshed, skipping profile re-fetch.");
+                        setLoading(false);
+                        return;
+                    }
+
+                    // For SIGN_IN or INITIAL_SESSION, we fetch.
+                    // But wait, if we are already logged in and reload, it might be INITIAL_SESSION.
+                    // If we switch users, it is SIGN_IN.
+
+                    // Best fix: Check event type.
+                    // Events: 'SIGNED_IN', 'SIGNED_OUT', 'TOKEN_REFRESHED', 'USER_UPDATED', 'PASSWORD_RECOVERY'.
+
+                    if (_event === 'SIGNED_IN' || _event === 'INITIAL_SESSION') {
+                        // We might already have the profile if it's just a remount, but safe to fetch once.
+                        // But we want to avoid re-fetching if we just refreshed.
+                        await fetchProfile(newSession.user.id);
+                    } else if (_event === 'SIGNED_OUT') {
+                        setProfile(null);
+                    }
+                    // For TOKEN_REFRESHED, we do nothing but update session (done above).
                 } else {
                     setProfile(null);
                 }
