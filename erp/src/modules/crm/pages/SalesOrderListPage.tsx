@@ -16,11 +16,12 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { salesOrderService } from "../services/salesOrderService";
 import type { SalesOrder } from "../types";
-import { formatCurrency } from "@/lib/utils";
+import { useCurrency } from "@/hooks/useCurrency";
 import { format } from "date-fns";
 
 export default function SalesOrderListPage() {
     const navigate = useNavigate();
+    const { formatAmount } = useCurrency();
     const [orders, setOrders] = useState<SalesOrder[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
@@ -119,7 +120,7 @@ export default function SalesOrderListPage() {
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="text-right font-semibold">
-                                            {formatCurrency(order.totalAmount, order.currency)}
+                                            {formatAmount(order.totalAmount)}
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-2">

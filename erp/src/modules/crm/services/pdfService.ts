@@ -1,7 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { Quote, SalesOrder } from "../types";
-import { formatCurrency } from "@/lib/utils";
+
 import { supabase } from "@/lib/supabase";
 import { companyService } from "@/modules/system/services/companyService";
 
@@ -25,6 +25,13 @@ export const pdfService = {
 
         const orgName = orgData.name || "Organization Name";
         const addr = orgData.address || {};
+
+        // Currency Formatter
+        const formatMoney = (amount: number) => {
+            const symbol = orgData.settings?.currency_symbol || '$';
+            const val = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount);
+            return `${symbol} ${val}`;
+        };
 
         // Letterhead / Header
         doc.setFontSize(20);
@@ -101,8 +108,8 @@ export const pdfService = {
         const tableRows = quote.items.map(item => [
             item.description,
             item.quantity,
-            formatCurrency(item.unitPrice),
-            formatCurrency(item.total)
+            formatMoney(item.unitPrice),
+            formatMoney(item.total)
         ]);
 
         autoTable(doc, {
@@ -116,14 +123,14 @@ export const pdfService = {
         let finalY = doc.lastAutoTable.finalY + 10;
 
         if (quote.taxRate) {
-            doc.text(`Subtotal: ${formatCurrency(quote.totalAmount)}`, 14, finalY);
+            doc.text(`Subtotal: ${formatMoney(quote.totalAmount)}`, 14, finalY);
             const taxAmount = quote.totalAmount * (quote.taxRate / 100);
-            doc.text(`Tax (${quote.taxRate}%): ${formatCurrency(taxAmount)}`, 14, finalY + 5);
+            doc.text(`Tax (${quote.taxRate}%): ${formatMoney(taxAmount)}`, 14, finalY + 5);
             doc.setFontSize(12);
-            doc.text(`Total: ${formatCurrency(quote.totalAmount + taxAmount)}`, 14, finalY + 12);
+            doc.text(`Total: ${formatMoney(quote.totalAmount + taxAmount)}`, 14, finalY + 12);
             finalY += 20;
         } else {
-            doc.text(`Total Amount: ${formatCurrency(quote.totalAmount)}`, 14, finalY);
+            doc.text(`Total Amount: ${formatMoney(quote.totalAmount)}`, 14, finalY);
             finalY += 10;
         }
 
@@ -175,6 +182,13 @@ export const pdfService = {
 
         const orgName = orgData.name || "Organization Name";
         const addr = orgData.address || {};
+
+        // Currency Formatter
+        const formatMoney = (amount: number) => {
+            const symbol = orgData.settings?.currency_symbol || '$';
+            const val = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount);
+            return `${symbol} ${val}`;
+        };
 
         // Letterhead
         doc.setFontSize(20);
@@ -229,8 +243,8 @@ export const pdfService = {
         const tableRows = order.items.map(item => [
             item.description,
             item.quantity,
-            formatCurrency(item.unitPrice),
-            formatCurrency(item.total)
+            formatMoney(item.unitPrice),
+            formatMoney(item.total)
         ]);
 
         autoTable(doc, {
@@ -242,7 +256,7 @@ export const pdfService = {
         // Totals
         // @ts-ignore
         const finalY = doc.lastAutoTable.finalY + 10;
-        doc.text(`Total Amount: ${formatCurrency(order.totalAmount)}`, 14, finalY);
+        doc.text(`Total Amount: ${formatMoney(order.totalAmount)}`, 14, finalY);
 
         // Footer
         doc.setFontSize(8);

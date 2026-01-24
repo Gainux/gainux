@@ -1,13 +1,14 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useRef } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
-import type { SystemUser } from "@/modules/system/types";
+import type { SystemUser, Organization } from "@/modules/system/types";
 
 // Extends Auth Context to include Profile Data
 interface AuthContextType {
     session: any;
     user: User | null;
     profile: SystemUser | null;
+    organization: Organization | null;
     loading: boolean;
     isAuthenticated: boolean;
     isAdmin: boolean;
@@ -19,6 +20,7 @@ const AuthContext = createContext<AuthContextType>({
     session: null,
     user: null,
     profile: null,
+    organization: null,
     loading: true,
     isAuthenticated: false,
     isAdmin: false,
@@ -30,7 +32,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [session, setSession] = useState<any>(null);
     const [user, setUser] = useState<User | null>(null);
     const [profile, setProfile] = useState<SystemUser | null>(null);
+    const [organization, setOrganization] = useState<Organization | null>(null);
     const [loading, setLoading] = useState(true);
+    const loadingTimeoutRef = useRef<number | null>(null);
 
     const fetchProfile = async (userId: string) => {
         try {
@@ -91,6 +95,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
             if (profileData) {
                 setProfile(profileData);
+                if (profileData.org_id) {
+                    const { data: orgData } = await supabase
+                        .from('organizations')
+                        .select('*')
+                        .eq('id', profileData.org_id)
+                        .maybeSingle();
+                    if (orgData) setOrganization(orgData as Organization);
+                }
             }
         } catch (error) {
             console.error('Error fetching profile:', error);
@@ -112,6 +124,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     await fetchProfile(initialSession.user.id);
                 } else {
                     setProfile(null);
+                    setOrganization(null);
                 }
                 setLoading(false);
             }
@@ -155,6 +168,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
                     if (_event === 'TOKEN_REFRESHED') {
                         console.log("Token refreshed, skipping profile re-fetch.");
+                        // Clear any existing timeout
+                        if (loadingTimeoutRef.current) {
+                            clearTimeout(loadingTimeoutRef.current);
+                            loadingTimeoutRef.current = null;
+                        }
                         setLoading(false);
                         return;
                     }
@@ -169,7 +187,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     if (_event === 'SIGNED_IN' || _event === 'INITIAL_SESSION') {
                         // We might already have the profile if it's just a remount, but safe to fetch once.
                         // But we want to avoid re-fetching if we just refreshed.
-                        await fetchProfile(newSession.user.id);
+                        try {
+                            await fetchProfile(newSession.user.id);
+                        } catch (error) {
+                            console.error('Error fetching profile during auth state change:', error);
+                            // Don't bail - let the user stay authenticated even if profile fetch fails
+                        }
                     } else if (_event === 'SIGNED_OUT') {
                         setProfile(null);
                     }
@@ -177,13 +200,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 } else {
                     setProfile(null);
                 }
+
+                // Clear any existing timeout
+                if (loadingTimeoutRef.current) {
+                    clearTimeout(loadingTimeoutRef.current);
+                    loadingTimeoutRef.current = null;
+                }
                 setLoading(false);
             }
         });
 
+        // Set a safety timeout to prevent infinite loading (30 seconds)
+        loadingTimeoutRef.current = setTimeout(() => {
+            console.warn('Loading timeout reached - forcing loading state to false');
+            setLoading(false);
+        }, 30000);
+
         return () => {
             mounted = false;
             subscription.unsubscribe();
+            if (loadingTimeoutRef.current) {
+                clearTimeout(loadingTimeoutRef.current);
+                loadingTimeoutRef.current = null;
+            }
         };
     }, []);
 
@@ -209,6 +248,33 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         };
     }, [user]);
 
+    // Periodic session validation to prevent infinite loading
+    useEffect(() => {
+        if (!session) return;
+
+        // Check session validity every 5 minutes
+        const intervalId = setInterval(async () => {
+            try {
+                const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+
+                if (error || !currentSession) {
+                    console.warn('Session validation failed, session may be expired');
+                    // Session is invalid - clear auth state
+                    setSession(null);
+                    setUser(null);
+                    setProfile(null);
+                    setOrganization(null);
+                }
+            } catch (error) {
+                console.error('Error checking session validity:', error);
+            }
+        }, 5 * 60 * 1000); // 5 minutes
+
+        return () => {
+            clearInterval(intervalId);
+        };
+    }, [session]);
+
     const updateProfile = async (data: Partial<SystemUser>) => {
         if (!user) return;
 
@@ -228,6 +294,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setSession(null);
         setUser(null);
         setProfile(null);
+        setOrganization(null);
     };
 
     return (
@@ -235,6 +302,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             session,
             user,
             profile,
+            organization,
             loading,
             isAuthenticated: !!session,
             isAdmin: profile?.role === 'admin',

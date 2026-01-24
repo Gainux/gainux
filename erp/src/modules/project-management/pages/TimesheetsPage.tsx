@@ -8,6 +8,7 @@ import { Plus, Pencil, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { TimesheetForm } from "../components/TimesheetForm";
 import { useAuth } from "@/context/AuthContext";
+import { useCurrency } from "@/hooks/useCurrency";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -20,7 +21,8 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export default function TimesheetsPage() {
-    const { user } = useAuth();
+    const { user, isAdmin } = useAuth();
+    const { formatAmount } = useCurrency();
     const [timesheets, setTimesheets] = useState<TimesheetEntry[]>([]);
     const [loading, setLoading] = useState(true);
     const [open, setOpen] = useState(false);
@@ -140,6 +142,7 @@ export default function TimesheetsPage() {
                                     <TableHead>Project</TableHead>
                                     <TableHead>Description</TableHead>
                                     <TableHead>Hours</TableHead>
+                                    {isAdmin && <TableHead>Billable</TableHead>}
                                     <TableHead>Status</TableHead>
                                     <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
@@ -155,10 +158,26 @@ export default function TimesheetsPage() {
                                             {entry.description}
                                         </TableCell>
                                         <TableCell>{entry.hours}</TableCell>
+                                        {isAdmin && (
+                                            <TableCell>
+                                                {entry.isBillable ? (
+                                                    <div className="flex flex-col">
+                                                        <span className="text-green-600 font-medium">✓ Billable</span>
+                                                        {entry.hourlyRate > 0 && (
+                                                            <span className="text-xs text-muted-foreground">
+                                                                {formatAmount(entry.hours * entry.hourlyRate)}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-muted-foreground">-</span>
+                                                )}
+                                            </TableCell>
+                                        )}
                                         <TableCell className="capitalize">
                                             <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${entry.status === 'approved' ? 'bg-green-100 text-green-800' :
-                                                    entry.status === 'submitted' ? 'bg-blue-100 text-blue-800' :
-                                                        'bg-gray-100 text-gray-800'
+                                                entry.status === 'submitted' ? 'bg-blue-100 text-blue-800' :
+                                                    'bg-gray-100 text-gray-800'
                                                 }`}>
                                                 {entry.status}
                                             </span>

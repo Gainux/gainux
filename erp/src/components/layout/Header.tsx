@@ -11,6 +11,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 import { User, LogOut } from "lucide-react";
+import { TimeTrackerWidget } from "@/modules/project-management/components/TimeTrackerWidget";
 
 export function Header() {
     const { user, logout } = useAuth();
@@ -31,6 +32,7 @@ export function Header() {
         <div className="border-b">
             <div className="flex h-16 items-center px-4">
                 <div className="ml-auto flex items-center space-x-4">
+                    <TimeTrackerWidget />
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="relative h-8 w-8 rounded-full">

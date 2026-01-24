@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { projectService } from "../services/projectService";
-import { Loader2, Plus, Users } from "lucide-react";
+import { Loader2, Plus, Users, AlertTriangle } from "lucide-react";
 import type { ResourceAllocation, Project, Task } from "../types";
+import { supabase } from "@/lib/supabase";
+import { Badge } from "@/components/ui/badge";
 import {
     Select,
     SelectContent,
@@ -22,8 +24,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { AllocationForm } from "../components/AllocationForm";
+import { useAuth } from "@/context/AuthContext";
 
 export default function ResourcePlanPage() {
+    const { isAdmin } = useAuth();
     const [projects, setProjects] = useState<Project[]>([]);
     const [selectedProjectId, setSelectedProjectId] = useState<string>("");
     const [allocations, setAllocations] = useState<ResourceAllocation[]>([]);
@@ -107,10 +111,58 @@ export default function ResourcePlanPage() {
     };
 
     const calculateAllocation = (employeeId: string) => {
-        if (tasks.length === 0) return 0;
-        const employeeTasks = tasks.filter(t => t.assigneeId === employeeId).length;
-        return Math.round((employeeTasks / tasks.length) * 100);
+        // Use the actual allocation_percentage from the database
+        const allocation = allocations.find(a => a.employeeId === employeeId);
+        return allocation?.allocationPercentage || 0;
     };
+
+    // Calculate total allocation across ALL projects for overallocation warning
+    const [employeeAllAllocations, setEmployeeAllAllocations] = useState<Record<string, number>>({});
+
+    useEffect(() => {
+        const calculateTotalAllocations = async () => {
+            if (allocations.length === 0) return;
+
+            const totals: Record<string, number> = {};
+
+            // For each unique employee, fetch their allocations across all projects
+            const uniqueEmployeeIds = Array.from(new Set(allocations.map(a => a.employeeId)));
+
+            for (const empId of uniqueEmployeeIds) {
+                const { data } = await supabase
+                    .from('resource_allocations')
+                    .select('allocation_percentage')
+                    .eq('employee_id', empId);
+
+                if (data) {
+                    totals[empId] = data.reduce((sum, item) => sum + (item.allocation_percentage || 0), 0);
+                }
+            }
+
+            setEmployeeAllAllocations(totals);
+        };
+
+        calculateTotalAllocations();
+    }, [allocations]);
+
+    // Admin-only access restriction
+    if (!isAdmin) {
+        return (
+            <div className="flex-1 h-[calc(100vh-4rem)] p-8 pt-6">
+                <Card>
+                    <CardContent className="pt-6">
+                        <div className="text-center py-12">
+                            <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                            <h3 className="text-lg font-semibold mb-2">Admin Access Required</h3>
+                            <p className="text-muted-foreground">
+                                Resource planning and allocation management is restricted to administrators.
+                            </p>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+        );
+    }
 
     return (
         <div className="flex-1 h-[calc(100vh-4rem)] p-8 pt-6 flex flex-col space-y-6">
@@ -224,11 +276,21 @@ export default function ResourcePlanPage() {
                                             <TableCell>{allocation.startDate}</TableCell>
                                             <TableCell>{allocation.endDate}</TableCell>
                                             <TableCell className="text-right">
-                                                <div className="flex flex-col items-end">
-                                                    <span className="font-bold">{dynamicPercentage}%</span>
-                                                    <span className="text-xs text-muted-foreground">
-                                                        {tasks.filter(t => t.assigneeId === allocation.employeeId).length} / {tasks.length} tasks
-                                                    </span>
+                                                <div className="flex flex-col items-end gap-1">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-bold">{allocation.allocationPercentage}%</span>
+                                                        {employeeAllAllocations[allocation.employeeId] > 100 && (
+                                                            <Badge variant="destructive" className="text-xs flex items-center gap-1">
+                                                                <AlertTriangle className="h-3 w-3" />
+                                                                Overallocated
+                                                            </Badge>
+                                                        )}
+                                                    </div>
+                                                    {employeeAllAllocations[allocation.employeeId] > 0 && (
+                                                        <span className="text-xs text-muted-foreground">
+                                                            Total: {employeeAllAllocations[allocation.employeeId]}% across all projects
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </TableCell>
                                             <TableCell>

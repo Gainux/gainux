@@ -3,9 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { projectService } from "../services/projectService";
 import type { Project, Task, TimesheetEntry } from "../types";
+import { useAuth } from "@/context/AuthContext";
+import { useCurrency } from "@/hooks/useCurrency";
 
 interface TimesheetFormProps {
     onSubmit: (data: Partial<TimesheetEntry>) => void;
@@ -15,12 +18,16 @@ interface TimesheetFormProps {
 }
 
 export function TimesheetForm({ onSubmit, onCancel, projectId, initialData }: TimesheetFormProps) {
+    const { isAdmin } = useAuth();
+    const { symbol } = useCurrency();
     const [formData, setFormData] = useState<Partial<TimesheetEntry>>({
         projectId: projectId || "",
         taskId: "",
         date: new Date().toISOString().split('T')[0],
         hours: 0,
         description: "",
+        isBillable: false,
+        hourlyRate: 0,
         ...initialData
     });
 
@@ -42,8 +49,10 @@ export function TimesheetForm({ onSubmit, onCancel, projectId, initialData }: Ti
                 projectId: initialData.projectId,
                 taskId: initialData.taskId,
                 date: initialData.date,
-                hours: initialData.hours, // Ensure number
-                description: initialData.description
+                hours: initialData.hours,
+                description: initialData.description,
+                isBillable: initialData.isBillable ?? false,
+                hourlyRate: initialData.hourlyRate ?? 0
             });
         }
     }, [initialData]);
@@ -62,7 +71,12 @@ export function TimesheetForm({ onSubmit, onCancel, projectId, initialData }: Ti
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSubmit(formData);
+        // Sanitize data: convert empty strings to undefined for optional UUID fields
+        const sanitizedData = {
+            ...formData,
+            taskId: formData.taskId === "" ? undefined : formData.taskId
+        };
+        onSubmit(sanitizedData);
     };
 
     return (
@@ -139,6 +153,32 @@ export function TimesheetForm({ onSubmit, onCancel, projectId, initialData }: Ti
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 />
             </div>
+
+            {/* Billable Hours Section - Admin Only */}
+            {isAdmin && (
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="flex items-center space-x-2">
+                        <Checkbox
+                            id="billable"
+                            checked={formData.isBillable}
+                            onCheckedChange={(checked) => setFormData({ ...formData, isBillable: !!checked })}
+                        />
+                        <Label htmlFor="billable" className="cursor-pointer">Billable Hours</Label>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="hourlyRate">Hourly Rate ({symbol})</Label>
+                        <Input
+                            id="hourlyRate"
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            disabled={!formData.isBillable}
+                            value={formData.hourlyRate}
+                            onChange={(e) => setFormData({ ...formData, hourlyRate: Number(e.target.value) })}
+                        />
+                    </div>
+                </div>
+            )}
 
             <div className="flex justify-end space-x-2 pt-4">
                 <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>

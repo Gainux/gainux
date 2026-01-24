@@ -19,13 +19,15 @@ interface TaskFormProps {
     initialData?: Task | null;
     projectId: string;
     projectMembers?: any[]; // Array of employees
+    sprints?: any[]; // Array of sprints
 }
 
-export function TaskForm({ onSubmit, onCancel, initialData, projectId, projectMembers = [] }: TaskFormProps) {
+export function TaskForm({ onSubmit, onCancel, initialData, projectId, projectMembers = [], sprints = [] }: TaskFormProps) {
     const [formData, setFormData] = useState<Partial<Task>>({
         title: "",
         description: "",
         assigneeId: "",
+        sprintId: "",
         status: "todo",
         priority: "medium",
         dueDate: "",
@@ -39,6 +41,7 @@ export function TaskForm({ onSubmit, onCancel, initialData, projectId, projectMe
                 ...initialData,
                 description: initialData.description || "",
                 assigneeId: initialData.assigneeId || "",
+                sprintId: initialData.sprintId || "",
                 dueDate: initialData.dueDate || ""
             });
         }
@@ -48,7 +51,8 @@ export function TaskForm({ onSubmit, onCancel, initialData, projectId, projectMe
         e.preventDefault();
         onSubmit({
             ...formData,
-            assigneeId: formData.assigneeId === "none" ? null : formData.assigneeId
+            assigneeId: formData.assigneeId === "none" ? null : formData.assigneeId,
+            sprintId: formData.sprintId === "none" ? null : formData.sprintId
         });
     };
 
@@ -88,6 +92,26 @@ export function TaskForm({ onSubmit, onCancel, initialData, projectId, projectMe
                             {projectMembers.map((emp) => (
                                 <SelectItem key={emp.id} value={emp.id}>
                                     {emp.firstName} {emp.lastName}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                <div className="space-y-2">
+                    <Label htmlFor="sprint">Sprint</Label>
+                    <Select
+                        value={formData.sprintId || "none"}
+                        onValueChange={(value) => setFormData({ ...formData, sprintId: value === "none" ? null : value })}
+                    >
+                        <SelectTrigger>
+                            <SelectValue placeholder="Backlog" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="none">Backlog (No Sprint)</SelectItem>
+                            {sprints.map((sprint) => (
+                                <SelectItem key={sprint.id} value={sprint.id}>
+                                    {sprint.name} ({sprint.status})
                                 </SelectItem>
                             ))}
                         </SelectContent>

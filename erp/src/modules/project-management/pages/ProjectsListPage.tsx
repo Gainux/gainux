@@ -23,9 +23,11 @@ import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
 import type { Project } from "../types";
 import { ProjectForm } from "../components/ProjectForm";
+import { useCurrency } from "@/hooks/useCurrency";
 
 export default function ProjectsListPage() {
     const { profile, user } = useAuth();
+    const { formatAmount } = useCurrency();
     const navigate = useNavigate();
     const [projects, setProjects] = useState<Project[]>([]);
     const [loading, setLoading] = useState(true);
@@ -178,10 +180,12 @@ export default function ProjectsListPage() {
                                         <Calendar className="mr-2 h-4 w-4" />
                                         {project.startDate || "N/A"} - {project.endDate || "N/A"}
                                     </div>
-                                    <div className="flex items-center text-muted-foreground">
-                                        <DollarSign className="mr-2 h-4 w-4" />
-                                        {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(project.budget)}
-                                    </div>
+                                    {profile?.role !== 'employee' && (
+                                        <div className="flex items-center text-muted-foreground">
+                                            <DollarSign className="mr-2 h-4 w-4" />
+                                            {formatAmount(project.budget)}
+                                        </div>
+                                    )}
                                 </div>
                             </CardContent>
                             <CardFooter className="flex justify-end">

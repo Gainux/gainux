@@ -10,7 +10,45 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Plus, Building, MapPin, Globe, CreditCard, Mail, Phone, Save } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Loader2, Plus, Building, MapPin, Globe, Mail, Phone, Save } from "lucide-react";
+
+const CURRENCIES = [
+    { code: 'USD', symbol: '$', name: 'US Dollar' },
+    { code: 'EUR', symbol: '€', name: 'Euro' },
+    { code: 'GBP', symbol: '£', name: 'British Pound' },
+    { code: 'INR', symbol: '₹', name: 'Indian Rupee' },
+    { code: 'AUD', symbol: 'A$', name: 'Australian Dollar' },
+    { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar' },
+    { code: 'AED', symbol: 'dh', name: 'UAE Dirham' },
+    { code: 'JPY', symbol: '¥', name: 'Japanese Yen' },
+    { code: 'CNY', symbol: '¥', name: 'Chinese Yuan' },
+    { code: 'SGD', symbol: 'S$', name: 'Singapore Dollar' },
+    { code: 'SAR', symbol: 'SR', name: 'Saudi Riyal' },
+    { code: 'QAR', symbol: 'QR', name: 'Qatari Riyal' },
+    { code: 'OMR', symbol: 'OMR', name: 'Omani Rial' },
+    { code: 'KWD', symbol: 'KD', name: 'Kuwaiti Dinar' },
+    { code: 'BHD', symbol: 'BD', name: 'Bahraini Dinar' },
+    { code: 'MYR', symbol: 'RM', name: 'Malaysian Ringgit' },
+    { code: 'THB', symbol: '฿', name: 'Thai Baht' },
+    { code: 'IDR', symbol: 'Rp', name: 'Indonesian Rupiah' },
+    { code: 'VND', symbol: '₫', name: 'Vietnamese Dong' },
+    { code: 'PHP', symbol: '₱', name: 'Philippine Peso' },
+    { code: 'KRW', symbol: '₩', name: 'South Korean Won' },
+    { code: 'HKD', symbol: 'HK$', name: 'Hong Kong Dollar' },
+    { code: 'NZD', symbol: 'NZ$', name: 'New Zealand Dollar' },
+    { code: 'ZAR', symbol: 'R', name: 'South African Rand' },
+    { code: 'NGN', symbol: '₦', name: 'Nigerian Naira' },
+    { code: 'EGP', symbol: 'E£', name: 'Egyptian Pound' },
+    { code: 'CHF', symbol: 'CHF', name: 'Swiss Franc' },
+    { code: 'SEK', symbol: 'kr', name: 'Swedish Krona' },
+    { code: 'NOK', symbol: 'kr', name: 'Norwegian Krone' },
+    { code: 'DKK', symbol: 'kr', name: 'Danish Krone' },
+    { code: 'RUB', symbol: '₽', name: 'Russian Ruble' },
+    { code: 'BRL', symbol: 'R$', name: 'Brazilian Real' },
+    { code: 'MXN', symbol: '$', name: 'Mexican Peso' },
+    { code: 'TRY', symbol: '₺', name: 'Turkish Lira' },
+];
 
 export default function CompanySettingsPage() {
     const { profile } = useAuth();
@@ -30,7 +68,8 @@ export default function CompanySettingsPage() {
     const [state, setState] = useState("");
     const [pincode, setPincode] = useState("");
     const [gstin, setGstin] = useState("");
-    const [currency, setCurrency] = useState("USD");
+    const [currency, setCurrency] = useState("INR");
+    const [currencySymbol, setCurrencySymbol] = useState("₹");
     const [taxId, setTaxId] = useState("");
 
     // Leave Policy
@@ -59,7 +98,17 @@ export default function CompanySettingsPage() {
 
             // Populate form fields
             setOrgName(orgData.name || "");
-            setCurrency(orgData.currency || "USD");
+            setCurrency(orgData.currency || "INR");
+
+            // Fix: Check settings for symbol, otherwise fallback to known symbol for currency
+            const savedSymbol = orgData.settings?.currency_symbol;
+            if (savedSymbol) {
+                setCurrencySymbol(savedSymbol);
+            } else {
+                const matched = CURRENCIES.find(c => c.code === (orgData.currency || "INR"));
+                setCurrencySymbol(matched?.symbol || "₹");
+            }
+
             setTaxId(orgData.tax_id || "");
 
             // Populate Leave Policy from settings
@@ -88,6 +137,14 @@ export default function CompanySettingsPage() {
         }
     };
 
+    const handleCurrencyChange = (currCode: string) => {
+        setCurrency(currCode);
+        const matched = CURRENCIES.find(c => c.code === currCode);
+        if (matched) {
+            setCurrencySymbol(matched.symbol);
+        }
+    };
+
     const handleSaveOrganization = async () => {
         if (!org) return;
 
@@ -108,6 +165,7 @@ export default function CompanySettingsPage() {
                 },
                 settings: {
                     ...org.settings,
+                    currency_symbol: currencySymbol,
                     leave_policy: {
                         paid_leaves: paidLeaves,
                         sick_leaves: sickLeaves
@@ -169,8 +227,10 @@ export default function CompanySettingsPage() {
             // 1. Create Organization
             await companyService.createOrganization({
                 name: orgName,
-                currency: currency || "USD",
-                settings: {}
+                currency: currency || "INR",
+                settings: {
+                    currency_symbol: currencySymbol
+                }
             });
 
             // 2. Reload to reflect changes (Profile is already updated by RPC)
@@ -211,23 +271,36 @@ export default function CompanySettingsPage() {
                             onChange={(e) => setOrgName(e.target.value)}
                         />
                     </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="createCurrency">Base Currency</Label>
-                        <div className="relative">
-                            <CreditCard className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="createCurrency">Base Currency</Label>
+                            <Select value={currency} onValueChange={handleCurrencyChange}>
+                                <SelectTrigger id="createCurrency">
+                                    <SelectValue placeholder="Select currency" />
+                                </SelectTrigger>
+                                <SelectContent className="max-h-[200px]">
+                                    {CURRENCIES.map((c) => (
+                                        <SelectItem key={c.code} value={c.code}>
+                                            <span className="font-medium mr-2">{c.code}</span>
+                                            <span className="text-muted-foreground text-xs">({c.name})</span>
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="createCurrencySymbol">Symbol</Label>
                             <Input
-                                id="createCurrency"
-                                placeholder="USD, EUR, INR..."
-                                value={currency}
-                                onChange={(e) => setCurrency(e.target.value.toUpperCase())}
-                                className="pl-9"
-                                maxLength={3}
+                                id="createCurrencySymbol"
+                                value={currencySymbol}
+                                onChange={(e) => setCurrencySymbol(e.target.value)}
+                                placeholder="$"
                             />
                         </div>
-                        <p className="text-xs text-muted-foreground">
-                            You can add more currencies later (Multi-currency support).
-                        </p>
                     </div>
+                    <p className="text-xs text-muted-foreground">
+                        You can add more currencies later (Multi-currency support).
+                    </p>
                     <Button
                         className="w-full mt-4"
                         onClick={handleCreateOrganization}
@@ -353,18 +426,33 @@ export default function CompanySettingsPage() {
 
                         <Separator />
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="space-y-2">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div className="space-y-2 md:col-span-2">
                                 <Label htmlFor="currency">Currency</Label>
-                                <div className="relative">
-                                    <CreditCard className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                                    <Input
-                                        id="currency"
-                                        value={currency}
-                                        onChange={(e) => setCurrency(e.target.value)}
-                                        className="pl-9"
-                                    />
-                                </div>
+                                <Select value={currency} onValueChange={handleCurrencyChange}>
+                                    <SelectTrigger id="currency">
+                                        <SelectValue placeholder="Select currency" />
+                                    </SelectTrigger>
+                                    <SelectContent className="max-h-[200px]">
+                                        {CURRENCIES.map((c) => (
+                                            <SelectItem key={c.code} value={c.code}>
+                                                <div className="flex items-center justify-between w-full min-w-[120px]">
+                                                    <span className="font-medium mr-2">{c.code}</span>
+                                                    <span className="text-muted-foreground text-xs">{c.name}</span>
+                                                </div>
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="currencySymbol">Symbol</Label>
+                                <Input
+                                    id="currencySymbol"
+                                    value={currencySymbol}
+                                    onChange={(e) => setCurrencySymbol(e.target.value)}
+                                    placeholder="$"
+                                />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="taxId">Tax ID</Label>

@@ -10,5 +10,28 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(
     supabaseUrl || "https://placeholder.supabase.co",
-    supabaseAnonKey || "placeholder-key"
+    supabaseAnonKey || "placeholder-key",
+    {
+        auth: {
+            autoRefreshToken: true,
+            persistSession: true,
+            detectSessionInUrl: true,
+            // Refresh token before it expires
+            storage: typeof window !== 'undefined' ? window.localStorage : undefined
+        },
+        global: {
+            headers: {
+                'x-application-name': 'gainux-erp',
+            },
+        },
+        // Add timeout to prevent infinite loading
+        db: {
+            schema: 'public',
+        },
+        realtime: {
+            params: {
+                eventsPerSecond: 10
+            }
+        }
+    }
 );

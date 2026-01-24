@@ -10,10 +10,11 @@ import { salesOrderService } from "../services/salesOrderService";
 import type { Company, SalesOrderItem } from "../types";
 import { toast } from "sonner";
 import { ArrowLeft, Trash, Plus } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { useCurrency } from "@/hooks/useCurrency";
 export default function SalesOrderFormPage() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { currency, formatAmount } = useCurrency();
     const isEdit = !!id; // Derived from id
 
     const [searchParams] = useSearchParams();
@@ -97,7 +98,7 @@ export default function SalesOrderFormPage() {
                 companyId,
                 orderDate,
                 status: 'draft',
-                currency: 'USD',
+                currency: currency,
                 totalAmount: calculateTotal(),
                 items,
                 quoteId: quoteId || undefined,
@@ -155,7 +156,7 @@ export default function SalesOrderFormPage() {
                     <CardContent>
                         <div className="flex justify-between text-lg font-bold">
                             <span>Total Amount</span>
-                            <span>{formatCurrency(calculateTotal(), 'USD')}</span>
+                            <span>{formatAmount(calculateTotal())}</span>
                         </div>
                         <Button className="w-full mt-4" onClick={handleSubmit} disabled={loading}>
                             {loading ? "Saving..." : "Create Order"}
