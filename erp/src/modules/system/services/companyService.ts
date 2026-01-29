@@ -59,13 +59,33 @@ export const companyService = {
         }
 
         // Use RPC to safely handle RLS and atomic profile update
-        const { data, error } = await supabase.rpc('create_new_organization', {
+        const { data: newOrg, error } = await supabase.rpc('create_new_organization', {
             org_name: org.name,
             org_currency: org.currency || 'USD'
         });
 
         if (error) throw error;
-        return data as Organization;
+
+        // Update with subscription details if provided
+        // We do this separately because the RPC might not accept these new columns yet
+        if (org.subscription_plan) {
+            await companyService.updateOrganization(newOrg.id, {
+                subscription_plan: org.subscription_plan,
+                subscription_status: org.subscription_status || 'active',
+                subscription_expiry: org.subscription_expiry,
+                razorpay_subscription_id: org.razorpay_subscription_id,
+                settings: org.settings
+            });
+
+            // Return updated object locally
+            return {
+                ...newOrg,
+                subscription_plan: org.subscription_plan,
+                subscription_status: org.subscription_status || 'active'
+            } as Organization;
+        }
+
+        return newOrg as Organization;
     },
 
     // Branches

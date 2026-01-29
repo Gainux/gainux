@@ -62,6 +62,8 @@ import SignupPage from "@/pages/auth/SignupPage";
 import ForgotPasswordPage from "@/pages/auth/ForgotPasswordPage";
 import OnboardingPage from "@/pages/auth/OnboardingPage";
 import ProfilePage from "@/pages/auth/ProfilePage";
+import SubscriptionExpiredPage from "@/pages/SubscriptionExpiredPage";
+import SubscriptionGuard from "@/components/auth/SubscriptionGuard";
 
 import SettingsPage from "@/pages/SettingsPage";
 import BankDetails from "./modules/finance/pages/BankDetails";
@@ -117,152 +119,157 @@ function App() {
               {/* Protected Routes (No Org Required) */}
               <Route element={<ProtectedRoute requireOrg={false} />}>
                 <Route path="/onboarding" element={<OnboardingPage />} />
+
               </Route>
 
               {/* Protected Routes (Org Required) */}
               <Route element={<ProtectedRoute requireOrg={true} />}>
-                <Route element={<AppLayout />}>
-                  <Route path="/" element={<Dashboard />} />
-                  <Route path="/analytics" element={<AnalyticsPage />} />
+                <Route path="/subscription/expired" element={<SubscriptionExpiredPage />} />
+                {/* Check Subscription Status */}
+                <Route element={<SubscriptionGuard />}>
+                  <Route element={<AppLayout />}>
+                    <Route path="/" element={<Dashboard />} />
+                    <Route path="/analytics" element={<AnalyticsPage />} />
 
-                  {/* Employee Self Service (ESS) */}
-                  <Route path="/ess/dashboard" element={<EssDashboard />} />
-                  <Route path="/ess/leaves" element={<MyLeavesPage />} />
-                  <Route path="/ess/attendance" element={<MyAttendancePage />} />
-                  <Route path="/ess/performance" element={<MyPerformancePage />} />
+                    {/* Employee Self Service (ESS) */}
+                    <Route path="/ess/dashboard" element={<EssDashboard />} />
+                    <Route path="/ess/leaves" element={<MyLeavesPage />} />
+                    <Route path="/ess/attendance" element={<MyAttendancePage />} />
+                    <Route path="/ess/performance" element={<MyPerformancePage />} />
 
-                  {/* CRM Module */}
-                  <Route element={<ModuleGuard moduleId="crm" />}>
-                    <Route path="/crm/leads" element={<LeadsPage />} />
-                    <Route path="/crm/leads/:id" element={<LeadDetailsPage />} />
-                    <Route path="/crm/customers" element={<CustomersPage />} />
-                    <Route path="/crm/customers/:id" element={<CustomerDetailsPage />} />
-                    <Route path="/crm/deals" element={<DealsPage />} />
-                    <Route path="/crm/deals/:id" element={<DealDetailsPage />} />
-                    <Route path="/crm/quotes" element={<QuotationsPage />} />
-                    <Route path="/crm/orders" element={<SalesOrderListPage />} />
-                    <Route path="/crm/orders/new" element={<SalesOrderFormPage />} />
-                    <Route path="/crm/orders/:id" element={<SalesOrderFormPage />} />
-                    <Route path="/crm/*" element={<ComingSoonPage title="Sales & CRM" />} />
-                  </Route>
-
-                  {/* HRM Module */}
-                  <Route element={<ModuleGuard moduleId="hrm" />}>
-                    <Route path="/hrm/attendance" element={<AttendancePage />} />
-                    <Route path="/hrm/leaves" element={<LeavesPage />} />
-                    <Route path="/hrm/employees" element={<EmployeeList />} />
-                    <Route path="/hrm/employees/:id" element={<EmployeeDetailsPage />} />
-                    <Route path="/hrm/org-structure" element={<OrgStructurePage />} />
-                    <Route path="/hrm/payroll" element={<PayrollPage />} />
-                    <Route path="/hrm/payroll/:id" element={<PayrollRunDetails />} />
-                    <Route path="/hrm/recruitment" element={<RecruitmentPage />} />
-                    <Route path="/hrm/lms" element={<TrainingDashboard />} />
-                    <Route path="/hrm/performance" element={<PerformanceDashboard />} />
-                    <Route path="/hrm/performance/employee/:id" element={<PerformanceDashboard />} />
-                    <Route path="/hrm/performance/goals" element={<GoalListPage />} />
-                    <Route path="/hrm/performance/reviews" element={<ReviewListPage />} />
-                    <Route path="/hrm/*" element={<ComingSoonPage title="Human Resources" />} />
-                  </Route>
-
-                  {/* Finance Module */}
-                  <Route element={<ModuleGuard moduleId="finance" />}>
-
-
-                    <Route path="/finance/gl" element={<GeneralLedgerPage />} />
-                    <Route path="/finance/invoices/create" element={<CreateInvoice />} />
-                    <Route path="/finance/invoices/:id/edit" element={<EditInvoice />} />
-                    <Route path="/finance/invoices/:id" element={<InvoiceDetails />} />
-                    <Route path="/finance/invoices" element={<InvoiceList />} />
-                    <Route path="/finance/payables/create" element={<CreateBill />} />
-                    <Route path="/finance/payables" element={<PayablesPage />} />
-                    <Route path="/finance/expenses" element={<ExpenseList />} />
-                    <Route path="/finance/banking" element={<BankList />} />
-                    <Route path="/finance/banking/:id" element={<BankDetails />} />
-                    <Route path="/finance/budgeting" element={<BudgetList />} />
-                    <Route path="/finance/budgeting/:id" element={<BudgetDetails />} />
-                    <Route path="/finance/assets" element={<AssetList />} />
-                    <Route path="/finance/assets/:id" element={<AssetDetails />} />
-
-                    <Route path="/finance/*" element={<ComingSoonPage title="Finance & Accounting" />} />
-                  </Route>
-
-
-
-
-                  {/* Projects Module */}
-                  <Route element={<ModuleGuard moduleId="projects" />}>
-                    <Route path="/projects" element={<ProjectsListPage />} />
-                    <Route path="/projects/:id" element={<ProjectDetailsPage />} />
-                    <Route path="/projects/resources" element={<ResourcePlanPage />} />
-                    <Route path="/projects/timesheets" element={<TimesheetsPage />} />
-                    <Route path="/projects/*" element={<ComingSoonPage title="Project Management" />} />
-                  </Route>
-
-                  {/* Assets (EAM) - merged with Finance for now as per Sidebar */}
-                  {/* <Route element={<ModuleGuard moduleId="assets" />}>
-                    <Route path="/finance/assets" element={<AssetList />} />
-                    <Route path="/finance/assets/:id" element={<AssetDetails />} />
-                  </Route> */}
-
-
-
-                  {/* Tax & Compliance */}
-                  <Route element={<ModuleGuard moduleId="finance" />}>
-                    <Route path="/finance/tax" element={<TaxRates />} />
-                  </Route>
-
-                  {/* Tax & Compliance */}
-                  {/* Tax & Compliance */}
-                  <Route element={<ModuleGuard moduleId="finance" />}>
-                    <Route path="/finance/tax" element={<TaxRates />} />
-                    <Route path="/finance/tax/report" element={
-                      <Suspense fallback={<div className="p-8">Loading report...</div>}>
-                        <TaxReportPage />
-                      </Suspense>
-                    } />
-                  </Route>
-
-                  {/* Analytics */}
-                  <Route element={<ModuleGuard moduleId="analytics" />}>
-                    <Route path="/analytics/advanced" element={<ComingSoonPage title="Advanced Analytics" />} />
-                    <Route path="/analytics/*" element={<ComingSoonPage title="BI & Analytics" />} />
-                  </Route>
-
-                  {/* Automation */}
-                  <Route element={<ModuleGuard moduleId="automation" />}>
-                    <Route path="/automation/workflows" element={<WorkflowListPage />} />
-                    <Route path="/automation/workflows/new" element={<WorkflowBuilderPage />} />
-                    <Route path="/automation/workflows/:id" element={<WorkflowBuilderPage />} />
-                    <Route path="/automation/rules" element={<BusinessRulesPage />} />
-                    <Route path="/automation/*" element={<Navigate to="/automation/workflows" replace />} />
-                  </Route>
-
-                  {/* Integrations */}
-                  <Route element={<ModuleGuard moduleId="integrations" />}>
-                    <Route path="/integrations" element={<IntegrationsLayout />}>
-                      <Route index element={<Navigate to="/integrations/apps" replace />} />
-                      <Route path="apps" element={<ConnectedAppsPage />} />
-                      <Route path="api-keys" element={<ApiKeysPage />} />
-                      <Route path="webhooks" element={<WebhooksPage />} />
+                    {/* CRM Module */}
+                    <Route element={<ModuleGuard moduleId="crm" />}>
+                      <Route path="/crm/leads" element={<LeadsPage />} />
+                      <Route path="/crm/leads/:id" element={<LeadDetailsPage />} />
+                      <Route path="/crm/customers" element={<CustomersPage />} />
+                      <Route path="/crm/customers/:id" element={<CustomerDetailsPage />} />
+                      <Route path="/crm/deals" element={<DealsPage />} />
+                      <Route path="/crm/deals/:id" element={<DealDetailsPage />} />
+                      <Route path="/crm/quotes" element={<QuotationsPage />} />
+                      <Route path="/crm/orders" element={<SalesOrderListPage />} />
+                      <Route path="/crm/orders/new" element={<SalesOrderFormPage />} />
+                      <Route path="/crm/orders/:id" element={<SalesOrderFormPage />} />
+                      <Route path="/crm/*" element={<ComingSoonPage title="Sales & CRM" />} />
                     </Route>
-                  </Route>
 
-
-
-                  {/* System Module (Settings & Users) */}
-                  <Route element={<ModuleGuard moduleId="system" />}>
-                    <Route element={<AdminGuard />}>
-                      <Route path="/users" element={<UsersListPage />} />
-                      <Route path="/system/company" element={<CompanySettingsPage />} />
-                      <Route path="/system/audit" element={<AuditLogsPage />} />
-                      <Route path="/system/security" element={<SecuritySettingsPage />} />
-
-                      <Route path="/settings" element={<SettingsPage />} />
-                      <Route path="/system/*" element={<ComingSoonPage title="System Settings" />} />
+                    {/* HRM Module */}
+                    <Route element={<ModuleGuard moduleId="hrm" />}>
+                      <Route path="/hrm/attendance" element={<AttendancePage />} />
+                      <Route path="/hrm/leaves" element={<LeavesPage />} />
+                      <Route path="/hrm/employees" element={<EmployeeList />} />
+                      <Route path="/hrm/employees/:id" element={<EmployeeDetailsPage />} />
+                      <Route path="/hrm/org-structure" element={<OrgStructurePage />} />
+                      <Route path="/hrm/payroll" element={<PayrollPage />} />
+                      <Route path="/hrm/payroll/:id" element={<PayrollRunDetails />} />
+                      <Route path="/hrm/recruitment" element={<RecruitmentPage />} />
+                      <Route path="/hrm/lms" element={<TrainingDashboard />} />
+                      <Route path="/hrm/performance" element={<PerformanceDashboard />} />
+                      <Route path="/hrm/performance/employee/:id" element={<PerformanceDashboard />} />
+                      <Route path="/hrm/performance/goals" element={<GoalListPage />} />
+                      <Route path="/hrm/performance/reviews" element={<ReviewListPage />} />
+                      <Route path="/hrm/*" element={<ComingSoonPage title="Human Resources" />} />
                     </Route>
-                  </Route>
 
-                  <Route path="/profile" element={<ProfilePage />} />
+                    {/* Finance Module */}
+                    <Route element={<ModuleGuard moduleId="finance" />}>
+
+
+                      <Route path="/finance/gl" element={<GeneralLedgerPage />} />
+                      <Route path="/finance/invoices/create" element={<CreateInvoice />} />
+                      <Route path="/finance/invoices/:id/edit" element={<EditInvoice />} />
+                      <Route path="/finance/invoices/:id" element={<InvoiceDetails />} />
+                      <Route path="/finance/invoices" element={<InvoiceList />} />
+                      <Route path="/finance/payables/create" element={<CreateBill />} />
+                      <Route path="/finance/payables" element={<PayablesPage />} />
+                      <Route path="/finance/expenses" element={<ExpenseList />} />
+                      <Route path="/finance/banking" element={<BankList />} />
+                      <Route path="/finance/banking/:id" element={<BankDetails />} />
+                      <Route path="/finance/budgeting" element={<BudgetList />} />
+                      <Route path="/finance/budgeting/:id" element={<BudgetDetails />} />
+                      <Route path="/finance/assets" element={<AssetList />} />
+                      <Route path="/finance/assets/:id" element={<AssetDetails />} />
+
+                      <Route path="/finance/*" element={<ComingSoonPage title="Finance & Accounting" />} />
+                    </Route>
+
+
+
+
+                    {/* Projects Module */}
+                    <Route element={<ModuleGuard moduleId="projects" />}>
+                      <Route path="/projects" element={<ProjectsListPage />} />
+                      <Route path="/projects/:id" element={<ProjectDetailsPage />} />
+                      <Route path="/projects/resources" element={<ResourcePlanPage />} />
+                      <Route path="/projects/timesheets" element={<TimesheetsPage />} />
+                      <Route path="/projects/*" element={<ComingSoonPage title="Project Management" />} />
+                    </Route>
+
+                    {/* Assets (EAM) - merged with Finance for now as per Sidebar */}
+                    {/* <Route element={<ModuleGuard moduleId="assets" />}>
+                        <Route path="/finance/assets" element={<AssetList />} />
+                        <Route path="/finance/assets/:id" element={<AssetDetails />} />
+                      </Route> */}
+
+
+
+                    {/* Tax & Compliance */}
+                    <Route element={<ModuleGuard moduleId="finance" />}>
+                      <Route path="/finance/tax" element={<TaxRates />} />
+                    </Route>
+
+                    {/* Tax & Compliance */}
+                    {/* Tax & Compliance */}
+                    <Route element={<ModuleGuard moduleId="finance" />}>
+                      <Route path="/finance/tax" element={<TaxRates />} />
+                      <Route path="/finance/tax/report" element={
+                        <Suspense fallback={<div className="p-8">Loading report...</div>}>
+                          <TaxReportPage />
+                        </Suspense>
+                      } />
+                    </Route>
+
+                    {/* Analytics */}
+                    <Route element={<ModuleGuard moduleId="analytics" />}>
+                      <Route path="/analytics/advanced" element={<ComingSoonPage title="Advanced Analytics" />} />
+                      <Route path="/analytics/*" element={<ComingSoonPage title="BI & Analytics" />} />
+                    </Route>
+
+                    {/* Automation */}
+                    <Route element={<ModuleGuard moduleId="automation" />}>
+                      <Route path="/automation/workflows" element={<WorkflowListPage />} />
+                      <Route path="/automation/workflows/new" element={<WorkflowBuilderPage />} />
+                      <Route path="/automation/workflows/:id" element={<WorkflowBuilderPage />} />
+                      <Route path="/automation/rules" element={<BusinessRulesPage />} />
+                      <Route path="/automation/*" element={<Navigate to="/automation/workflows" replace />} />
+                    </Route>
+
+                    {/* Integrations */}
+                    <Route element={<ModuleGuard moduleId="integrations" />}>
+                      <Route path="/integrations" element={<IntegrationsLayout />}>
+                        <Route index element={<Navigate to="/integrations/apps" replace />} />
+                        <Route path="apps" element={<ConnectedAppsPage />} />
+                        <Route path="api-keys" element={<ApiKeysPage />} />
+                        <Route path="webhooks" element={<WebhooksPage />} />
+                      </Route>
+                    </Route>
+
+
+
+                    {/* System Module (Settings & Users) */}
+                    <Route element={<ModuleGuard moduleId="system" />}>
+                      <Route element={<AdminGuard />}>
+                        <Route path="/users" element={<UsersListPage />} />
+                        <Route path="/system/company" element={<CompanySettingsPage />} />
+                        <Route path="/system/audit" element={<AuditLogsPage />} />
+                        <Route path="/system/security" element={<SecuritySettingsPage />} />
+
+                        <Route path="/settings" element={<SettingsPage />} />
+                        <Route path="/system/*" element={<ComingSoonPage title="System Settings" />} />
+                      </Route>
+                    </Route>
+
+                    <Route path="/profile" element={<ProfilePage />} />
+                  </Route>
                 </Route>
               </Route>
               <Route path="*" element={<Navigate to="/" replace />} />

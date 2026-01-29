@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { projectService } from "../services/projectService";
 import { Loader2, Plus, Users, AlertTriangle } from "lucide-react";
-import type { ResourceAllocation, Project, Task } from "../types";
+import type { ResourceAllocation, Project } from "../types";
 import { supabase } from "@/lib/supabase";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -31,7 +31,7 @@ export default function ResourcePlanPage() {
     const [projects, setProjects] = useState<Project[]>([]);
     const [selectedProjectId, setSelectedProjectId] = useState<string>("");
     const [allocations, setAllocations] = useState<ResourceAllocation[]>([]);
-    const [tasks, setTasks] = useState<Task[]>([]);
+
     const [loading, setLoading] = useState(false);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -46,7 +46,6 @@ export default function ResourcePlanPage() {
             loadData(selectedProjectId);
         } else {
             setAllocations([]);
-            setTasks([]);
         }
     }, [selectedProjectId]);
 
@@ -62,12 +61,8 @@ export default function ResourcePlanPage() {
     const loadData = async (projectId: string) => {
         setLoading(true);
         try {
-            const [allocData, taskData] = await Promise.all([
-                projectService.getResourceAllocations(projectId),
-                projectService.getProjectTasks(projectId)
-            ]);
+            const allocData = await projectService.getResourceAllocations(projectId);
             setAllocations(allocData);
-            setTasks(taskData);
         } catch (error) {
             console.error("Failed to load data", error);
         } finally {
@@ -110,11 +105,7 @@ export default function ResourcePlanPage() {
         setIsDialogOpen(true);
     };
 
-    const calculateAllocation = (employeeId: string) => {
-        // Use the actual allocation_percentage from the database
-        const allocation = allocations.find(a => a.employeeId === employeeId);
-        return allocation?.allocationPercentage || 0;
-    };
+
 
     // Calculate total allocation across ALL projects for overallocation warning
     const [employeeAllAllocations, setEmployeeAllAllocations] = useState<Record<string, number>>({});
@@ -256,7 +247,7 @@ export default function ResourcePlanPage() {
                                 </TableHeader>
                                 <TableBody>
                                     {allocations.map((allocation) => {
-                                        const dynamicPercentage = calculateAllocation(allocation.employeeId);
+
                                         return (
                                             <TableRow key={allocation.id}>
                                                 <TableCell className="flex items-center gap-2">

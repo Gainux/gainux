@@ -16,6 +16,10 @@ export interface Organization {
         permissions?: RolePermissions;
         [key: string]: any;
     };
+    subscription_plan?: 'monthly' | 'yearly';
+    subscription_status?: 'active' | 'inactive' | 'expired';
+    subscription_expiry?: string;
+    razorpay_subscription_id?: string;
     created_at: string;
     updated_at?: string;
 }

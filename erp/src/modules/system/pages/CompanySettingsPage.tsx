@@ -11,7 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Plus, Building, MapPin, Globe, Mail, Phone, Save } from "lucide-react";
+import { Loader2, Plus, Building, MapPin, Globe, Mail, Phone, Save, CreditCard, Calendar, Activity } from "lucide-react";
 
 const CURRENCIES = [
     { code: 'USD', symbol: '$', name: 'US Dollar' },
@@ -492,6 +492,58 @@ export default function CompanySettingsPage() {
                                     </>
                                 )}
                             </Button>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Subscription Details */}
+                <Card className="border-border/50 shadow-sm">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <CreditCard className="h-5 w-5 text-primary" />
+                            Subscription Details
+                        </CardTitle>
+                        <CardDescription>Manage your current subscription plan and billing</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div className="p-4 border rounded-lg bg-card/50">
+                                <span className="text-sm text-muted-foreground flex items-center gap-1 mb-1">
+                                    <Building className="h-3 w-3" /> Current Plan
+                                </span>
+                                <div className="font-semibold text-lg capitalize">
+                                    {org?.subscription_plan || 'Free / Trial'}
+                                </div>
+                            </div>
+                            <div className="p-4 border rounded-lg bg-card/50">
+                                <span className="text-sm text-muted-foreground flex items-center gap-1 mb-1">
+                                    <Activity className="h-3 w-3" /> Status
+                                </span>
+                                <div>
+                                    <Badge variant={org?.subscription_status === 'active' ? 'default' : 'destructive'} className="capitalize">
+                                        {org?.subscription_status || 'Inactive'}
+                                    </Badge>
+                                </div>
+                            </div>
+                            <div className="p-4 border rounded-lg bg-card/50">
+                                <span className="text-sm text-muted-foreground flex items-center gap-1 mb-1">
+                                    <Calendar className="h-3 w-3" /> Expires On
+                                </span>
+                                <div className="font-medium">
+                                    {org?.subscription_expiry
+                                        ? new Date(org.subscription_expiry).toLocaleDateString()
+                                        : 'N/A'
+                                    }
+                                </div>
+                            </div>
+                            <div className="p-4 border rounded-lg bg-card/50">
+                                <span className="text-sm text-muted-foreground flex items-center gap-1 mb-1">
+                                    <Globe className="h-3 w-3" /> Reference ID
+                                </span>
+                                <div className="font-mono text-xs overflow-hidden text-ellipsis" title={org?.razorpay_subscription_id}>
+                                    {org?.razorpay_subscription_id || 'N/A'}
+                                </div>
+                            </div>
                         </div>
                     </CardContent>
                 </Card>
