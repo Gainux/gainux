@@ -85,7 +85,7 @@ export default function SecuritySettingsPage() {
     };
 
     return (
-        <div className="space-y-6 p-6 pb-8">
+        <div className="space-y-6 p-4 md:p-6 pb-8">
             <div className="flex flex-col gap-2">
                 <h1 className="text-3xl font-bold tracking-tight">Security & Access</h1>
                 <p className="text-muted-foreground">
@@ -177,7 +177,7 @@ export default function SecuritySettingsPage() {
                             ) : loginHistory.length > 0 ? (
                                 <div className="space-y-4">
                                     {loginHistory.map((log) => (
-                                        <div key={log.id} className="flex items-center justify-between p-4 border rounded-lg">
+                                        <div key={log.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border rounded-lg gap-4">
                                             <div className="flex items-center gap-4">
                                                 <div className="p-2 bg-primary/10 rounded-full">
                                                     <Shield className="h-4 w-4 text-primary" />
@@ -189,7 +189,7 @@ export default function SecuritySettingsPage() {
                                                     </p>
                                                 </div>
                                             </div>
-                                            <div className="text-right">
+                                            <div className="text-right w-full sm:w-auto">
                                                 {/* Mock IP/Device since we don't store it yet */}
                                                 <Badge variant="outline" className="font-mono text-xs">
                                                     Current Device

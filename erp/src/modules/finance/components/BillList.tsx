@@ -85,8 +85,8 @@ export function BillList() {
 
     return (
         <div className="space-y-4">
-            <div className="flex items-center justify-between">
-                <div className="relative flex-1 max-w-sm">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="relative flex-1 w-full md:max-w-sm">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                         placeholder="Search bills..."
@@ -101,7 +101,7 @@ export function BillList() {
                 </Button>
             </div>
 
-            <div className="rounded-md border">
+            <div className="rounded-md border overflow-x-auto">
                 <Table>
                     <TableHeader>
                         <TableRow>

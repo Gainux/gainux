@@ -26,7 +26,38 @@ export const companyService = {
         return data as Organization;
     },
 
-    async createOrganization(org: Partial<Organization>) {
+    async createOrganization(org: Partial<Organization>, user?: { id: string, email: string, full_name?: string }) {
+        // 1. Ensure Profile Exists (if user provided)
+        if (user) {
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('id')
+                .eq('id', user.id)
+                .maybeSingle();
+
+            if (!profile) {
+                console.log("Creating missing profile for user before org creation...");
+                // Insert profile so RPC can update it or just to ensure it exists
+                const { error: profileError } = await supabase.from('profiles').insert({
+                    id: user.id,
+                    auth_id: user.id,
+                    email: user.email,
+                    full_name: user.full_name || '',
+                    role: 'admin', // Default to admin for new org creator
+                    status: 'active',
+                    created_at: new Date().toISOString()
+                });
+
+                if (profileError) {
+                    // Ignore duplicate key errors (race condition with trigger)
+                    if (profileError.code !== '23505') {
+                        console.error("Error creating profile:", profileError);
+                        throw profileError;
+                    }
+                }
+            }
+        }
+
         // Use RPC to safely handle RLS and atomic profile update
         const { data, error } = await supabase.rpc('create_new_organization', {
             org_name: org.name,

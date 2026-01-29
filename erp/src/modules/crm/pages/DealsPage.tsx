@@ -89,7 +89,7 @@ export default function DealsPage() {
     };
 
     return (
-        <div className="flex-1 h-[calc(100vh-4rem)] p-8 pt-6 flex flex-col">
+        <div className="flex-1 h-[calc(100vh-4rem)] p-4 md:p-8 pt-6 flex flex-col">
             <div className="flex items-center justify-between space-y-2 mb-4">
                 <h2 className="text-3xl font-bold tracking-tight">Deals Pipeline</h2>
                 <div className="flex items-center space-x-2">

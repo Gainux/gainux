@@ -92,7 +92,7 @@ export default function DealDetailsPage() {
 
     if (error || !deal) {
         return (
-            <div className="p-8">
+            <div className="p-4 md:p-8">
                 <Alert variant="destructive">
                     <AlertDescription>{error || "Deal not found"}</AlertDescription>
                 </Alert>
@@ -108,7 +108,7 @@ export default function DealDetailsPage() {
     return (
         <div className="flex flex-col h-full">
             {/* Header */}
-            <div className="border-b bg-background p-6">
+            <div className="border-b bg-background p-4 md:p-6">
                 <div className="flex items-center gap-4 mb-4">
                     <Button variant="ghost" size="icon" onClick={() => window.history.back()}>
                         <ArrowLeft className="h-4 w-4" />
@@ -163,7 +163,7 @@ export default function DealDetailsPage() {
                 </div>
             </div>
 
-            <div className="flex-1 p-6 space-y-6 overflow-auto">
+            <div className="flex-1 p-4 md:p-6 space-y-6 overflow-auto">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="md:col-span-2 space-y-6">
                         <Card>

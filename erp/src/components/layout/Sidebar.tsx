@@ -394,10 +394,10 @@ export function Sidebar({ className, isCollapsed = false, onToggle }: SidebarPro
                     <div className={cn("mb-2 flex items-center gap-2", isCollapsed ? "justify-center px-0 flex-col" : "px-4 justify-between")}>
 
                         {isCollapsed ? (
-                            <img src="/src/assets/logo.png" alt="Gainux Logo" className="h-8 w-auto mb-4" />
+                            <img src="/logo.png" alt="Gainux Logo" className="h-8 w-auto mb-4" />
                         ) : (
                             <div className="flex items-center gap-2">
-                                <img src="/src/assets/logo.png" alt="Gainux Logo" className="h-8 w-auto" />
+                                <img src="/logo.png" alt="Gainux Logo" className="h-8 w-auto" />
                                 <h2 className="text-xl font-bold tracking-tight">Gainux</h2>
                             </div>
                         )}

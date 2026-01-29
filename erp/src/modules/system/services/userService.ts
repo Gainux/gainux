@@ -20,11 +20,17 @@ const mapToSystemUser = (data: any): SystemUser => ({
 });
 
 export const userService = {
-    async getUsers() {
-        const { data, error } = await supabase
+    async getUsers(orgId?: string) {
+        let query = supabase
             .from('profiles')
             .select('*')
             .order('created_at', { ascending: false });
+
+        if (orgId) {
+            query = query.eq('org_id', orgId);
+        }
+
+        const { data, error } = await query;
 
         if (error) throw error;
         return data.map(mapToSystemUser);
@@ -108,7 +114,8 @@ export const userService = {
                 email,
                 full_name: user.full_name,
                 role: user.role || 'user',
-                status: user.status || 'active'
+                status: user.status || 'active',
+                org_id: user.org_id // Ensure org_id is passed
             })
             .select()
             .single();

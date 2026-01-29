@@ -104,7 +104,7 @@ export default function EmployeeList() {
 
 
     return (
-        <div className="flex-1 space-y-4 p-8 pt-6">
+        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
             <div className="flex items-center justify-between space-y-2">
                 <h2 className="text-3xl font-bold tracking-tight">Employees</h2>
                 <div className="flex items-center space-x-2">
@@ -114,9 +114,9 @@ export default function EmployeeList() {
                 </div>
             </div>
 
-            <div className="flex items-center justify-between space-x-2 py-4">
-                <div className="flex flex-1 items-center space-x-2">
-                    <div className="relative w-[300px]">
+            <div className="flex flex-col md:flex-row items-center justify-between space-y-3 md:space-y-0 md:space-x-2 py-4">
+                <div className="flex flex-col md:flex-row flex-1 items-stretch md:items-center space-y-2 md:space-y-0 md:space-x-2 w-full">
+                    <div className="relative w-full md:w-[300px]">
                         <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
                             placeholder="Search by name, email, or code..."
@@ -125,7 +125,7 @@ export default function EmployeeList() {
                             className="pl-8"
                         />
                     </div>
-                    <div className="w-[200px]">
+                    <div className="w-full md:w-[200px]">
                         <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
                             <SelectTrigger>
                                 <SelectValue placeholder="Department" />
@@ -138,7 +138,7 @@ export default function EmployeeList() {
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="w-[200px]">
+                    <div className="w-full md:w-[200px]">
                         <Select value={statusFilter} onValueChange={setStatusFilter}>
                             <SelectTrigger>
                                 <SelectValue placeholder="Status" />
@@ -154,7 +154,7 @@ export default function EmployeeList() {
                 </div>
             </div>
 
-            <div className="rounded-md border">
+            <div className="rounded-md border overflow-x-auto">
                 <Table>
                     <TableHeader>
                         <TableRow>

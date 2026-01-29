@@ -58,6 +58,9 @@ import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import LoginPage from "@/pages/auth/LoginPage";
+import SignupPage from "@/pages/auth/SignupPage";
+import ForgotPasswordPage from "@/pages/auth/ForgotPasswordPage";
+import OnboardingPage from "@/pages/auth/OnboardingPage";
 import ProfilePage from "@/pages/auth/ProfilePage";
 
 import SettingsPage from "@/pages/SettingsPage";
@@ -102,6 +105,8 @@ function App() {
           <Router>
             <Routes>
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/signup" element={<SignupPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
               {/* Public Career Pages */}
               <Route element={<PublicJobLayout />}>
@@ -109,7 +114,13 @@ function App() {
                 <Route path="/careers/:orgId/jobs/:jobId" element={<PublicJobDetails />} />
               </Route>
 
-              <Route element={<ProtectedRoute />}>
+              {/* Protected Routes (No Org Required) */}
+              <Route element={<ProtectedRoute requireOrg={false} />}>
+                <Route path="/onboarding" element={<OnboardingPage />} />
+              </Route>
+
+              {/* Protected Routes (Org Required) */}
+              <Route element={<ProtectedRoute requireOrg={true} />}>
                 <Route element={<AppLayout />}>
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/analytics" element={<AnalyticsPage />} />

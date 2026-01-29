@@ -366,7 +366,7 @@ export default function AttendancePage() {
     };
 
     return (
-        <div className="flex-1 flex flex-col space-y-4 p-8 pt-6 h-full overflow-hidden">
+        <div className="flex-1 flex flex-col space-y-4 p-4 md:p-8 pt-6 h-full overflow-hidden">
             {/* Header with Date Navigation */}
             <div className="flex flex-col gap-6">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -563,7 +563,7 @@ export default function AttendancePage() {
                     </div>
 
 
-                    <div className="rounded-md border">
+                    <div className="rounded-md border overflow-x-auto">
                         <Table>
                             <TableHeader>
                                 <TableRow>

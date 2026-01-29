@@ -52,7 +52,7 @@ export default function CustomersPage() {
     }
 
     return (
-        <div className="flex-1 space-y-4 p-8 pt-6">
+        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
             <div className="flex items-center justify-between space-y-2">
                 <h2 className="text-3xl font-bold tracking-tight">Customers</h2>
                 <Dialog open={open} onOpenChange={setOpen}>
@@ -82,7 +82,7 @@ export default function CustomersPage() {
                 </Alert>
             )}
 
-            <div className="hidden h-full flex-1 flex-col space-y-8 md:flex">
+            <div className="h-full flex-1 flex-col space-y-8 flex">
                 {loading ? (
                     <div className="flex items-center justify-center h-24">
                         <Loader2 className="h-6 w-6 animate-spin" />

@@ -121,7 +121,7 @@ export default function PayrollPage() {
     });
 
     return (
-        <div className="flex-1 space-y-4 p-8 pt-6">
+        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-3xl font-bold tracking-tight">Payroll</h2>
@@ -153,64 +153,66 @@ export default function PayrollPage() {
                             </Button>
                         </div>
                     ) : (
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Period</TableHead>
-                                    <TableHead>Processed Date</TableHead>
-                                    <TableHead>Total Amount</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {runs.map((run) => (
-                                    <TableRow key={run.id}>
-                                        <TableCell className="font-medium">
-                                            {format(new Date(run.year, run.month - 1), 'MMMM yyyy')}
-                                        </TableCell>
-                                        <TableCell>
-                                            {run.processedAt ? format(new Date(run.processedAt), 'PPP') : '-'}
-                                        </TableCell>
-                                        <TableCell>
-                                            {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'INR' }).format(run.totalAmount || 0)}
-                                        </TableCell>
-                                        <TableCell>
-                                            <Badge variant="secondary" className={getStatusColor(run.status)}>
-                                                {run.status.charAt(0).toUpperCase() + run.status.slice(1)}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <div className="flex items-center justify-end gap-2">
-                                                <Button variant="ghost" size="sm" asChild>
-                                                    <Link to={`/hrm/payroll/${run.id}`}>
-                                                        View Details <ChevronRight className="ml-2 h-4 w-4" />
-                                                    </Link>
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={async () => {
-                                                        if (confirm("Are you sure you want to delete this payroll run?")) {
-                                                            try {
-                                                                await payrollService.deletePayrollRun(run.id);
-                                                                toast.success("Payroll run deleted");
-                                                                loadRuns();
-                                                            } catch (error) {
-                                                                console.error(error);
-                                                                toast.error("Failed to delete payroll run");
-                                                            }
-                                                        }
-                                                    }}
-                                                >
-                                                    <Trash2 className="h-4 w-4 text-red-500" />
-                                                </Button>
-                                            </div>
-                                        </TableCell>
+                        <div className="overflow-x-auto">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Period</TableHead>
+                                        <TableHead>Processed Date</TableHead>
+                                        <TableHead>Total Amount</TableHead>
+                                        <TableHead>Status</TableHead>
+                                        <TableHead className="text-right">Actions</TableHead>
                                     </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
+                                </TableHeader>
+                                <TableBody>
+                                    {runs.map((run) => (
+                                        <TableRow key={run.id}>
+                                            <TableCell className="font-medium">
+                                                {format(new Date(run.year, run.month - 1), 'MMMM yyyy')}
+                                            </TableCell>
+                                            <TableCell>
+                                                {run.processedAt ? format(new Date(run.processedAt), 'PPP') : '-'}
+                                            </TableCell>
+                                            <TableCell>
+                                                {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'INR' }).format(run.totalAmount || 0)}
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge variant="secondary" className={getStatusColor(run.status)}>
+                                                    {run.status.charAt(0).toUpperCase() + run.status.slice(1)}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <Button variant="ghost" size="sm" asChild>
+                                                        <Link to={`/hrm/payroll/${run.id}`}>
+                                                            View Details <ChevronRight className="ml-2 h-4 w-4" />
+                                                        </Link>
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={async () => {
+                                                            if (confirm("Are you sure you want to delete this payroll run?")) {
+                                                                try {
+                                                                    await payrollService.deletePayrollRun(run.id);
+                                                                    toast.success("Payroll run deleted");
+                                                                    loadRuns();
+                                                                } catch (error) {
+                                                                    console.error(error);
+                                                                    toast.error("Failed to delete payroll run");
+                                                                }
+                                                            }
+                                                        }}
+                                                    >
+                                                        <Trash2 className="h-4 w-4 text-red-500" />
+                                                    </Button>
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
                     )}
                 </CardContent>
             </Card>

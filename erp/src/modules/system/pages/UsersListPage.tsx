@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -36,6 +37,7 @@ import { RolePermissionMatrix } from "../components/RolePermissionMatrix";
 import type { SystemUser } from "../types";
 
 export default function UsersListPage() {
+    const { profile } = useAuth();
     const [users, setUsers] = useState<SystemUser[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
@@ -45,9 +47,10 @@ export default function UsersListPage() {
     const [userToDelete, setUserToDelete] = useState<SystemUser | null>(null);
 
     const fetchUsers = async () => {
+        if (!profile?.org_id) return;
         setLoading(true);
         try {
-            const data = await userService.getUsers();
+            const data = await userService.getUsers(profile.org_id);
             setUsers(data);
         } catch (error) {
             console.error("Failed to fetch users", error);
@@ -58,7 +61,7 @@ export default function UsersListPage() {
 
     useEffect(() => {
         fetchUsers();
-    }, []);
+    }, [profile?.org_id]);
 
     const handleSaveUser = async (data: Partial<SystemUser>) => {
         try {
@@ -74,7 +77,8 @@ export default function UsersListPage() {
                 setUsers(users.map(u => u.id === data.id ? { ...u, ...data } as SystemUser : u));
             } else {
                 // Create new
-                const newUser = await userService.createUser(data);
+                if (!profile?.org_id) return;
+                const newUser = await userService.createUser({ ...data, org_id: profile.org_id });
                 setUsers([newUser, ...users]);
             }
 
@@ -116,8 +120,8 @@ export default function UsersListPage() {
     };
 
     return (
-        <div className="flex-1 space-y-6 p-8 pt-6">
-            <div className="flex items-center justify-between">
+        <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">System Users</h1>
                     <p className="text-muted-foreground mt-1">
@@ -153,7 +157,7 @@ export default function UsersListPage() {
                                 </div>
                             </div>
                         </CardHeader>
-                        <div className="rounded-md border mx-6 mb-6">
+                        <div className="rounded-md border mx-6 mb-6 overflow-x-auto">
                             <Table>
                                 <TableHeader>
                                     <TableRow className="bg-muted/50 hover:bg-muted/50">

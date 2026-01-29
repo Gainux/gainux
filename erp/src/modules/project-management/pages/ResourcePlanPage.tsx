@@ -165,14 +165,14 @@ export default function ResourcePlanPage() {
     }
 
     return (
-        <div className="flex-1 h-[calc(100vh-4rem)] p-8 pt-6 flex flex-col space-y-6">
-            <div className="flex justify-between items-center">
+        <div className="flex-1 h-[calc(100vh-4rem)] p-4 md:p-8 pt-6 flex flex-col space-y-6">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <h2 className="text-3xl font-bold tracking-tight">Resource Plan</h2>
                     <p className="text-muted-foreground">Manage team allocations across projects.</p>
                 </div>
-                <div className="flex items-center gap-4">
-                    <div className="w-[300px]">
+                <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4 w-full md:w-auto">
+                    <div className="w-full md:w-[300px]">
                         <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
                             <SelectTrigger>
                                 <SelectValue placeholder="Select a project..." />
@@ -242,72 +242,74 @@ export default function ResourcePlanPage() {
                             </Button>
                         </div>
                     ) : (
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Employee</TableHead>
-                                    <TableHead>Role</TableHead>
-                                    <TableHead>Start Date</TableHead>
-                                    <TableHead>End Date</TableHead>
-                                    <TableHead className="text-right">Allocation (Based on Tasks)</TableHead>
-                                    <TableHead className="w-[100px]"></TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {allocations.map((allocation) => {
-                                    const dynamicPercentage = calculateAllocation(allocation.employeeId);
-                                    return (
-                                        <TableRow key={allocation.id}>
-                                            <TableCell className="flex items-center gap-2">
-                                                <Avatar className="h-8 w-8">
-                                                    <AvatarImage src={allocation.employee?.avatarUrl} />
-                                                    <AvatarFallback>
-                                                        {allocation.employee?.firstName?.[0]}
-                                                        {allocation.employee?.lastName?.[0]}
-                                                    </AvatarFallback>
-                                                </Avatar>
-                                                <div>
-                                                    <div className="font-medium">
-                                                        {allocation.employee?.firstName} {allocation.employee?.lastName}
+                        <div className="overflow-x-auto">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Employee</TableHead>
+                                        <TableHead>Role</TableHead>
+                                        <TableHead>Start Date</TableHead>
+                                        <TableHead>End Date</TableHead>
+                                        <TableHead className="text-right">Allocation (Based on Tasks)</TableHead>
+                                        <TableHead className="w-[100px]"></TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {allocations.map((allocation) => {
+                                        const dynamicPercentage = calculateAllocation(allocation.employeeId);
+                                        return (
+                                            <TableRow key={allocation.id}>
+                                                <TableCell className="flex items-center gap-2">
+                                                    <Avatar className="h-8 w-8">
+                                                        <AvatarImage src={allocation.employee?.avatarUrl} />
+                                                        <AvatarFallback>
+                                                            {allocation.employee?.firstName?.[0]}
+                                                            {allocation.employee?.lastName?.[0]}
+                                                        </AvatarFallback>
+                                                    </Avatar>
+                                                    <div>
+                                                        <div className="font-medium">
+                                                            {allocation.employee?.firstName} {allocation.employee?.lastName}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>Member</TableCell>
-                                            <TableCell>{allocation.startDate}</TableCell>
-                                            <TableCell>{allocation.endDate}</TableCell>
-                                            <TableCell className="text-right">
-                                                <div className="flex flex-col items-end gap-1">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="font-bold">{allocation.allocationPercentage}%</span>
-                                                        {employeeAllAllocations[allocation.employeeId] > 100 && (
-                                                            <Badge variant="destructive" className="text-xs flex items-center gap-1">
-                                                                <AlertTriangle className="h-3 w-3" />
-                                                                Overallocated
-                                                            </Badge>
+                                                </TableCell>
+                                                <TableCell>Member</TableCell>
+                                                <TableCell>{allocation.startDate}</TableCell>
+                                                <TableCell>{allocation.endDate}</TableCell>
+                                                <TableCell className="text-right">
+                                                    <div className="flex flex-col items-end gap-1">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="font-bold">{allocation.allocationPercentage}%</span>
+                                                            {employeeAllAllocations[allocation.employeeId] > 100 && (
+                                                                <Badge variant="destructive" className="text-xs flex items-center gap-1">
+                                                                    <AlertTriangle className="h-3 w-3" />
+                                                                    Overallocated
+                                                                </Badge>
+                                                            )}
+                                                        </div>
+                                                        {employeeAllAllocations[allocation.employeeId] > 0 && (
+                                                            <span className="text-xs text-muted-foreground">
+                                                                Total: {employeeAllAllocations[allocation.employeeId]}% across all projects
+                                                            </span>
                                                         )}
                                                     </div>
-                                                    {employeeAllAllocations[allocation.employeeId] > 0 && (
-                                                        <span className="text-xs text-muted-foreground">
-                                                            Total: {employeeAllAllocations[allocation.employeeId]}% across all projects
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="flex justify-end gap-2">
-                                                    <Button variant="ghost" size="sm" onClick={() => openEditDialog(allocation)}>
-                                                        Edit
-                                                    </Button>
-                                                    <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleDeleteAllocation(allocation.id)}>
-                                                        Delete
-                                                    </Button>
-                                                </div>
-                                            </TableCell>
-                                        </TableRow>
-                                    );
-                                })}
-                            </TableBody>
-                        </Table>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="flex justify-end gap-2">
+                                                        <Button variant="ghost" size="sm" onClick={() => openEditDialog(allocation)}>
+                                                            Edit
+                                                        </Button>
+                                                        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleDeleteAllocation(allocation.id)}>
+                                                            Delete
+                                                        </Button>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })}
+                                </TableBody>
+                            </Table>
+                        </div>
                     )}
                 </CardContent>
             </Card>

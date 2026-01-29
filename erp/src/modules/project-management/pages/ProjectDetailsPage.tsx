@@ -233,8 +233,8 @@ export default function ProjectDetailsPage() {
     return (
         <div className="flex-1 h-[calc(100vh-4rem)] bg-muted/10 flex flex-col">
             {/* Header */}
-            <div className="border-b bg-background p-6">
-                <div className="flex items-center justify-between mb-6">
+            <div className="border-b bg-background p-4 md:p-6">
+                <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
                     <div className="flex items-center space-x-4">
                         <Button variant="ghost" size="icon" onClick={() => navigate("/projects")}>
                             <ArrowLeft className="h-4 w-4" />
@@ -303,7 +303,7 @@ export default function ProjectDetailsPage() {
                 </div>
 
                 {/* Stats */}
-                <div className="grid grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                     <Card className="p-4 flex flex-row items-center justify-between pb-4">
                         <div className="space-y-1">
                             <p className="text-sm font-medium text-muted-foreground">Total Tasks</p>
@@ -338,7 +338,7 @@ export default function ProjectDetailsPage() {
             </div>
 
             {/* Content */}
-            <div className="flex-1 p-6 overflow-hidden flex flex-col">
+            <div className="flex-1 p-4 md:p-6 overflow-hidden flex flex-col">
                 <Tabs defaultValue="board" className="h-full flex flex-col">
                     <div className="flex items-center justify-between mb-4">
                         <TabsList>

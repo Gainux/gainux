@@ -6,7 +6,7 @@ import { FileText, FileSpreadsheet, BookOpen } from 'lucide-react';
 
 export default function GeneralLedgerPage() {
     return (
-        <div className="space-y-6 p-6">
+        <div className="space-y-6 p-4 md:p-6">
             <div className="flex flex-col gap-2">
                 <h1 className="text-3xl font-bold tracking-tight">General Ledger</h1>
                 <p className="text-muted-foreground">
@@ -15,7 +15,7 @@ export default function GeneralLedgerPage() {
             </div>
 
             <Tabs defaultValue="coa" className="space-y-4">
-                <TabsList>
+                <TabsList className="flex flex-wrap h-auto gap-2">
                     <TabsTrigger value="coa" className="flex items-center gap-2">
                         <FileSpreadsheet className="h-4 w-4" />
                         Chart of Accounts

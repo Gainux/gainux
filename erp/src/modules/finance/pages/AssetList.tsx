@@ -55,7 +55,7 @@ export default function AssetList() {
     const totalAssetValue = assets.reduce((sum, asset) => sum + (asset.currentValue || asset.purchaseCost), 0);
 
     return (
-        <div className="flex-1 space-y-4 p-8 pt-6">
+        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-3xl font-bold tracking-tight">Fixed Assets</h2>
@@ -75,7 +75,7 @@ export default function AssetList() {
             />
 
             {/* Asset Summary Cards */}
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Total Assets Value</CardTitle>
@@ -108,7 +108,7 @@ export default function AssetList() {
             </div>
 
             <Card>
-                <CardContent className="p-0">
+                <CardContent className="p-0 overflow-x-auto">
                     <Table>
                         <TableHeader>
                             <TableRow>
