@@ -64,7 +64,6 @@ export default function BudgetList() {
         if (!orgId) return;
         try {
             setLoading(true);
-            // TODO: Get real orgId from context
             const data = await budgetService.getBudgets(orgId);
             setBudgets(data);
         } catch (error) {

@@ -17,7 +17,9 @@ export interface Project {
     endDate: string | null;   // ISO Date string
     budget: number;
     createdAt: string;
+
     updatedAt: string;
+    orgId?: string;
 }
 
 export interface ProjectMember {

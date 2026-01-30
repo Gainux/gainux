@@ -129,6 +129,24 @@ export const userService = {
         return mapToSystemUser(data);
     },
 
+    async updateUser(id: string, updates: Partial<SystemUser>) {
+        // Filter out undefined values
+        const cleanUpdates: any = {};
+        if (updates.full_name !== undefined) cleanUpdates.full_name = updates.full_name;
+        if (updates.role !== undefined) cleanUpdates.role = updates.role;
+        if (updates.status !== undefined) cleanUpdates.status = updates.status;
+
+        const { data, error } = await supabase
+            .from('profiles')
+            .update(cleanUpdates)
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) throw error;
+        return mapToSystemUser(data);
+    },
+
     async deleteUser(id: string) {
         const { error } = await supabase
             .from('profiles')

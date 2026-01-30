@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,27 +19,12 @@ interface UserDialogProps {
 }
 
 export function UserDialog({ user, onSave, onCancel }: UserDialogProps) {
-    const [role, setRole] = useState("user");
-    const [status, setStatus] = useState("active");
-    const [email, setEmail] = useState("");
-    const [fullName, setFullName] = useState("");
+    // Initialize state directly from props since we use a key to force re-mounting
+    const [role, setRole] = useState(user?.role?.toLowerCase() || "user");
+    const [status, setStatus] = useState(user?.status?.toLowerCase() || "active");
+    const [email, setEmail] = useState(user?.email || "");
+    const [fullName, setFullName] = useState(user?.full_name || "");
     const [password, setPassword] = useState("");
-
-    useEffect(() => {
-        if (user) {
-            setRole(user.role);
-            setStatus(user.status);
-            setEmail(user.email);
-            setFullName(user.full_name || "");
-        } else {
-            // Reset for create mode
-            setRole("user");
-            setStatus("active");
-            setEmail("");
-            setFullName("");
-            setPassword("");
-        }
-    }, [user]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -102,6 +87,7 @@ export function UserDialog({ user, onSave, onCancel }: UserDialogProps) {
                         <SelectItem value="admin">Admin</SelectItem>
                         <SelectItem value="manager">Manager</SelectItem>
                         <SelectItem value="user">User</SelectItem>
+                        <SelectItem value="employee">Employee</SelectItem>
                     </SelectContent>
                 </Select>
             </div>

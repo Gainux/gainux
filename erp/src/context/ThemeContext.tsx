@@ -6,14 +6,17 @@ type Theme = "light" | "dark";
 
 interface ThemeContextType {
     theme: Theme;
+    primaryColor: string;
     toggleTheme: () => void;
     setTheme: (theme: Theme) => void;
+    setPrimaryColor: (color: string) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
     const [theme, setThemeState] = useState<Theme>("light");
+    const [primaryColor, setPrimaryColorState] = useState<string>("blue");
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
@@ -25,8 +28,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         try {
             const settings = await settingsService.getSettings();
             const savedTheme = settings.darkMode ? "dark" : "light";
+            const savedPrimaryColor = settings.primaryColor || "blue";
+
             setThemeState(savedTheme);
+            setPrimaryColorState(savedPrimaryColor);
+
             applyTheme(savedTheme);
+            applyPrimaryColor(savedPrimaryColor);
         } catch (err) {
             console.error("Error loading theme:", err);
         }
@@ -38,9 +46,35 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         root.classList.add(newTheme);
     };
 
-    const setTheme = (newTheme: Theme) => {
+    const applyPrimaryColor = (color: string) => {
+        const root = window.document.documentElement;
+        if (color.startsWith('#')) {
+            root.style.setProperty("--primary", color);
+        } else {
+            // Map the color name to the CSS variable
+            // The CSS variables are named --primary-blue, --primary-green, etc.
+            root.style.setProperty("--primary", `var(--primary-${color})`);
+        }
+    };
+
+    const setTheme = async (newTheme: Theme) => {
         setThemeState(newTheme);
         applyTheme(newTheme);
+        try {
+            await settingsService.updateSettings({ darkMode: newTheme === "dark" });
+        } catch (err) {
+            console.error("Error saving theme:", err);
+        }
+    };
+
+    const setPrimaryColor = async (color: string) => {
+        setPrimaryColorState(color);
+        applyPrimaryColor(color);
+        try {
+            await settingsService.updateSettings({ primaryColor: color });
+        } catch (err) {
+            console.error("Error saving primary color:", err);
+        }
     };
 
     const toggleTheme = () => {
@@ -54,7 +88,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     }
 
     return (
-        <ThemeContext.Provider value={{ theme, toggleTheme, setTheme }}>
+        <ThemeContext.Provider value={{ theme, primaryColor, toggleTheme, setTheme, setPrimaryColor }}>
             {children}
         </ThemeContext.Provider>
     );

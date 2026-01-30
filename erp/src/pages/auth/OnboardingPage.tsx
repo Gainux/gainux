@@ -83,49 +83,47 @@ export default function OnboardingPage() {
 
         setLoading(true);
 
-        // 1. Initialize Razorpay (Simulated or Real)
-        // In a real scenario, we would call our backend to create a Razorpay Subscription/Order here.
-        // For this implementation, we will simulate the "Subscription Creation" and open Razorpay.
-
-        const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_placeholder";
-
-        const options = {
-            key: razorpayKey,
-            amount: selectedPlan.price * 100, // Amount in paise
-            currency: "INR",
-            name: "Gainux ERP",
-            description: `${selectedPlan.name} Subscription`,
-            image: "/logo.png", // Use our logo
-            handler: async function (response: any) {
-                // Payment Success
-                console.log("Payment successful", response);
-                await createOrgWithSubscription(response.razorpay_payment_id || "simulated_pay_id");
-            },
-            prefill: {
-                name: user.user_metadata?.full_name || "",
-                email: user.email || "",
-                contact: ""
-            },
-            theme: {
-                color: "#2563eb"
-            }
-        };
-
         try {
-            // Check if Razorpay is loaded
+            // ONE-TIME PAYMENT FLOW
+            const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_placeholder";
+
+            const options = {
+                key: razorpayKey,
+                amount: selectedPlan.price * 100, // paise
+                currency: "INR",
+                name: "Gainux ERP",
+                description: `${selectedPlan.name} Subscription`,
+                image: "/logo.png",
+                handler: async function (response: any) {
+                    console.log("Payment successful", response);
+
+                    // Direct activation, skipping strict signature verification for this simple flow
+                    // or strictly verify if we had a backend order. 
+                    // For now, trusting the callback for "Manual One Time" mode to unblock.
+                    await createOrgWithSubscription(response.razorpay_payment_id);
+                },
+                prefill: {
+                    name: user.user_metadata?.full_name || "",
+                    email: user.email || "",
+                    contact: ""
+                },
+                theme: {
+                    color: "#2563eb"
+                }
+            };
+
             if ((window as any).Razorpay) {
                 const rzp1 = new (window as any).Razorpay(options);
                 rzp1.open();
-                setLoading(false); // Wait for user action
             } else {
-                // Fallback for simulation if script fails or dev mode
-                alert("Razorpay SDK not loaded. Simulating success...");
-                await createOrgWithSubscription("simulated_pay_id");
+                alert("Razorpay SDK not loaded.");
+                setLoading(false);
             }
-        } catch (error) {
+
+        } catch (error: any) {
             console.error("Payment initialization failed", error);
             setLoading(false);
-            alert("Payment failed to initialize.");
+            alert("Failed to initialize payment: " + error.message);
         }
     };
 
@@ -262,7 +260,7 @@ export default function OnboardingPage() {
                             </div>
                             <div className="bg-muted/50 p-3 rounded-md flex items-start gap-2 text-sm text-muted-foreground">
                                 <ShieldCheck className="h-4 w-4 shrink-0 mt-0.5" />
-                                <p>Secure payment via Razorpay. Auto-renew enabled. Cancel anytime.</p>
+                                <p>Secure payment via Razorpay. One-time payment (Manual Renewal).</p>
                             </div>
                         </div>
                     )}

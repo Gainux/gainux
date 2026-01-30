@@ -2,8 +2,8 @@ import { supabase } from "@/lib/supabase";
 import type { Deal } from "../types";
 
 export const dealService = {
-    async getDeals() {
-        const { data, error } = await supabase
+    async getDeals(orgId?: string) {
+        let query = supabase
             .from("deals")
             .select(`
                 *,
@@ -11,6 +11,12 @@ export const dealService = {
                 contact:contacts(*)
             `)
             .order("created_at", { ascending: false });
+
+        if (orgId) {
+            query = query.eq('org_id', orgId);
+        }
+
+        const { data, error } = await query;
 
         if (error) throw error;
 

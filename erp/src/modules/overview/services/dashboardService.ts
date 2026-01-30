@@ -45,10 +45,10 @@ export const dashboardService = {
             employees,
             users
         ] = await Promise.all([
-            invoiceService.getFinancialMetrics(),
-            dealService.getDeals(),
-            salesOrderService.getOrders(), // Added
-            projectService.getProjects(),
+            invoiceService.getFinancialMetrics(orgId),
+            dealService.getDeals(orgId),
+            salesOrderService.getOrders(orgId),
+            projectService.getProjects(undefined, orgId),
             employeeService.getEmployees(orgId),
             userService.getUsers() // Users might be global or needing filter, checking userService later
         ]);
@@ -105,12 +105,15 @@ export const dashboardService = {
         };
     },
 
-    async getAnalyticsData() {
+    async getAnalyticsData(orgId?: string) {
         // Fetch data
+        let expensesQuery = supabase.from("expenses").select("*");
+        if (orgId) expensesQuery = expensesQuery.eq("org_id", orgId);
+
         const [invoices, expenses, deals] = await Promise.all([
-            invoiceService.getInvoices(),
-            supabase.from("expenses").select("*"),
-            dealService.getDeals()
+            invoiceService.getInvoices(orgId),
+            expensesQuery,
+            dealService.getDeals(orgId)
         ]);
 
         const allInvoices = invoices;

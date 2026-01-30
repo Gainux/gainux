@@ -53,7 +53,8 @@ export default function ProjectsListPage() {
                 }
             }
 
-            const data = await projectService.getProjects(employeeId);
+            const orgId = profile?.org_id;
+            const data = await projectService.getProjects(employeeId, orgId);
             setProjects(data);
         } catch (error) {
             console.error("Failed to fetch projects", error);
@@ -70,7 +71,10 @@ export default function ProjectsListPage() {
 
     const handleCreate = async (data: Partial<Project>) => {
         try {
-            const newProject = await projectService.createProject(data);
+            const newProject = await projectService.createProject({
+                ...data,
+                orgId: profile?.org_id
+            });
             setProjects([newProject, ...projects]);
             setCreateOpen(false);
         } catch (error) {

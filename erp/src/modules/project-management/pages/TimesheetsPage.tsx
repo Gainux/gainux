@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export default function TimesheetsPage() {
-    const { user, isAdmin } = useAuth();
+    const { user, isAdmin, profile } = useAuth();
     const { formatAmount } = useCurrency();
     const [timesheets, setTimesheets] = useState<TimesheetEntry[]>([]);
     const [loading, setLoading] = useState(true);
@@ -32,12 +32,15 @@ export default function TimesheetsPage() {
     const [deleteId, setDeleteId] = useState<string | null>(null);
 
     useEffect(() => {
-        loadTimesheets();
-    }, []);
+        if (profile) {
+            loadTimesheets();
+        }
+    }, [profile]);
 
     const loadTimesheets = async () => {
         try {
-            const data = await projectService.getTimesheets();
+            // Pass undefined for projectId, and profile.org_id for orgId
+            const data = await projectService.getTimesheets(undefined, profile?.org_id);
             setTimesheets(data);
         } catch (error) {
             console.error("Failed to load timesheets", error);

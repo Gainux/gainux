@@ -67,12 +67,11 @@ export default function UsersListPage() {
         try {
             if (data.id) {
                 // Update existing
-                if (editingUser?.role !== data.role) {
-                    await userService.updateUserRole(data.id, data.role as string);
-                }
-                if (editingUser?.status !== data.status) {
-                    await userService.updateUserStatus(data.id, data.status as string);
-                }
+                // Check if role or status changed for specific notifications if needed, 
+                // but generally we can just update everything.
+                // However, the existing code called specific methods. Let's keep using generic update for everything now.
+
+                await userService.updateUser(data.id, data);
 
                 setUsers(users.map(u => u.id === data.id ? { ...u, ...data } as SystemUser : u));
             } else {
@@ -251,6 +250,7 @@ export default function UsersListPage() {
                         </DialogDescription>
                     </DialogHeader>
                     <UserDialog
+                        key={editingUser?.id || 'new'}
                         user={editingUser}
                         isOpen={dialogOpen}
                         onSave={handleSaveUser}

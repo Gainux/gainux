@@ -79,6 +79,8 @@ import PublicJobDetails from "./modules/recruitment/public/PublicJobDetails";
 import TrainingDashboard from "./modules/hrm/pages/training/TrainingDashboard";
 
 const TaxReportPage = lazy(() => import('./modules/finance/pages/TaxReportPage'));
+const AdvancedAnalyticsPage = lazy(() => import('./modules/overview/pages/AdvancedAnalyticsPage'));
+const CustomReportsPage = lazy(() => import('./modules/overview/pages/CustomReportsPage'));
 
 import ResourcePlanPage from "./modules/project-management/pages/ResourcePlanPage";
 import TimesheetsPage from "./modules/project-management/pages/TimesheetsPage";
@@ -230,8 +232,16 @@ function App() {
 
                     {/* Analytics */}
                     <Route element={<ModuleGuard moduleId="analytics" />}>
-                      <Route path="/analytics/advanced" element={<ComingSoonPage title="Advanced Analytics" />} />
-                      <Route path="/analytics/*" element={<ComingSoonPage title="BI & Analytics" />} />
+                      <Route path="/analytics/advanced" element={
+                        <Suspense fallback={<div>Loading...</div>}>
+                          <AdvancedAnalyticsPage />
+                        </Suspense>
+                      } />
+                      <Route path="/analytics/reports" element={
+                        <Suspense fallback={<div>Loading...</div>}>
+                          <CustomReportsPage />
+                        </Suspense>
+                      } />
                     </Route>
 
                     {/* Automation */}

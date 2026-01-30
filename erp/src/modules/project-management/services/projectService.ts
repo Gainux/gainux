@@ -17,7 +17,8 @@ const mapToProject = (data: any): Project => ({
     endDate: data.end_date,
     budget: Number(data.budget),
     createdAt: data.created_at,
-    updatedAt: data.updated_at
+    updatedAt: data.updated_at,
+    orgId: data.org_id
 });
 
 const mapToTask = (data: any): Task => ({
@@ -65,9 +66,9 @@ const mapToMember = (data: any): ProjectMember => ({
 
 export const projectService = {
     // Projects
-    async getProjects(employeeId?: string) {
+    async getProjects(employeeId?: string, orgId?: string) {
         if (employeeId) {
-            const { data, error } = await supabase
+            let query = supabase
                 .from('projects')
                 .select(`
                     *,
@@ -77,10 +78,15 @@ export const projectService = {
                 .eq('resource_allocations.employee_id', employeeId)
                 .order('created_at', { ascending: false });
 
+            if (orgId) {
+                query = query.eq('org_id', orgId);
+            }
+
+            const { data, error } = await query;
             if (error) throw error;
             return data.map(mapToProject);
         } else {
-            const { data, error } = await supabase
+            let query = supabase
                 .from('projects')
                 .select(`
                     *,
@@ -88,6 +94,11 @@ export const projectService = {
                 `)
                 .order('created_at', { ascending: false });
 
+            if (orgId) {
+                query = query.eq('org_id', orgId);
+            }
+
+            const { data, error } = await query;
             if (error) throw error;
             return data.map(mapToProject);
         }
@@ -117,7 +128,8 @@ export const projectService = {
                 status: project.status || 'planning',
                 start_date: project.startDate,
                 end_date: project.endDate,
-                budget: project.budget
+                budget: project.budget,
+                org_id: project.orgId
             })
             .select()
             .single();
@@ -342,7 +354,7 @@ export const projectService = {
     },
 
     // Timesheets
-    async getTimesheets(projectId?: string) {
+    async getTimesheets(projectId?: string, orgId?: string) {
         let query = supabase
             .from('timesheets')
             .select(`
@@ -353,6 +365,10 @@ export const projectService = {
 
         if (projectId) {
             query = query.eq('project_id', projectId);
+        }
+
+        if (orgId) {
+            query = query.eq('org_id', orgId);
         }
 
         const { data, error } = await query;

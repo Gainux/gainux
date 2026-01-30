@@ -34,14 +34,20 @@ const mapToOrder = (data: any): SalesOrder => ({
 });
 
 export const salesOrderService = {
-    getOrders: async (): Promise<SalesOrder[]> => {
-        const { data, error } = await supabase
+    getOrders: async (orgId?: string): Promise<SalesOrder[]> => {
+        let query = supabase
             .from('sales_orders')
             .select(`
                 *,
                 companies (id, name)
             `)
             .order('created_at', { ascending: false });
+
+        if (orgId) {
+            query = query.eq('org_id', orgId);
+        }
+
+        const { data, error } = await query;
 
         if (error) throw error;
         return data.map(mapToOrder);

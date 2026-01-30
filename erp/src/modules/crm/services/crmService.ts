@@ -101,8 +101,8 @@ const mapToActivity = (data: any): CRMActivity => ({
 
 export const crmService = {
     // Leads
-    async getLeads() {
-        const { data, error } = await supabase
+    async getLeads(orgId?: string) {
+        let query = supabase
             .from('leads')
             .select(`
                 *,
@@ -110,6 +110,11 @@ export const crmService = {
             `)
             .order('created_at', { ascending: false });
 
+        if (orgId) {
+            query = query.eq('org_id', orgId);
+        }
+
+        const { data, error } = await query;
         if (error) throw error;
         return data.map(mapToLead);
     },
@@ -229,8 +234,8 @@ export const crmService = {
     },
 
     // Deals
-    async getDeals() {
-        const { data, error } = await supabase
+    async getDeals(orgId?: string) {
+        let query = supabase
             .from('deals')
             .select(`
                 *,
@@ -241,6 +246,11 @@ export const crmService = {
             `)
             .order('created_at', { ascending: false });
 
+        if (orgId) {
+            query = query.eq('org_id', orgId);
+        }
+
+        const { data, error } = await query;
         if (error) throw error;
         return data.map(mapToDeal);
     },
@@ -322,12 +332,17 @@ export const crmService = {
     },
 
     // Companies
-    async getCompanies() {
-        const { data, error } = await supabase
+    async getCompanies(orgId?: string) {
+        let query = supabase
             .from('companies')
             .select('*')
             .order('name');
 
+        if (orgId) {
+            query = query.eq('org_id', orgId);
+        }
+
+        const { data, error } = await query;
         if (error) throw error;
         return data.map(mapToCompany);
     },
@@ -391,8 +406,8 @@ export const crmService = {
     },
 
     // Contacts
-    async getContacts() {
-        const { data, error } = await supabase
+    async getContacts(orgId?: string) {
+        let query = supabase
             .from('contacts')
             .select(`
                 *,
@@ -400,6 +415,11 @@ export const crmService = {
             `)
             .order('created_at', { ascending: false });
 
+        if (orgId) {
+            query = query.eq('org_id', orgId);
+        }
+
+        const { data, error } = await query;
         if (error) throw error;
         return data.map(mapToContact);
     },
@@ -467,8 +487,8 @@ export const crmService = {
 
     // --- Quotations ---
 
-    async getQuotes(): Promise<Quote[]> {
-        const { data, error } = await supabase
+    async getQuotes(orgId?: string): Promise<Quote[]> {
+        let query = supabase
             .from('quotes')
             .select(`
                 *,
@@ -477,6 +497,11 @@ export const crmService = {
             `)
             .order('created_at', { ascending: false });
 
+        if (orgId) {
+            query = query.eq('org_id', orgId);
+        }
+
+        const { data, error } = await query;
         if (error) throw error;
 
         return data.map((item: any) => ({

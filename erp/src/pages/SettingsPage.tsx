@@ -14,7 +14,7 @@ import { useModules } from "@/context/ModuleContext";
 import { MODULES } from "@/config/modules";
 
 export default function SettingsPage() {
-    const { theme, setTheme } = useTheme();
+    const { theme, setTheme, primaryColor, setPrimaryColor } = useTheme();
     const { enabledModules, toggleModule } = useModules();
     const [loading, setLoading] = useState(true);
     const [organizationName, setOrganizationName] = useState("Gainux");
@@ -25,7 +25,7 @@ export default function SettingsPage() {
     const [gstin, setGstin] = useState("");
     const [email, setEmail] = useState("");
     const [phone, setPhone] = useState("");
-    const [primaryColor, setPrimaryColor] = useState("blue");
+    // Primary color is now managed by ThemeContext
     const [emailNotifications, setEmailNotifications] = useState(true);
     const [notifyInvoiceDue, setNotifyInvoiceDue] = useState(true);
     const [notifyDealWon, setNotifyDealWon] = useState(true);
@@ -48,7 +48,7 @@ export default function SettingsPage() {
             setState(settings.state || "");
             setPincode(settings.pincode || "");
             setGstin(settings.gstin || "");
-            setPrimaryColor(settings.primaryColor);
+            // Primary color and theme are loaded by ThemeContextProvider
             setEmailNotifications(settings.emailNotifications);
             setNotifyInvoiceDue(settings.notifyInvoiceDue);
             setNotifyDealWon(settings.notifyDealWon);
@@ -84,21 +84,10 @@ export default function SettingsPage() {
         }
     };
 
-    const handleSaveTheme = async () => {
-        try {
-            setSaving(true);
-            const darkMode = theme === "dark";
-            await settingsService.updateSettings({
-                darkMode,
-                primaryColor,
-            });
-            alert("Theme settings saved successfully!");
-        } catch (err: any) {
-            console.error("Error saving theme:", err);
-            alert("Failed to save theme: " + err.message);
-        } finally {
-            setSaving(false);
-        }
+    // Theme saving is now handled instantly by context setters
+    // Keeping this function if we want to show a success message or handle other theme-related saves
+    const handleSaveTheme = () => {
+        alert("Theme settings saved successfully!");
     };
 
     const handleSaveNotifications = async () => {
@@ -289,17 +278,37 @@ export default function SettingsPage() {
 
                             <div className="space-y-2">
                                 <Label>Primary Color</Label>
-                                <div className="grid grid-cols-6 gap-2">
+                                <div className="grid grid-cols-7 gap-2">
                                     {['blue', 'green', 'purple', 'red', 'orange', 'pink'].map((color) => (
                                         <button
                                             key={color}
                                             type="button"
-                                            className={`h-10 w-full rounded-md border-2 ${color === primaryColor ? 'border-primary' : 'border-transparent'
+                                            className={`h-10 w-full rounded-md ${color === primaryColor ? 'ring-2 ring-primary ring-offset-2' : ''
                                                 }`}
-                                            style={{ backgroundColor: `var(--${color}-500, ${color})` }}
+                                            style={{ backgroundColor: `var(--primary-${color})` }}
                                             onClick={() => setPrimaryColor(color)}
                                         />
                                     ))}
+                                    <div className="relative">
+                                        <button
+                                            type="button"
+                                            className={`h-10 w-full rounded-md flex items-center justify-center border-2 ${primaryColor.startsWith('#') ? 'ring-2 ring-primary ring-offset-2 border-transparent' : 'border-dashed border-muted-foreground/30'
+                                                }`}
+                                            onClick={() => document.getElementById('customColorPicker')?.click()}
+                                            style={{
+                                                background: primaryColor.startsWith('#') ? primaryColor : 'transparent'
+                                            }}
+                                        >
+                                            {!primaryColor.startsWith('#') && <span className="text-xl">+</span>}
+                                        </button>
+                                        <input
+                                            id="customColorPicker"
+                                            type="color"
+                                            className="absolute opacity-0 pointer-events-none"
+                                            onChange={(e) => setPrimaryColor(e.target.value)}
+                                            value={primaryColor.startsWith('#') ? primaryColor : '#000000'}
+                                        />
+                                    </div>
                                 </div>
                                 <p className="text-sm text-muted-foreground">
                                     Choose your preferred accent color

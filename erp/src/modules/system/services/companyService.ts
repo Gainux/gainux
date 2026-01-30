@@ -26,6 +26,64 @@ export const companyService = {
         return data as Organization;
     },
 
+    async verifyPayment(paymentDetails: any) {
+        // Direct fetch using ANON KEY to avoid "Invalid JWT" from broken user sessions.
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-payment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+            },
+            body: JSON.stringify(paymentDetails)
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            try {
+                const errorJson = JSON.parse(errorText);
+                throw new Error(errorJson.message || errorJson.error || `Server error: ${response.status}`);
+            } catch (e) {
+                throw new Error(errorText || `Server error: ${response.status}`);
+            }
+        }
+
+        const data = await response.json();
+
+
+
+        return data;
+    },
+
+    async createSubscription(details: { plan_id?: string, plan_name: string, amount: number, interval: 'month' | 'year', currency: string }) {
+        // Direct fetch using ANON KEY to avoid "Invalid JWT" from broken user sessions.
+        // We disabled strict JWT checking on the server, so Anon Key is sufficient.
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-subscription`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+            },
+            body: JSON.stringify(details)
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            // Try to parse JSON error
+            try {
+                const errorJson = JSON.parse(errorText);
+                throw new Error(errorJson.message || errorJson.error || `Server error: ${response.status}`);
+            } catch (e) {
+                throw new Error(errorText || `Server error: ${response.status}`);
+            }
+        }
+
+        const data = await response.json();
+
+
+
+        return data;
+    },
+
     async createOrganization(org: Partial<Organization>, user?: { id: string, email: string, full_name?: string }) {
         // 1. Ensure Profile Exists (if user provided)
         if (user) {

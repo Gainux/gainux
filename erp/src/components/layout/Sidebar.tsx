@@ -10,7 +10,6 @@ import {
     BarChart,
     Briefcase,
     FolderKanban,
-    LineChart,
     Workflow,
     Plug,
     Activity,
@@ -287,10 +286,10 @@ export function Sidebar({ className, isCollapsed = false, onToggle }: SidebarPro
             moduleId: 'analytics',
             routes: [
                 {
-                    href: "/analytics/dashboards",
+                    href: "/analytics/advanced",
                     label: "Dashboards",
                     icon: LayoutDashboard,
-                    active: pathname.startsWith("/analytics/dashboards"),
+                    active: pathname.startsWith("/analytics/advanced"),
                 },
                 {
                     href: "/analytics/reports",
@@ -298,12 +297,7 @@ export function Sidebar({ className, isCollapsed = false, onToggle }: SidebarPro
                     icon: FileText,
                     active: pathname.startsWith("/analytics/reports"),
                 },
-                {
-                    href: "/analytics/advanced",
-                    label: "Advanced BI",
-                    icon: LineChart,
-                    active: pathname.startsWith("/analytics/advanced"),
-                }
+
             ]
         },
         {
@@ -388,7 +382,7 @@ export function Sidebar({ className, isCollapsed = false, onToggle }: SidebarPro
     });
 
     return (
-        <div className={cn("pb-12 bg-sidebar h-full overflow-y-auto relative", className)}>
+        <div className={cn("pb-12 bg-sidebar/95 backdrop-blur-xl border-r shadow-sm h-full overflow-y-auto relative transition-all duration-300 ease-in-out", className)}>
             <div className="space-y-4 py-4">
                 <div className="px-3 py-2">
                     <div className={cn("mb-2 flex items-center gap-2", isCollapsed ? "justify-center px-0 flex-col" : "px-4 justify-between")}>
@@ -452,7 +446,7 @@ export function Sidebar({ className, isCollapsed = false, onToggle }: SidebarPro
                                                 <Button
                                                     key={route.href}
                                                     title={isCollapsed ? route.label : undefined}
-                                                    variant={route.active ? "secondary" : "ghost"}
+                                                    variant={route.active ? "default" : "ghost"}
                                                     className={cn("w-full justify-start", isCollapsed ? "justify-center px-0 h-10 w-10 mx-auto" : "")}
                                                     asChild
                                                 >
