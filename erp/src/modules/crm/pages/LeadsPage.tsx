@@ -99,7 +99,7 @@ export default function LeadsPage() {
                 </Alert>
             )}
 
-            <div className="hidden h-full flex-1 flex-col space-y-8 md:flex">
+            <div className="flex h-full flex-1 flex-col space-y-8">
                 {loading ? (
                     <div className="flex items-center justify-center h-24">
                         <Loader2 className="h-6 w-6 animate-spin" />
