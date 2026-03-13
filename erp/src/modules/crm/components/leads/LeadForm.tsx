@@ -113,6 +113,7 @@ export function LeadForm({ initialData, onSubmit, onCancel, loading }: LeadFormP
                             <SelectItem value="work_ongoing">Work Ongoing</SelectItem>
                             <SelectItem value="do_completion_call">Do Completion Call</SelectItem>
                             <SelectItem value="waiting_for_full_payment">Waiting for Full Payment</SelectItem>
+                            <SelectItem value="complete">Complete</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>

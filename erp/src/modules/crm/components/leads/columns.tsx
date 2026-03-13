@@ -52,10 +52,11 @@ export const columns: ColumnDef<Lead>[] = [
                 work_ongoing: "Work Ongoing",
                 do_completion_call: "Do Completion Call",
                 waiting_for_full_payment: "Waiting for Full Payment",
+                complete: "Complete",
             }
-            const negativeStatuses = ["not_interested"]
+            const variant = status === "not_interested" ? "destructive" : status === "complete" ? "default" : "secondary"
             return (
-                <Badge variant={negativeStatuses.includes(status) ? "destructive" : "secondary"}>
+                <Badge variant={variant}>
                     {statusLabels[status] ?? status}
                 </Badge>
             )

@@ -3,15 +3,29 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Mail, Phone, Building, User, ArrowRightLeft } from "lucide-react";
+import { ArrowLeft, Mail, Phone, Building, User } from "lucide-react";
 import { crmService } from "../services/crmService";
 import type { Lead } from "../types";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { ConvertLeadModal } from "../components/leads/ConvertLeadModal";
 import { LeadForm } from "../components/leads/LeadForm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { CreateCustomerFromLeadDialog } from "../components/leads/CreateCustomerFromLeadDialog";
 import PageLoading from "../../../components/common/PageLoading";
+
+const STATUS_LABELS: Record<string, string> = {
+    do_cold_call: "Do Cold Call",
+    collecting_requirements: "Collecting Requirements",
+    not_interested: "Not Interested",
+    preparing_proposal: "Preparing Proposal",
+    waiting_for_proposal_response: "Waiting for Proposal Response",
+    negotiating: "Negotiating",
+    waiting_for_advance_amount: "Waiting for Advance Amount",
+    work_ongoing: "Work Ongoing",
+    do_completion_call: "Do Completion Call",
+    waiting_for_full_payment: "Waiting for Full Payment",
+    complete: "Complete",
+};
 
 export default function LeadDetailsPage() {
     const { id } = useParams();
@@ -19,9 +33,9 @@ export default function LeadDetailsPage() {
     const [searchParams, setSearchParams] = useSearchParams();
     const [lead, setLead] = useState<Lead | null>(null);
     const [loading, setLoading] = useState(true);
-    const [convertOpen, setConvertOpen] = useState(false);
     const [editOpen, setEditOpen] = useState(searchParams.get("edit") === "true");
     const [saving, setSaving] = useState(false);
+    const [customerDialogOpen, setCustomerDialogOpen] = useState(false);
 
     useEffect(() => {
         const loadLead = async (leadId: string) => {
@@ -50,15 +64,14 @@ export default function LeadDetailsPage() {
             setEditOpen(false);
             setSearchParams({});
             toast.success("Lead updated");
+            if (updated.status === "complete") {
+                setCustomerDialogOpen(true);
+            }
         } catch (err: any) {
             toast.error(err.message || "Failed to update lead");
         } finally {
             setSaving(false);
         }
-    };
-
-    const openEdit = () => {
-        setEditOpen(true);
     };
 
     const closeEdit = () => {
@@ -68,6 +81,8 @@ export default function LeadDetailsPage() {
 
     if (loading) return <PageLoading />;
     if (!lead) return <div>Lead not found</div>;
+
+    const statusVariant = lead.status === "not_interested" ? "destructive" : lead.status === "complete" ? "default" : "secondary";
 
     return (
         <div className="flex-1 space-y-4 p-8 pt-6">
@@ -86,11 +101,10 @@ export default function LeadDetailsPage() {
                 </DialogContent>
             </Dialog>
 
-            <ConvertLeadModal
-                open={convertOpen}
-                onOpenChange={setConvertOpen}
-                leadId={lead.id}
-                leadName={`${lead.firstName} ${lead.lastName}`}
+            <CreateCustomerFromLeadDialog
+                lead={lead}
+                open={customerDialogOpen}
+                onOpenChange={setCustomerDialogOpen}
             />
 
             {/* Header */}
@@ -102,19 +116,8 @@ export default function LeadDetailsPage() {
                     <div>
                         <h2 className="text-3xl font-bold tracking-tight flex items-center gap-2">
                             {lead.firstName} {lead.lastName}
-                            <Badge variant={lead.status === 'not_interested' ? 'destructive' : 'secondary'}>
-                                {({
-                                    do_cold_call: "Do Cold Call",
-                                    collecting_requirements: "Collecting Requirements",
-                                    not_interested: "Not Interested",
-                                    preparing_proposal: "Preparing Proposal",
-                                    waiting_for_proposal_response: "Waiting for Proposal Response",
-                                    negotiating: "Negotiating",
-                                    waiting_for_advance_amount: "Waiting for Advance Amount",
-                                    work_ongoing: "Work Ongoing",
-                                    do_completion_call: "Do Completion Call",
-                                    waiting_for_full_payment: "Waiting for Full Payment",
-                                } as Record<string, string>)[lead.status] ?? lead.status}
+                            <Badge variant={statusVariant}>
+                                {STATUS_LABELS[lead.status] ?? lead.status}
                             </Badge>
                         </h2>
                         <p className="text-muted-foreground flex items-center gap-2">
@@ -123,10 +126,7 @@ export default function LeadDetailsPage() {
                     </div>
                 </div>
                 <div className="flex gap-2">
-                    <Button variant="outline" onClick={openEdit}>Edit</Button>
-                    <Button onClick={() => setConvertOpen(true)}>
-                        <ArrowRightLeft className="mr-2 h-4 w-4" /> Convert to Deal
-                    </Button>
+                    <Button variant="outline" onClick={() => setEditOpen(true)}>Edit</Button>
                 </div>
             </div>
 

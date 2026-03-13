@@ -8,7 +8,6 @@ import ComingSoonPage from "@/components/common/ComingSoonPage";
 import Dashboard from "@/modules/overview/pages/Dashboard";
 import AnalyticsPage from "@/modules/overview/pages/AnalyticsPage";
 import LeadsPage from "@/modules/crm/pages/LeadsPage";
-import DealsPage from "@/modules/crm/pages/DealsPage";
 
 import EmployeeList from "./modules/hrm/pages/EmployeeList";
 import EmployeeDetailsPage from "./modules/hrm/pages/EmployeeDetailsPage";
@@ -33,7 +32,6 @@ import BankList from "./modules/finance/pages/BankList";
 
 import LeadDetailsPage from "@/modules/crm/pages/LeadDetailsPage";
 
-import DealDetailsPage from "@/modules/crm/pages/DealDetailsPage";
 
 import QuotationsPage from "@/modules/crm/pages/QuotationsPage";
 
@@ -151,9 +149,7 @@ function App() {
                       <Route path="/crm/leads/:id" element={<LeadDetailsPage />} />
                       <Route path="/crm/customers" element={<CustomersPage />} />
                       <Route path="/crm/customers/:id" element={<CustomerDetailsPage />} />
-                      <Route path="/crm/deals" element={<DealsPage />} />
-                      <Route path="/crm/deals/:id" element={<DealDetailsPage />} />
-                      <Route path="/crm/quotes" element={<QuotationsPage />} />
+<Route path="/crm/quotes" element={<QuotationsPage />} />
                       <Route path="/crm/orders" element={<SalesOrderListPage />} />
                       <Route path="/crm/orders/new" element={<SalesOrderFormPage />} />
                       <Route path="/crm/orders/:id" element={<SalesOrderFormPage />} />

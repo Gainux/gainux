@@ -16,12 +16,15 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog";
 import { LeadForm } from "@/modules/crm/components/leads/LeadForm";
+import { CreateCustomerFromLeadDialog } from "@/modules/crm/components/leads/CreateCustomerFromLeadDialog";
 
 export default function LeadsPage() {
     const [data, setData] = useState<Lead[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [open, setOpen] = useState(false);
+    const [completedLead, setCompletedLead] = useState<Lead | null>(null);
+    const [customerDialogOpen, setCustomerDialogOpen] = useState(false);
 
     useEffect(() => {
         const fetchLeads = async () => {
@@ -44,6 +47,10 @@ export default function LeadsPage() {
             const newLead = await crmService.createLead(leadData);
             setData([newLead, ...data]);
             setOpen(false);
+            if (newLead.status === "complete") {
+                setCompletedLead(newLead);
+                setCustomerDialogOpen(true);
+            }
         } catch (err: any) {
             console.error("Error creating lead:", err);
             setError("Failed to create lead");
@@ -52,6 +59,15 @@ export default function LeadsPage() {
 
     return (
         <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+            <CreateCustomerFromLeadDialog
+                lead={completedLead}
+                open={customerDialogOpen}
+                onOpenChange={open => {
+                    setCustomerDialogOpen(open);
+                    if (!open) setCompletedLead(null);
+                }}
+            />
+
             <div className="flex items-center justify-between space-y-2">
                 <h2 className="text-3xl font-bold tracking-tight">Leads</h2>
                 <div className="flex items-center space-x-2">

@@ -249,12 +249,6 @@ export function Sidebar({ className, isCollapsed = false, onToggle }: SidebarPro
                     active: pathname.startsWith("/crm/leads"),
                 },
                 {
-                    href: "/crm/deals",
-                    label: "Deals",
-                    icon: Briefcase,
-                    active: pathname.startsWith("/crm/deals"),
-                },
-                {
                     href: "/crm/customers",
                     label: "Customers",
                     icon: Building,
