@@ -19,11 +19,6 @@ export const supabase = createClient(
             // Refresh token before it expires
             storage: typeof window !== 'undefined' ? window.localStorage : undefined
         },
-        global: {
-            headers: {
-                'x-application-name': 'gainux-erp',
-            },
-        },
         // Add timeout to prevent infinite loading
         db: {
             schema: 'public',

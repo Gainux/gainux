@@ -20,7 +20,7 @@ export const customerService = {
                     name: customer.name || '',
                     email: customer.email,
                     status: customer.status || 'active',
-                    total_revenue: customer.totalRevenue || '$0.00',
+                    total_revenue: customer.totalRevenue || 0,
                     last_order_date: customer.lastOrderDate,
                     phone: customer.phone,
                     address: customer.address,

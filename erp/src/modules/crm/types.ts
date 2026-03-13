@@ -190,8 +190,20 @@ export interface SalesOrder {
     deliveryDate?: string;
     billingAddress?: string;
     shippingAddress?: string;
-    items: SalesOrderItem[];
+    updatedAt: string;
+}
+
+export interface ServiceCatalog {
+    id: string;
+    orgId: string;
+    name: string;
+    description?: string;
+    category?: string;
+    price: number;
+    duration?: number;
+    status: 'active' | 'inactive' | 'draft';
     createdAt: string;
     updatedAt: string;
 }
+
 

@@ -12,6 +12,7 @@ import { financeService } from '../services/financeService';
 import type { JournalEntry, Account } from '../types';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { useCurrency } from '@/hooks/useCurrency';
 
 export default function JournalEntryList() {
     // Assuming AuthContext provides user which contains organization info or organization directly but lint says it doesn't exist on type. 
@@ -23,6 +24,7 @@ export default function JournalEntryList() {
     // Maybe the lint is just slow? Or AuthContextType is missing it. 
     // I'll suppress for now or keep it if I trust ChartOfAccounts was working.
     const { profile } = useAuth();
+    const { formatAmount } = useCurrency();
     const orgId = profile?.org_id;
     const [journals, setJournals] = useState<JournalEntry[]>([]);
     const [, setIsLoading] = useState(true);
@@ -87,7 +89,7 @@ export default function JournalEntryList() {
         const totalCredit = validItems.reduce((sum, item) => sum + Number(item.credit || 0), 0);
 
         if (Math.abs(totalDebit - totalCredit) > 0.01) {
-            toast.error(`Unbalanced Entry: Total Debits (₹${totalDebit.toFixed(2)}) must equal Total Credits (₹${totalCredit.toFixed(2)})`, {
+            toast.error(`Unbalanced Entry: Total Debits (${formatAmount(totalDebit)}) must equal Total Credits (${formatAmount(totalCredit)})`, {
                 duration: 5000,
             });
             return;
@@ -317,7 +319,7 @@ export default function JournalEntryList() {
                                                 </TableCell>
                                                 <TableCell>{journal.reference || '-'}</TableCell>
                                                 <TableCell className="text-right font-mono">
-                                                    {totalAmount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
+                                                    {formatAmount(totalAmount)}
                                                 </TableCell>
                                                 <TableCell className="text-right">
                                                     <Badge variant={journal.status === 'posted' ? 'default' : 'secondary'}>

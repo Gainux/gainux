@@ -24,7 +24,7 @@ export function ProjectForm({ onSubmit, onCancel, initialData }: ProjectFormProp
     const [formData, setFormData] = useState<Partial<Project> & { budget: string | number }>({
         name: "",
         description: "",
-        clientId: "", // Initialize as empty string
+        clientId: null, // Initialize as null so empty string is never sent as UUID
         status: "planning",
         startDate: "",
         endDate: "",
@@ -68,7 +68,7 @@ export function ProjectForm({ onSubmit, onCancel, initialData }: ProjectFormProp
         onSubmit({
             ...formData,
             budget: Number(formData.budget),
-            clientId: formData.clientId === "none" ? null : formData.clientId
+            clientId: (!formData.clientId || formData.clientId === "none") ? null : formData.clientId
         });
     };
 

@@ -29,9 +29,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/context/AuthContext';
 import { dashboardService, type DashboardMetrics } from '../services/dashboardService';
+import { useCurrency } from '@/hooks/useCurrency';
 
 export default function AdvancedAnalyticsPage() {
     const { profile } = useAuth();
+    const { formatAmount, symbol } = useCurrency();
     const [period, setPeriod] = useState('year');
     const [loading, setLoading] = useState(true);
     const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
@@ -77,13 +79,6 @@ export default function AdvancedAnalyticsPage() {
         // We can add more statuses if available in metrics
     ];
 
-    const formatCurrency = (val: number) =>
-        new Intl.NumberFormat('en-IN', {
-            style: 'currency',
-            currency: 'INR',
-            maximumFractionDigits: 0
-        }).format(val);
-
     return (
         <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
             <div className="flex items-center justify-between space-y-2">
@@ -123,7 +118,7 @@ export default function AdvancedAnalyticsPage() {
                                 <DollarSign className="h-4 w-4 text-muted-foreground" />
                             </CardHeader>
                             <CardContent>
-                                <div className="text-2xl font-bold">{formatCurrency(financial.revenue)}</div>
+                                <div className="text-2xl font-bold">{formatAmount(financial.revenue)}</div>
                                 <p className="text-xs text-muted-foreground flex items-center mt-1">
                                     <TrendingUp className="h-3 w-3 text-green-500 mr-1" />
                                     +20.1% from last month
@@ -161,7 +156,7 @@ export default function AdvancedAnalyticsPage() {
                                 <Calendar className="h-4 w-4 text-muted-foreground" />
                             </CardHeader>
                             <CardContent>
-                                <div className="text-2xl font-bold">{formatCurrency(financial.expenses)}</div>
+                                <div className="text-2xl font-bold">{formatAmount(financial.expenses)}</div>
                                 <p className="text-xs text-muted-foreground flex items-center mt-1">
                                     <ArrowDownRight className="h-3 w-3 text-red-500 mr-1" />
                                     Total expenses
@@ -191,8 +186,8 @@ export default function AdvancedAnalyticsPage() {
                                                 </linearGradient>
                                             </defs>
                                             <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                                            <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `₹${value}`} />
-                                            <Tooltip formatter={(value: number | undefined) => formatCurrency(value || 0)} />
+                                            <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${symbol}${value}`} />
+                                            <Tooltip formatter={(value: number | undefined) => formatAmount(value || 0)} />
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                             <Area type="monotone" dataKey="revenue" stroke="#2563eb" fillOpacity={1} fill="url(#colorRevenue)" name="Revenue" />
                                             <Area type="monotone" dataKey="expense" stroke="#ef4444" fillOpacity={1} fill="url(#colorExpenses)" name="Expenses" />
@@ -223,7 +218,7 @@ export default function AdvancedAnalyticsPage() {
                                                     <Cell key={`cell-${index}`} fill={entry.color} />
                                                 ))}
                                             </Pie>
-                                            <Tooltip formatter={(value: number | undefined) => formatCurrency(value || 0)} />
+                                            <Tooltip formatter={(value: number | undefined) => formatAmount(value || 0)} />
                                         </PieChart>
                                     </ResponsiveContainer>
                                 </div>
@@ -251,8 +246,8 @@ export default function AdvancedAnalyticsPage() {
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart data={expensesByCategoryData}>
                                         <XAxis dataKey="name" stroke="#888888" fontSize={12} />
-                                        <YAxis stroke="#888888" fontSize={12} tickFormatter={formatCurrency} />
-                                        <Tooltip formatter={(value: number | undefined) => [formatCurrency(value || 0), "Amount"]} />
+                                        <YAxis stroke="#888888" fontSize={12} tickFormatter={formatAmount} />
+                                        <Tooltip formatter={(value: number | undefined) => [formatAmount(value || 0), "Amount"]} />
                                         <Bar dataKey="value" fill="#8884d8" radius={[4, 4, 0, 0]} name="Amount" />
                                     </BarChart>
                                 </ResponsiveContainer>

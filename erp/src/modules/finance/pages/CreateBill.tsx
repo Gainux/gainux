@@ -16,13 +16,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { billService } from "../services/billService";
 import { taxService } from "../services/taxService";
 import type { BillItem, TaxRate } from "../types";
-import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useCurrency } from "@/hooks/useCurrency";
+import { useAuth } from "@/context/AuthContext";
 
 export default function CreateBill() {
     const navigate = useNavigate();
     const { profile } = useAuth();
+    const { formatAmount } = useCurrency();
     const orgId = profile?.org_id;
 
     // const [vendors, setVendors] = useState<Vendor[]>([]);
@@ -330,18 +332,18 @@ export default function CreateBill() {
                             <CardContent className="space-y-4">
                                 <div className="flex justify-between">
                                     <span className="text-muted-foreground">Subtotal:</span>
-                                    <span className="font-medium">₹{subtotal.toFixed(2)}</span>
+                                    <span className="font-medium">{formatAmount(subtotal)}</span>
                                 </div>
                                 {applyTax && (
                                     <div className="flex justify-between">
                                         <span className="text-muted-foreground">Tax ({taxRate}%):</span>
-                                        <span className="font-medium">₹{tax?.toFixed(2)}</span>
+                                        <span className="font-medium">{formatAmount(tax)}</span>
                                     </div>
                                 )}
                                 <div className="h-px bg-border" />
                                 <div className="flex justify-between text-lg font-bold">
                                     <span>Total:</span>
-                                    <span>₹{total.toFixed(2)}</span>
+                                    <span>{formatAmount(total)}</span>
                                 </div>
 
                                 <div className="pt-4 space-y-2">

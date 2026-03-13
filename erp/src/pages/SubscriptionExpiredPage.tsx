@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { AlertTriangle, Check, CreditCard, Loader2, ShieldCheck, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
-
+import { useCurrency } from "@/hooks/useCurrency";
 
 const PLANS = [
     {
@@ -31,6 +31,7 @@ const PLANS = [
 
 export default function SubscriptionExpiredPage() {
     const { user, profile } = useAuth();
+    const { formatAmount } = useCurrency();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [selectedPlanId, setSelectedPlanId] = useState<string>("yearly");
@@ -168,11 +169,11 @@ export default function SubscriptionExpiredPage() {
                                     {selectedPlanId === plan.id && <Check className="h-4 w-4 text-primary" />}
                                 </div>
                                 <div className="mb-4">
-                                    <span className="text-2xl font-bold">₹{plan.price}</span>
+                                    <span className="text-2xl font-bold">{formatAmount(plan.price)}</span>
                                     <span className="text-muted-foreground text-sm">/{plan.interval}</span>
                                     {plan.id === 'yearly' && (
                                         <p className="text-xs text-green-600 font-medium mt-1">
-                                            ₹249/month (billed annually)
+                                            {formatAmount(249)}/month (billed annually)
                                         </p>
                                     )}
                                 </div>

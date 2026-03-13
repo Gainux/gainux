@@ -42,6 +42,9 @@ import CustomerDetailsPage from "@/modules/crm/pages/CustomerDetailsPage";
 import SalesOrderListPage from "@/modules/crm/pages/SalesOrderListPage";
 import SalesOrderFormPage from "@/modules/crm/pages/SalesOrderFormPage";
 
+import ServiceCatalogPage from "@/modules/crm/pages/ServiceCatalogPage";
+import ReferralLeadsPage from "@/modules/crm/pages/ReferralLeadsPage";
+
 import ProjectsListPage from "@/modules/project-management/pages/ProjectsListPage";
 import ProjectDetailsPage from "@/modules/project-management/pages/ProjectDetailsPage";
 
@@ -72,6 +75,7 @@ import BudgetDetails from "./modules/finance/pages/BudgetDetails";
 import AssetList from "./modules/finance/pages/AssetList";
 import AssetDetails from "./modules/finance/pages/AssetDetails";
 import TaxRates from "./modules/finance/pages/TaxRates";
+import ReferralPayoutsPage from "./modules/finance/pages/ReferralPayoutsPage";
 import RecruitmentPage from "./modules/hrm/pages/RecruitmentPage";
 import { PublicJobLayout } from "./modules/recruitment/public/PublicJobLayout";
 import PublicJobBoard from "./modules/recruitment/public/PublicJobBoard";
@@ -151,6 +155,9 @@ function App() {
                       <Route path="/crm/orders" element={<SalesOrderListPage />} />
                       <Route path="/crm/orders/new" element={<SalesOrderFormPage />} />
                       <Route path="/crm/orders/:id" element={<SalesOrderFormPage />} />
+                      <Route path="/crm/services" element={<ServiceCatalogPage />} />
+                      <Route path="/crm/referral-leads" element={<ReferralLeadsPage />} />
+
                       <Route path="/crm/*" element={<ComingSoonPage title="Sales & CRM" />} />
                     </Route>
 
@@ -190,6 +197,7 @@ function App() {
                       <Route path="/finance/budgeting/:id" element={<BudgetDetails />} />
                       <Route path="/finance/assets" element={<AssetList />} />
                       <Route path="/finance/assets/:id" element={<AssetDetails />} />
+                      <Route path="/finance/referral-payouts" element={<ReferralPayoutsPage />} />
 
                       <Route path="/finance/*" element={<ComingSoonPage title="Finance & Accounting" />} />
                     </Route>

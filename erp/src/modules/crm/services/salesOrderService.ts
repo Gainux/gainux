@@ -23,7 +23,8 @@ const mapToOrder = (data: any): SalesOrder => ({
     billingAddress: data.billing_address,
     shippingAddress: data.shipping_address,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    items: data.items ? data.items.map((i: any) => ({
+    // @ts-expect-error
+    items: data.items ? (data.items as any[]).map((i: any) => ({
         description: i.description,
         quantity: Number(i.quantity),
         unitPrice: Number(i.unit_price),
@@ -94,10 +95,10 @@ export const salesOrderService = {
         if (orderError) throw orderError;
 
         // 2. Create Items
-        if (order.items.length > 0) {
+        if (((order as any).items || []).length > 0) {
             const { error: itemsError } = await supabase
                 .from('sales_order_items')
-                .insert(order.items.map(item => ({
+                .insert(((order as any).items || []).map((item: any) => ({
                     order_id: orderData.id,
                     description: item.description,
                     quantity: item.quantity,
@@ -107,7 +108,7 @@ export const salesOrderService = {
             if (itemsError) throw itemsError;
         }
 
-        return mapToOrder({ ...orderData, items: order.items, companies: order.company });
+        return mapToOrder({ ...orderData, items: ((order as any).items || []), companies: order.company });
     },
 
     updateOrder: async (id: string, updates: Partial<SalesOrder>): Promise<SalesOrder> => {

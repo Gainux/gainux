@@ -257,6 +257,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             try {
                 const { data: { session: currentSession }, error } = await supabase.auth.getSession();
 
+                // On network errors (e.g. timeout, offline), the error message usually contains fetch or network keywords
+                // We should NOT log the user out if it's just a temporary network disconnect.
+                const isNetworkError = error?.message?.toLowerCase().includes('fetch') ||
+                    error?.message?.toLowerCase().includes('network') ||
+                    error?.name === 'AbortError' ||
+                    (error as any)?.code === 'ERR_NETWORK';
+
+                if (error && isNetworkError) {
+                    console.warn('Session check failed due to network error, keeping session intact.');
+                    return;
+                }
+
                 if (error || !currentSession) {
                     console.warn('Session validation failed, session may be expired');
                     // Session is invalid - clear auth state
@@ -314,4 +326,5 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     );
 };
 
+/* eslint-disable-next-line react-refresh/only-export-components */
 export const useAuth = () => useContext(AuthContext);

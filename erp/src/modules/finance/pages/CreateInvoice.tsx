@@ -19,12 +19,13 @@ import { crmService } from "@/modules/crm/services/crmService";
 import { taxService } from "../services/taxService";
 import type { Company } from "@/modules/crm/types";
 import type { InvoiceItem, TaxRate } from "../types";
-
+import { useCurrency } from "@/hooks/useCurrency";
 import { useAuth } from "@/context/AuthContext";
 
 export default function CreateInvoice() {
     const navigate = useNavigate();
     const { profile } = useAuth();
+    const { formatAmount } = useCurrency();
     const orgId = profile?.org_id;
 
     const [companies, setCompanies] = useState<Company[]>([]);
@@ -325,18 +326,18 @@ export default function CreateInvoice() {
                             <CardContent className="space-y-4">
                                 <div className="flex justify-between">
                                     <span className="text-muted-foreground">Subtotal:</span>
-                                    <span className="font-medium">₹{subtotal.toFixed(2)}</span>
+                                    <span className="font-medium">{formatAmount(subtotal)}</span>
                                 </div>
                                 {applyGst && (
                                     <div className="flex justify-between">
                                         <span className="text-muted-foreground">GST ({taxRate}%):</span>
-                                        <span className="font-medium">₹{tax.toFixed(2)}</span>
+                                        <span className="font-medium">{formatAmount(tax)}</span>
                                     </div>
                                 )}
                                 <div className="h-px bg-border" />
                                 <div className="flex justify-between text-lg font-bold">
                                     <span>Total:</span>
-                                    <span>₹{total.toFixed(2)}</span>
+                                    <span>{formatAmount(total)}</span>
                                 </div>
 
                                 <div className="pt-4 space-y-2">

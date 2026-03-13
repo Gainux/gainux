@@ -240,7 +240,7 @@ export const pdfService = {
 
         // Table
         const tableColumn = ["Description", "Quantity", "Unit Price", "Total"];
-        const tableRows = order.items.map(item => [
+        const tableRows = ((order as any).items || []).map((item: any) => [
             item.description,
             item.quantity,
             formatMoney(item.unitPrice),

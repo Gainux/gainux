@@ -401,6 +401,54 @@ export const crmService = {
     },
 
     async deleteCompany(id: string) {
+        // 1. Delete CRM Activities linked to deals or contacts
+        const { data: deals } = await supabase.from('deals').select('id').eq('company_id', id);
+        if (deals && deals.length > 0) {
+            const dealIds = deals.map(d => d.id);
+            await supabase.from('crm_activities').delete().in('deal_id', dealIds);
+        }
+        
+        const { data: contacts } = await supabase.from('contacts').select('id').eq('company_id', id);
+        if (contacts && contacts.length > 0) {
+            const contactIds = contacts.map(c => c.id);
+            await supabase.from('crm_activities').delete().in('contact_id', contactIds);
+        }
+
+        // 2. Identify all Quotes for this company
+        const { data: quotes } = await supabase.from('quotes').select('id').eq('company_id', id);
+        const quoteIds = quotes ? quotes.map(q => q.id) : [];
+
+        // 3. Delete Sales Order Items and Sales Orders
+        // We need to delete SOs that are linked directly to the company OR to the company's quotes
+        let orderIdsToDelete: string[] = [];
+        
+        const { data: salesOrdersCompany } = await supabase.from('sales_orders').select('id').eq('company_id', id);
+        if (salesOrdersCompany) {
+            orderIdsToDelete.push(...salesOrdersCompany.map(o => o.id));
+        }
+
+        if (quoteIds.length > 0) {
+            const { data: salesOrdersQuotes } = await supabase.from('sales_orders').select('id').in('quote_id', quoteIds);
+            if (salesOrdersQuotes) {
+                orderIdsToDelete.push(...salesOrdersQuotes.map(o => o.id));
+            }
+        }
+
+        orderIdsToDelete = [...new Set(orderIdsToDelete)]; // deduplicate
+
+        if (orderIdsToDelete.length > 0) {
+            await supabase.from('sales_order_items').delete().in('order_id', orderIdsToDelete);
+            await supabase.from('sales_orders').delete().in('id', orderIdsToDelete);
+        }
+
+        // 4. Delete dependent records (Quotes, Deals, Contacts)
+        if (quoteIds.length > 0) {
+            await supabase.from('quotes').delete().in('id', quoteIds);
+        }
+        await supabase.from('deals').delete().eq('company_id', id);
+        await supabase.from('contacts').delete().eq('company_id', id);
+
+        // 5. Finally, delete the company itself
         const { error } = await supabase.from('companies').delete().eq('id', id);
         if (error) throw error;
     },

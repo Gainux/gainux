@@ -124,12 +124,12 @@ export const projectService = {
             .insert({
                 name: project.name,
                 description: project.description,
-                client_id: project.clientId,
+                client_id: project.clientId || null,
                 status: project.status || 'planning',
-                start_date: project.startDate,
-                end_date: project.endDate,
+                start_date: project.startDate || null,
+                end_date: project.endDate || null,
                 budget: project.budget,
-                org_id: project.orgId
+                org_id: project.orgId || null
             })
             .select()
             .single();

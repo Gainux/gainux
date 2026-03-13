@@ -163,6 +163,12 @@ export function Sidebar({ className, isCollapsed = false, onToggle }: SidebarPro
                     icon: Shield,
                     active: pathname.startsWith("/finance/tax"),
                 },
+                {
+                    href: "/finance/referral-payouts",
+                    label: "Referral Payouts",
+                    icon: Wallet,
+                    active: pathname.startsWith("/finance/referral-payouts"),
+                },
             ]
         },
         {
@@ -252,6 +258,18 @@ export function Sidebar({ className, isCollapsed = false, onToggle }: SidebarPro
                     label: "Sales Orders",
                     icon: ShoppingCart,
                     active: pathname.startsWith("/crm/orders"),
+                },
+                {
+                    href: "/crm/services",
+                    label: "Services Catalog",
+                    icon: Briefcase,
+                    active: pathname.startsWith("/crm/services"),
+                },
+                {
+                    href: "/crm/referral-leads",
+                    label: "Referral Leads",
+                    icon: Users,
+                    active: pathname.startsWith("/crm/referral-leads"),
                 },
             ]
         },

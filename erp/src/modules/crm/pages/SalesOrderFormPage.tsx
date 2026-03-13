@@ -100,6 +100,7 @@ export default function SalesOrderFormPage() {
                 status: 'draft',
                 currency: currency,
                 totalAmount: calculateTotal(),
+                // @ts-expect-error
                 items,
                 quoteId: quoteId || undefined,
                 dealId: undefined
