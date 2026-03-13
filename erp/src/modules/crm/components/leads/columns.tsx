@@ -37,6 +37,24 @@ export const columns: ColumnDef<Lead>[] = [
         header: "Source",
     },
     {
+        id: "category",
+        header: "Category",
+        cell: ({ row }) => {
+            const cat = row.original.category;
+            const loc = row.original.location;
+            if (!cat) return <span className="text-muted-foreground text-xs">—</span>;
+            return (
+                <div className="flex flex-col gap-0.5">
+                    <span className="flex items-center gap-1.5">
+                        <span className="inline-block w-2 h-2 rounded-full shrink-0" style={{ background: cat.color }} />
+                        <span className="text-xs font-medium">{cat.name}</span>
+                    </span>
+                    {loc && <span className="text-xs text-muted-foreground pl-3.5">{loc.name}</span>}
+                </div>
+            );
+        },
+    },
+    {
         accessorKey: "status",
         header: "Status",
         cell: ({ row }) => {

@@ -1,6 +1,22 @@
 
 export type CRMStatus = 'new' | 'contacted' | 'qualified' | 'lost' | 'lead' | 'proposal' | 'negotiation' | 'won';
 
+export interface LeadCategory {
+    id: string;
+    orgId: string;
+    name: string;
+    color: string;
+    createdAt: string;
+}
+
+export interface LeadLocation {
+    id: string;
+    orgId: string;
+    categoryId: string;
+    name: string;
+    createdAt: string;
+}
+
 export interface Lead {
     id: string;
     orgId: string;
@@ -18,6 +34,10 @@ export interface Lead {
         lastName: string;
     };
     notes?: string;
+    categoryId?: string;
+    category?: LeadCategory;
+    locationId?: string;
+    location?: LeadLocation;
 
     // Compatibility fields
     name?: string;

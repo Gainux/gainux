@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,16 +11,19 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import type { Lead } from "@/modules/crm/types";
+import type { Lead, LeadCategory, LeadLocation } from "@/modules/crm/types";
+import { crmService } from "@/modules/crm/services/crmService";
 
 interface LeadFormProps {
     initialData?: Lead;
     onSubmit: (data: Partial<Lead>) => void;
     onCancel: () => void;
     loading?: boolean;
+    defaultCategoryId?: string;
+    defaultLocationId?: string;
 }
 
-export function LeadForm({ initialData, onSubmit, onCancel, loading }: LeadFormProps) {
+export function LeadForm({ initialData, onSubmit, onCancel, loading, defaultCategoryId, defaultLocationId }: LeadFormProps) {
     const [formData, setFormData] = useState<Partial<Lead>>(
         initialData || {
             firstName: "",
@@ -31,11 +34,28 @@ export function LeadForm({ initialData, onSubmit, onCancel, loading }: LeadFormP
             source: "",
             status: "do_cold_call",
             notes: "",
+            categoryId: defaultCategoryId,
+            locationId: defaultLocationId,
         }
     );
 
+    const [categories, setCategories] = useState<LeadCategory[]>([]);
+    const [locations, setLocations] = useState<LeadLocation[]>([]);
+
+    useEffect(() => {
+        crmService.getLeadCategories().then(setCategories).catch(() => {});
+        crmService.getLeadLocations().then(setLocations).catch(() => {});
+    }, []);
+
+    const filteredLocations = locations.filter(l => l.categoryId === formData.categoryId);
+
     const handleChange = (field: keyof Lead, value: any) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
+        setFormData(prev => {
+            const next = { ...prev, [field]: value };
+            // Clear location when category changes
+            if (field === 'categoryId') next.locationId = undefined;
+            return next;
+        });
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -118,6 +138,52 @@ export function LeadForm({ initialData, onSubmit, onCancel, loading }: LeadFormP
                     </Select>
                 </div>
             </div>
+
+            {/* Category & Location */}
+            {categories.length > 0 && (
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label>Category</Label>
+                        <Select
+                            value={formData.categoryId ?? "__none__"}
+                            onValueChange={val => handleChange("categoryId", val === "__none__" ? undefined : val)}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="None" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="__none__">None</SelectItem>
+                                {categories.map(cat => (
+                                    <SelectItem key={cat.id} value={cat.id}>
+                                        <span className="flex items-center gap-2">
+                                            <span className="inline-block w-2 h-2 rounded-full" style={{ background: cat.color }} />
+                                            {cat.name}
+                                        </span>
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Location</Label>
+                        <Select
+                            value={formData.locationId ?? "__none__"}
+                            onValueChange={val => handleChange("locationId", val === "__none__" ? undefined : val)}
+                            disabled={!formData.categoryId || filteredLocations.length === 0}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder={!formData.categoryId ? "Select category first" : "None"} />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="__none__">None</SelectItem>
+                                {filteredLocations.map(loc => (
+                                    <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+            )}
 
             <div className="space-y-2">
                 <Label htmlFor="source">Source</Label>

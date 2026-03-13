@@ -1,7 +1,23 @@
 import { supabase } from "@/lib/supabase";
-import type { Lead, Deal, Contact, Company, CRMActivity, Quote } from "../types";
+import type { Lead, Deal, Contact, Company, CRMActivity, Quote, LeadCategory, LeadLocation } from "../types";
 
 // --- Helpers ---
+
+const mapToLeadCategory = (data: any): LeadCategory => ({
+    id: data.id,
+    orgId: data.org_id,
+    name: data.name,
+    color: data.color ?? '#6366f1',
+    createdAt: data.created_at,
+});
+
+const mapToLeadLocation = (data: any): LeadLocation => ({
+    id: data.id,
+    orgId: data.org_id,
+    categoryId: data.category_id,
+    name: data.name,
+    createdAt: data.created_at,
+});
 
 const mapToLead = (data: any): Lead => ({
     id: data.id,
@@ -20,6 +36,10 @@ const mapToLead = (data: any): Lead => ({
         lastName: data.employees.last_name
     } : undefined,
     notes: data.notes,
+    categoryId: data.category_id,
+    category: data.lead_categories ? mapToLeadCategory(data.lead_categories) : undefined,
+    locationId: data.location_id,
+    location: data.lead_locations ? mapToLeadLocation(data.lead_locations) : undefined,
     createdAt: data.created_at,
     updatedAt: data.updated_at
 });
@@ -100,13 +120,84 @@ const mapToActivity = (data: any): CRMActivity => ({
 // --- Service ---
 
 export const crmService = {
+    // Lead Categories
+    async getLeadCategories(): Promise<LeadCategory[]> {
+        const { data, error } = await supabase
+            .from('lead_categories')
+            .select('*')
+            .order('name');
+        if (error) throw error;
+        return data.map(mapToLeadCategory);
+    },
+
+    async createLeadCategory(name: string, color: string): Promise<LeadCategory> {
+        const { data: auth } = await supabase.auth.getUser();
+        const { data: profile } = await supabase
+            .from('profiles').select('org_id').eq('id', auth.user?.id).single();
+        if (!profile) throw new Error('User organization not found');
+        const { data, error } = await supabase
+            .from('lead_categories')
+            .insert({ org_id: profile.org_id, name, color })
+            .select().single();
+        if (error) throw error;
+        return mapToLeadCategory(data);
+    },
+
+    async updateLeadCategory(id: string, updates: { name?: string; color?: string }): Promise<LeadCategory> {
+        const { data, error } = await supabase
+            .from('lead_categories').update(updates).eq('id', id).select().single();
+        if (error) throw error;
+        return mapToLeadCategory(data);
+    },
+
+    async deleteLeadCategory(id: string): Promise<void> {
+        const { error } = await supabase.from('lead_categories').delete().eq('id', id);
+        if (error) throw error;
+    },
+
+    // Lead Locations
+    async getLeadLocations(categoryId?: string): Promise<LeadLocation[]> {
+        let query = supabase.from('lead_locations').select('*').order('name');
+        if (categoryId) query = query.eq('category_id', categoryId);
+        const { data, error } = await query;
+        if (error) throw error;
+        return data.map(mapToLeadLocation);
+    },
+
+    async createLeadLocation(categoryId: string, name: string): Promise<LeadLocation> {
+        const { data: auth } = await supabase.auth.getUser();
+        const { data: profile } = await supabase
+            .from('profiles').select('org_id').eq('id', auth.user?.id).single();
+        if (!profile) throw new Error('User organization not found');
+        const { data, error } = await supabase
+            .from('lead_locations')
+            .insert({ org_id: profile.org_id, category_id: categoryId, name })
+            .select().single();
+        if (error) throw error;
+        return mapToLeadLocation(data);
+    },
+
+    async updateLeadLocation(id: string, name: string): Promise<LeadLocation> {
+        const { data, error } = await supabase
+            .from('lead_locations').update({ name }).eq('id', id).select().single();
+        if (error) throw error;
+        return mapToLeadLocation(data);
+    },
+
+    async deleteLeadLocation(id: string): Promise<void> {
+        const { error } = await supabase.from('lead_locations').delete().eq('id', id);
+        if (error) throw error;
+    },
+
     // Leads
     async getLeads(orgId?: string) {
         let query = supabase
             .from('leads')
             .select(`
                 *,
-                employees (id, first_name, last_name)
+                employees (id, first_name, last_name),
+                lead_categories (id, name, color),
+                lead_locations (id, name, category_id)
             `)
             .order('created_at', { ascending: false });
 
@@ -119,13 +210,14 @@ export const crmService = {
         return data.map(mapToLead);
     },
 
-
     async getLeadById(id: string) {
         const { data, error } = await supabase
             .from('leads')
             .select(`
                 *,
-                employees (id, first_name, last_name)
+                employees (id, first_name, last_name),
+                lead_categories (id, name, color),
+                lead_locations (id, name, category_id)
             `)
             .eq('id', id)
             .single();
@@ -136,8 +228,6 @@ export const crmService = {
 
     async createLead(lead: Partial<Lead>) {
         const { data: profile } = await supabase.auth.getUser();
-        // Assuming profile fetch logic for org_id if needed, but RLS handles view.
-        // For insert, we need org_id. Let's fetch it from user profile table.
         const { data: userProfile } = await supabase
             .from('profiles')
             .select('org_id')
@@ -158,7 +248,9 @@ export const crmService = {
                 source: lead.source,
                 status: lead.status || 'new',
                 owner_id: lead.ownerId,
-                notes: lead.notes
+                notes: lead.notes,
+                category_id: lead.categoryId || null,
+                location_id: lead.locationId || null,
             })
             .select()
             .single();
@@ -178,6 +270,8 @@ export const crmService = {
         if (updates.status !== undefined) dbUpdates.status = updates.status;
         if (updates.ownerId !== undefined) dbUpdates.owner_id = updates.ownerId;
         if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
+        if (updates.categoryId !== undefined) dbUpdates.category_id = updates.categoryId || null;
+        if (updates.locationId !== undefined) dbUpdates.location_id = updates.locationId || null;
 
         const { data, error } = await supabase
             .from('leads')
