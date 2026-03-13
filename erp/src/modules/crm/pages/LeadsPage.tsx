@@ -1,7 +1,8 @@
 
 import { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { DataTable } from "@/modules/crm/components/leads/data-table";
-import { columns, LeadMobileCard } from "@/modules/crm/components/leads/columns";
+import { createColumns, LeadMobileCard } from "@/modules/crm/components/leads/columns";
 import type { Lead, LeadCategory, LeadLocation } from "@/modules/crm/types";
 import { crmService } from "@/modules/crm/services/crmService";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,10 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
     Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+    AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+    AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { LeadForm } from "@/modules/crm/components/leads/LeadForm";
 import { CreateCustomerFromLeadDialog } from "@/modules/crm/components/leads/CreateCustomerFromLeadDialog";
 import { ManageCategoriesDialog } from "@/modules/crm/components/leads/ManageCategoriesDialog";
@@ -30,7 +35,7 @@ type ViewState =
     | { type: "leads"; category: LeadCategory; location: LeadLocation | null }
     | { type: "unassigned-leads" };
 
-type BulkAction = "status" | "location" | "category" | null;
+type BulkAction = "status" | "location" | "category" | "delete" | null;
 
 interface StatusSummary { total: number; active: number; complete: number; lost: number; }
 
@@ -202,6 +207,9 @@ function BulkActionBar({ count, onAction, onClear }: {
                 <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => onAction("category")}>
                     Change Category
                 </Button>
+                <Button size="sm" variant="outline" className="h-7 text-xs gap-1 text-destructive hover:text-destructive border-destructive/30 hover:bg-destructive/5" onClick={() => onAction("delete")}>
+                    Delete
+                </Button>
             </div>
             <button type="button" onClick={onClear} className="ml-auto text-muted-foreground hover:text-foreground transition-colors">
                 <X className="h-4 w-4" />
@@ -213,6 +221,7 @@ function BulkActionBar({ count, onAction, onClear }: {
 // ─── Main Page ───────────────────────────────────────────────────────────────
 
 export default function LeadsPage() {
+    const navigate = useNavigate();
     const [allLeads, setAllLeads] = useState<Lead[]>([]);
     const [categories, setCategories] = useState<LeadCategory[]>([]);
     const [locations, setLocations] = useState<LeadLocation[]>([]);
@@ -231,6 +240,9 @@ export default function LeadsPage() {
     const [bulkAction, setBulkAction] = useState<BulkAction>(null);
     const [bulkValue, setBulkValue] = useState("");
     const [bulkSaving, setBulkSaving] = useState(false);
+
+    // Single delete confirmation
+    const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
     const fetchAll = async () => {
         try {
@@ -292,6 +304,19 @@ export default function LeadsPage() {
         } finally { setAddingLocation(false); }
     };
 
+    // ── Delete ──────────────────────────────────────────────────────────────
+    const handleDeleteLead = (id: string) => setPendingDeleteId(id);
+
+    const confirmDelete = async () => {
+        if (!pendingDeleteId) return;
+        try {
+            await crmService.deleteLead(pendingDeleteId);
+            setAllLeads(prev => prev.filter(l => l.id !== pendingDeleteId));
+            setSelectedLeadIds(prev => prev.filter(id => id !== pendingDeleteId));
+        } catch { setError("Failed to delete lead"); }
+        finally { setPendingDeleteId(null); }
+    };
+
     // ── Bulk actions ────────────────────────────────────────────────────────
     const openBulkAction = (action: BulkAction) => {
         setBulkValue("");
@@ -305,6 +330,10 @@ export default function LeadsPage() {
     };
 
     const applyBulkAction = async () => {
+        if (bulkAction === "delete") {
+            // handled by AlertDialog confirm — open it
+            return;
+        }
         if (!bulkValue || selectedLeadIds.length === 0) return;
         setBulkSaving(true);
         try {
@@ -318,6 +347,16 @@ export default function LeadsPage() {
             setBulkAction(null);
         } catch { setError("Failed to apply bulk update"); }
         finally { setBulkSaving(false); }
+    };
+
+    const confirmBulkDelete = async () => {
+        setBulkSaving(true);
+        try {
+            await Promise.all(selectedLeadIds.map(id => crmService.deleteLead(id)));
+            setAllLeads(prev => prev.filter(l => !selectedLeadIds.includes(l.id)));
+            clearSelection();
+        } catch { setError("Failed to delete leads"); }
+        finally { setBulkSaving(false); setBulkAction(null); }
     };
 
     // Locations relevant to the bulk location picker
@@ -430,8 +469,40 @@ export default function LeadsPage() {
                 onChanged={() => { setManageOpen(false); fetchAll(); }}
             />
 
+            {/* ── Single delete confirmation ────────────────────────── */}
+            <AlertDialog open={pendingDeleteId !== null} onOpenChange={open => { if (!open) setPendingDeleteId(null); }}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete lead?</AlertDialogTitle>
+                        <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction className="bg-destructive hover:bg-destructive/90 text-destructive-foreground" onClick={confirmDelete}>
+                            Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* ── Bulk delete confirmation ──────────────────────────── */}
+            <AlertDialog open={bulkAction === "delete"} onOpenChange={open => { if (!open) setBulkAction(null); }}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete {selectedLeadIds.length} lead{selectedLeadIds.length !== 1 ? "s" : ""}?</AlertDialogTitle>
+                        <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction className="bg-destructive hover:bg-destructive/90 text-destructive-foreground" onClick={confirmBulkDelete} disabled={bulkSaving}>
+                            {bulkSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Delete"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
             {/* ── Bulk Action Dialogs ────────────────────────────────── */}
-            <Dialog open={bulkAction !== null} onOpenChange={open => { if (!open) setBulkAction(null); }}>
+            <Dialog open={bulkAction !== null && bulkAction !== "delete"} onOpenChange={open => { if (!open) setBulkAction(null); }}>
                 <DialogContent className="sm:max-w-[400px]">
                     <DialogHeader>
                         <DialogTitle>
@@ -583,20 +654,22 @@ export default function LeadsPage() {
                             />
                         )}
                         <DataTable
-                            columns={columns}
+                            columns={createColumns(handleDeleteLead)}
                             data={tableLeads}
-                            searchKey="firstName"
+                            searchKey="companyName"
                             searchValue={search}
                             onSearchChange={setSearch}
                             searchPlaceholder="Search by name, email, phone, company…"
                             enableSelection
                             onSelectionChange={setSelectedLeadIds}
+                            onRowClick={(lead: any) => navigate(`/crm/leads/${lead.id}`)}
                             renderMobileCard={(lead, { isSelected, onSelect }) => (
                                 <LeadMobileCard
                                     key={(lead as any).id}
                                     lead={lead as any}
                                     isSelected={isSelected}
                                     onSelect={onSelect}
+                                    onDelete={handleDeleteLead}
                                 />
                             )}
                         />

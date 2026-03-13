@@ -38,6 +38,8 @@ interface DataTableProps<TData, TValue> {
     onSelectionChange?: (ids: string[]) => void
     /** If provided, renders this on mobile instead of the table. */
     renderMobileCard?: (row: TData, meta: { isSelected: boolean; onSelect: (v: boolean) => void }) => ReactNode
+    /** Called when a table row body is clicked (not checkbox/actions cells). */
+    onRowClick?: (row: TData) => void
 }
 
 export function DataTable<TData, TValue>({
@@ -50,6 +52,7 @@ export function DataTable<TData, TValue>({
     enableSelection,
     onSelectionChange,
     renderMobileCard,
+    onRowClick,
 }: DataTableProps<TData, TValue>) {
     const [sorting, setSorting] = useState<SortingState>([])
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
@@ -190,7 +193,12 @@ export function DataTable<TData, TValue>({
                         <TableBody>
                             {rows.length ? (
                                 rows.map(row => (
-                                    <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
+                                    <TableRow
+                                        key={row.id}
+                                        data-state={row.getIsSelected() && "selected"}
+                                        className={onRowClick ? "cursor-pointer" : ""}
+                                        onClick={onRowClick ? () => onRowClick(row.original) : undefined}
+                                    >
                                         {row.getVisibleCells().map(cell => (
                                             <TableCell key={cell.id}>
                                                 {flexRender(cell.column.columnDef.cell, cell.getContext())}

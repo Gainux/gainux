@@ -1,17 +1,24 @@
-import { useState, useEffect } from "react";
-import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Mail, Phone, Building, User } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+    AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+    AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { ArrowLeft, Pencil, Check, X, Loader2, Trash2 } from "lucide-react";
 import { crmService } from "../services/crmService";
-import type { Lead } from "../types";
+import type { Lead, LeadCategory, LeadLocation } from "../types";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { LeadForm } from "../components/leads/LeadForm";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { CreateCustomerFromLeadDialog } from "../components/leads/CreateCustomerFromLeadDialog";
 import PageLoading from "../../../components/common/PageLoading";
+import { cn } from "@/lib/utils";
+
+// ─── Constants ────────────────────────────────────────────────────────────────
 
 const STATUS_LABELS: Record<string, string> = {
     do_cold_call: "Do Cold Call",
@@ -27,174 +34,429 @@ const STATUS_LABELS: Record<string, string> = {
     complete: "Complete",
 };
 
+const STATUS_OPTIONS = Object.entries(STATUS_LABELS).map(([value, label]) => ({ value, label }));
+
+// ─── Inline field components ──────────────────────────────────────────────────
+
+function InlineTextField({
+    label, value, placeholder = "—",
+    onSave, type = "text",
+}: {
+    label: string;
+    value?: string;
+    placeholder?: string;
+    onSave: (v: string) => Promise<void>;
+    type?: string;
+}) {
+    const [editing, setEditing] = useState(false);
+    const [draft, setDraft] = useState("");
+    const [saving, setSaving] = useState(false);
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    const start = () => { setDraft(value ?? ""); setEditing(true); };
+    const cancel = () => setEditing(false);
+    const save = async () => {
+        setSaving(true);
+        try { await onSave(draft); setEditing(false); }
+        catch { /* onSave shows toast */ }
+        finally { setSaving(false); }
+    };
+
+    useEffect(() => { if (editing) inputRef.current?.focus(); }, [editing]);
+
+    return (
+        <div className="group py-3 border-b last:border-0">
+            <p className="text-xs font-medium text-muted-foreground mb-1">{label}</p>
+            {editing ? (
+                <div className="flex items-center gap-2">
+                    <Input
+                        ref={inputRef}
+                        type={type}
+                        value={draft}
+                        onChange={e => setDraft(e.target.value)}
+                        onKeyDown={e => { if (e.key === "Enter") save(); if (e.key === "Escape") cancel(); }}
+                        className="flex-1 h-8"
+                    />
+                    <Button size="icon" className="h-7 w-7 shrink-0" onClick={save} disabled={saving}>
+                        {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                    </Button>
+                    <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={cancel} disabled={saving}>
+                        <X className="h-3.5 w-3.5" />
+                    </Button>
+                </div>
+            ) : (
+                <div className="flex items-center justify-between gap-2 min-h-[28px]">
+                    <span className={cn("text-sm", !value && "text-muted-foreground/50")}>{value || placeholder}</span>
+                    <button
+                        type="button"
+                        onClick={start}
+                        className="opacity-0 group-hover:opacity-100 focus:opacity-100 p-1 rounded hover:bg-muted transition-opacity shrink-0"
+                        aria-label={`Edit ${label}`}
+                    >
+                        <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+}
+
+function InlineTextareaField({
+    label, value, onSave,
+}: {
+    label: string;
+    value?: string;
+    onSave: (v: string) => Promise<void>;
+}) {
+    const [editing, setEditing] = useState(false);
+    const [draft, setDraft] = useState("");
+    const [saving, setSaving] = useState(false);
+
+    const start = () => { setDraft(value ?? ""); setEditing(true); };
+    const cancel = () => setEditing(false);
+    const save = async () => {
+        setSaving(true);
+        try { await onSave(draft); setEditing(false); }
+        catch { }
+        finally { setSaving(false); }
+    };
+
+    return (
+        <div className="group py-3 border-b last:border-0">
+            <p className="text-xs font-medium text-muted-foreground mb-1">{label}</p>
+            {editing ? (
+                <div className="space-y-2">
+                    <Textarea
+                        autoFocus
+                        value={draft}
+                        onChange={e => setDraft(e.target.value)}
+                        rows={4}
+                        onKeyDown={e => { if (e.key === "Escape") cancel(); }}
+                    />
+                    <div className="flex gap-2">
+                        <Button size="sm" onClick={save} disabled={saving} className="h-7">
+                            {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Save"}
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={cancel} disabled={saving} className="h-7">Cancel</Button>
+                    </div>
+                </div>
+            ) : (
+                <div className="flex items-start justify-between gap-2">
+                    <p className={cn("text-sm whitespace-pre-wrap flex-1", !value && "text-muted-foreground/50")}>
+                        {value || "No notes added."}
+                    </p>
+                    <button
+                        type="button"
+                        onClick={start}
+                        className="opacity-0 group-hover:opacity-100 focus:opacity-100 p-1 rounded hover:bg-muted transition-opacity shrink-0 mt-0.5"
+                        aria-label="Edit notes"
+                    >
+                        <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+}
+
+function InlineSelectField({
+    label, value, displayValue, options, onSave, nullable,
+}: {
+    label: string;
+    value?: string;
+    displayValue?: string;
+    options: { value: string; label: string; color?: string }[];
+    onSave: (v: string | undefined) => Promise<void>;
+    nullable?: boolean;
+}) {
+    const [editing, setEditing] = useState(false);
+    const [draft, setDraft] = useState("");
+    const [saving, setSaving] = useState(false);
+
+    const start = () => { setDraft(value ?? "__none__"); setEditing(true); };
+    const cancel = () => setEditing(false);
+    const save = async () => {
+        setSaving(true);
+        try {
+            await onSave(draft === "__none__" ? undefined : draft);
+            setEditing(false);
+        } catch { }
+        finally { setSaving(false); }
+    };
+
+    return (
+        <div className="group py-3 border-b last:border-0">
+            <p className="text-xs font-medium text-muted-foreground mb-1">{label}</p>
+            {editing ? (
+                <div className="flex items-center gap-2">
+                    <Select value={draft} onValueChange={setDraft}>
+                        <SelectTrigger className="flex-1 h-8">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {nullable && <SelectItem value="__none__">— None</SelectItem>}
+                            {options.map(o => (
+                                <SelectItem key={o.value} value={o.value}>
+                                    {o.color ? (
+                                        <span className="flex items-center gap-2">
+                                            <span className="inline-block w-2 h-2 rounded-full shrink-0" style={{ background: o.color }} />
+                                            {o.label}
+                                        </span>
+                                    ) : o.label}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <Button size="icon" className="h-7 w-7 shrink-0" onClick={save} disabled={saving}>
+                        {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                    </Button>
+                    <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={cancel} disabled={saving}>
+                        <X className="h-3.5 w-3.5" />
+                    </Button>
+                </div>
+            ) : (
+                <div className="flex items-center justify-between gap-2 min-h-[28px]">
+                    <span className={cn("text-sm", !value && "text-muted-foreground/50")}>
+                        {displayValue || value || "—"}
+                    </span>
+                    <button
+                        type="button"
+                        onClick={start}
+                        className="opacity-0 group-hover:opacity-100 focus:opacity-100 p-1 rounded hover:bg-muted transition-opacity shrink-0"
+                        aria-label={`Edit ${label}`}
+                    >
+                        <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+}
+
+// ─── Section card ─────────────────────────────────────────────────────────────
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+    return (
+        <div className="border rounded-xl bg-card overflow-hidden">
+            <div className="px-4 pt-4 pb-1 border-b">
+                <h3 className="text-sm font-semibold">{title}</h3>
+            </div>
+            <div className="px-4">{children}</div>
+        </div>
+    );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
 export default function LeadDetailsPage() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const [searchParams, setSearchParams] = useSearchParams();
     const [lead, setLead] = useState<Lead | null>(null);
     const [loading, setLoading] = useState(true);
-    const [editOpen, setEditOpen] = useState(searchParams.get("edit") === "true");
-    const [saving, setSaving] = useState(false);
+    const [deleteOpen, setDeleteOpen] = useState(false);
+    const [deleting, setDeleting] = useState(false);
     const [customerDialogOpen, setCustomerDialogOpen] = useState(false);
+    const [categories, setCategories] = useState<LeadCategory[]>([]);
+    const [locations, setLocations] = useState<LeadLocation[]>([]);
 
     useEffect(() => {
-        const loadLead = async (leadId: string) => {
-            try {
-                setLoading(true);
-                const data = await crmService.getLeadById(leadId);
-                setLead(data);
-            } catch (error) {
-                console.error("Failed to load lead", error);
-                toast.error("Failed to load lead details");
-                navigate("/crm/leads");
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        if (id) loadLead(id);
+        if (!id) return;
+        Promise.all([
+            crmService.getLeadById(id),
+            crmService.getLeadCategories(),
+            crmService.getLeadLocations(),
+        ]).then(([l, cats, locs]) => {
+            setLead(l); setCategories(cats); setLocations(locs);
+        }).catch(() => {
+            toast.error("Failed to load lead");
+            navigate("/crm/leads");
+        }).finally(() => setLoading(false));
     }, [id, navigate]);
 
-    const handleEdit = async (data: Partial<Lead>) => {
+    // Generic field saver
+    const save = async (updates: Partial<Lead>) => {
         if (!lead) return;
         try {
-            setSaving(true);
-            const updated = await crmService.updateLead(lead.id, data);
+            const updated = await crmService.updateLead(lead.id, updates);
             setLead(updated);
-            setEditOpen(false);
-            setSearchParams({});
-            toast.success("Lead updated");
-            if (updated.status === "complete") {
-                setCustomerDialogOpen(true);
-            }
+            toast.success("Saved");
+            if (updated.status === "complete") setCustomerDialogOpen(true);
         } catch (err: any) {
-            toast.error(err.message || "Failed to update lead");
-        } finally {
-            setSaving(false);
+            toast.error(err.message || "Failed to save");
+            throw err; // let inline component stay in edit mode
         }
     };
 
-    const closeEdit = () => {
-        setEditOpen(false);
-        setSearchParams({});
+    const handleDelete = async () => {
+        if (!lead) return;
+        setDeleting(true);
+        try {
+            await crmService.deleteLead(lead.id);
+            toast.success("Lead deleted");
+            navigate("/crm/leads");
+        } catch (err: any) {
+            toast.error(err.message || "Failed to delete");
+        } finally {
+            setDeleting(false);
+            setDeleteOpen(false);
+        }
     };
 
     if (loading) return <PageLoading />;
     if (!lead) return <div>Lead not found</div>;
 
     const statusVariant = lead.status === "not_interested" ? "destructive" : lead.status === "complete" ? "default" : "secondary";
+    const filteredLocations = locations.filter(l => l.categoryId === lead.categoryId);
 
     return (
         <div className="flex-1 space-y-4 p-4 md:p-8 md:pt-6">
-            <Dialog open={editOpen} onOpenChange={open => { if (!open) closeEdit(); }}>
-                <DialogContent className="sm:max-w-[600px]">
-                    <DialogHeader>
-                        <DialogTitle>Edit Lead</DialogTitle>
-                        <DialogDescription>Update the lead details below.</DialogDescription>
-                    </DialogHeader>
-                    <LeadForm
-                        initialData={lead}
-                        onSubmit={handleEdit}
-                        onCancel={closeEdit}
-                        loading={saving}
-                    />
-                </DialogContent>
-            </Dialog>
-
             <CreateCustomerFromLeadDialog
                 lead={lead}
                 open={customerDialogOpen}
                 onOpenChange={setCustomerDialogOpen}
             />
 
+            <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete lead?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will permanently delete {lead.firstName} {lead.lastName}. This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                            onClick={handleDelete}
+                            disabled={deleting}
+                        >
+                            {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Delete"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
             {/* Header */}
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <Button variant="outline" size="icon" onClick={() => navigate("/crm/leads")}>
+            <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-3">
+                    <Button variant="outline" size="icon" className="shrink-0 mt-0.5" onClick={() => navigate(-1)}>
                         <ArrowLeft className="h-4 w-4" />
                     </Button>
                     <div>
-                        <h2 className="text-xl md:text-3xl font-bold tracking-tight flex items-center gap-2">
+                        <h2 className="text-xl md:text-2xl font-bold tracking-tight">
                             {lead.firstName} {lead.lastName}
-                            <Badge variant={statusVariant}>
-                                {STATUS_LABELS[lead.status] ?? lead.status}
-                            </Badge>
                         </h2>
-                        <p className="text-muted-foreground flex items-center gap-2">
-                            <Building className="h-3 w-3" /> {lead.companyName || 'No Company'}
-                        </p>
+                        {lead.companyName && (
+                            <p className="text-sm text-muted-foreground mt-0.5">{lead.companyName}</p>
+                        )}
+                        <Badge variant={statusVariant} className="mt-2">
+                            {STATUS_LABELS[lead.status] ?? lead.status}
+                        </Badge>
                     </div>
                 </div>
-                <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => setEditOpen(true)}>Edit</Button>
-                </div>
+                <Button
+                    variant="outline"
+                    size="icon"
+                    className="shrink-0 text-destructive hover:text-destructive hover:border-destructive/40"
+                    onClick={() => setDeleteOpen(true)}
+                    title="Delete lead"
+                >
+                    <Trash2 className="h-4 w-4" />
+                </Button>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-3">
-                {/* Left Column: Info */}
-                <div className="md:col-span-2 space-y-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Contact Information</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-1">
-                                    <label className="text-sm font-medium text-muted-foreground">Email</label>
-                                    <div className="flex items-center gap-2">
-                                        <Mail className="h-4 w-4 text-muted-foreground" />
-                                        <a href={`mailto:${lead.email}`} className="text-blue-600 hover:underline">{lead.email}</a>
-                                    </div>
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-sm font-medium text-muted-foreground">Phone</label>
-                                    <div className="flex items-center gap-2">
-                                        <Phone className="h-4 w-4 text-muted-foreground" />
-                                        <span>{lead.phone || 'N/A'}</span>
-                                    </div>
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-sm font-medium text-muted-foreground">Source</label>
-                                    <div>{lead.source || 'Direct'}</div>
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-sm font-medium text-muted-foreground">Owner</label>
-                                    <div className="flex items-center gap-2">
-                                        <User className="h-4 w-4 text-muted-foreground" />
-                                        <span>{lead.owner ? `${lead.owner.firstName} ${lead.owner.lastName}` : 'Unassigned'}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+            {/* Content grid */}
+            <div className="grid gap-4 md:grid-cols-2">
+                {/* Contact */}
+                <Section title="Contact">
+                    <InlineTextField
+                        label="First Name"
+                        value={lead.firstName}
+                        onSave={v => save({ firstName: v })}
+                    />
+                    <InlineTextField
+                        label="Last Name"
+                        value={lead.lastName}
+                        onSave={v => save({ lastName: v })}
+                    />
+                    <InlineTextField
+                        label="Email"
+                        value={lead.email}
+                        type="email"
+                        onSave={v => save({ email: v })}
+                    />
+                    <InlineTextField
+                        label="Phone"
+                        value={lead.phone}
+                        type="tel"
+                        onSave={v => save({ phone: v })}
+                    />
+                    <InlineTextField
+                        label="Company"
+                        value={lead.companyName}
+                        onSave={v => save({ companyName: v })}
+                    />
+                    <InlineTextField
+                        label="Source"
+                        value={lead.source}
+                        placeholder="e.g. Website, Referral"
+                        onSave={v => save({ source: v })}
+                    />
+                </Section>
 
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Notes</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-sm whitespace-pre-wrap">{lead.notes || "No notes added."}</p>
-                        </CardContent>
-                    </Card>
-                </div>
+                {/* Pipeline */}
+                <Section title="Pipeline">
+                    <InlineSelectField
+                        label="Status"
+                        value={lead.status}
+                        displayValue={STATUS_LABELS[lead.status] ?? lead.status}
+                        options={STATUS_OPTIONS}
+                        onSave={v => save({ status: v ?? "do_cold_call" })}
+                    />
+                    <InlineSelectField
+                        label="Category"
+                        value={lead.categoryId}
+                        displayValue={lead.category?.name}
+                        nullable
+                        options={categories.map(c => ({ value: c.id, label: c.name, color: c.color }))}
+                        onSave={async v => {
+                            await save({ categoryId: v, locationId: undefined });
+                        }}
+                    />
+                    <InlineSelectField
+                        label="Location"
+                        value={lead.locationId}
+                        displayValue={lead.location?.name}
+                        nullable
+                        options={filteredLocations.map(l => ({ value: l.id, label: l.name }))}
+                        onSave={v => save({ locationId: v })}
+                    />
+                    {lead.owner && (
+                        <div className="group py-3 border-b last:border-0">
+                            <p className="text-xs font-medium text-muted-foreground mb-1">Owner</p>
+                            <p className="text-sm">{lead.owner.firstName} {lead.owner.lastName}</p>
+                        </div>
+                    )}
+                    <div className="py-3 border-b last:border-0">
+                        <p className="text-xs font-medium text-muted-foreground mb-1">Created</p>
+                        <p className="text-sm">{format(new Date(lead.createdAt), "MMM d, yyyy")}</p>
+                    </div>
+                    <div className="py-3 last:border-0">
+                        <p className="text-xs font-medium text-muted-foreground mb-1">Last Updated</p>
+                        <p className="text-sm">{format(new Date(lead.updatedAt), "MMM d, yyyy")}</p>
+                    </div>
+                </Section>
 
-                {/* Right Column: Timeline / Meta */}
-                <div className="space-y-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-sm font-medium">System Info</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4 text-sm">
-                            <div className="flex justify-between">
-                                <span className="text-muted-foreground">Created</span>
-                                <span>{format(new Date(lead.createdAt), 'MMM d, yyyy')}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-muted-foreground">Last Updated</span>
-                                <span>{format(new Date(lead.updatedAt), 'MMM d, yyyy')}</span>
-                            </div>
-                        </CardContent>
-                    </Card>
+                {/* Notes — full width */}
+                <div className="md:col-span-2">
+                    <Section title="Notes">
+                        <InlineTextareaField
+                            label=""
+                            value={lead.notes}
+                            onSave={v => save({ notes: v })}
+                        />
+                    </Section>
                 </div>
             </div>
         </div>
