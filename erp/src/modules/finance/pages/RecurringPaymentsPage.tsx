@@ -144,10 +144,11 @@ export default function RecurringPaymentsPage() {
     };
 
     const handleSave = async () => {
-        if (!orgId) return;
+        if (!orgId) { toast.error("Organization not found. Please refresh and try again."); return; }
         if (!form.client_id) { toast.error("Please select a client"); return; }
         if (!form.description.trim()) { toast.error("Please enter a description"); return; }
         if (form.amount <= 0) { toast.error("Amount must be greater than 0"); return; }
+        if (!form.start_date) { toast.error("Please enter a start date"); return; }
 
         try {
             setSaving(true);
@@ -523,7 +524,7 @@ export default function RecurringPaymentsPage() {
                         </div>
 
                         {/* Live preview */}
-                        {form.amount > 0 && (
+                        {form.amount > 0 && form.start_date && (
                             <div className="rounded-md bg-muted p-3 text-sm space-y-1">
                                 <p className="font-medium">Preview</p>
                                 <p>
@@ -535,9 +536,13 @@ export default function RecurringPaymentsPage() {
                                     <span className="capitalize">{form.frequency}</span>
                                 </p>
                                 <p className="text-muted-foreground">
-                                    Next payment: {computeNextDate(form.start_date, form.frequency, form.payment_day)
-                                        ? format(new Date(computeNextDate(form.start_date, form.frequency, form.payment_day)), "dd MMM yyyy")
-                                        : "—"}
+                                    Next payment: {(() => {
+                                        try {
+                                            return format(new Date(computeNextDate(form.start_date, form.frequency, form.payment_day)), "dd MMM yyyy");
+                                        } catch {
+                                            return "—";
+                                        }
+                                    })()}
                                 </p>
                             </div>
                         )}
@@ -547,7 +552,7 @@ export default function RecurringPaymentsPage() {
                         <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={saving}>
                             Cancel
                         </Button>
-                        <Button onClick={handleSave} disabled={saving}>
+                        <Button type="button" onClick={handleSave} disabled={saving}>
                             {saving ? "Saving..." : editingId ? "Update" : "Add Payment"}
                         </Button>
                     </DialogFooter>
