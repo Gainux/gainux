@@ -1,10 +1,9 @@
 
 import type { ColumnDef } from "@tanstack/react-table"
 import type { Lead } from "@/modules/crm/types"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import { MoreHorizontal, MapPin, Building2, Mail, Phone, Tag } from "lucide-react"
+import { MoreHorizontal, MapPin, Building2, Phone, Tag } from "lucide-react"
 import { Link, useNavigate } from "react-router-dom"
 import {
     DropdownMenu,
@@ -32,6 +31,34 @@ export const STATUS_LABELS: Record<string, string> = {
     complete: "Complete",
 }
 
+// Distinct color per status (full Tailwind class strings for purge safety)
+export const STATUS_COLORS: Record<string, string> = {
+    do_cold_call:                    "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800",
+    collecting_requirements:         "bg-violet-100 text-violet-700 border-violet-200 dark:bg-violet-900/30 dark:text-violet-300 dark:border-violet-800",
+    not_interested:                  "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800",
+    preparing_proposal:              "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800",
+    waiting_for_proposal_response:   "bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-800",
+    negotiating:                     "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800",
+    waiting_for_advance_amount:      "bg-cyan-100 text-cyan-700 border-cyan-200 dark:bg-cyan-900/30 dark:text-cyan-300 dark:border-cyan-800",
+    work_ongoing:                    "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800",
+    do_completion_call:              "bg-teal-100 text-teal-700 border-teal-200 dark:bg-teal-900/30 dark:text-teal-300 dark:border-teal-800",
+    waiting_for_full_payment:        "bg-lime-100 text-lime-700 border-lime-200 dark:bg-lime-900/30 dark:text-lime-300 dark:border-lime-800",
+    complete:                        "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800",
+}
+
+export function StatusBadge({ status, className }: { status: string; className?: string }) {
+    return (
+        <span className={cn(
+            "inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium",
+            STATUS_COLORS[status] ?? "bg-muted text-muted-foreground border-border",
+            className
+        )}>
+            {STATUS_LABELS[status] ?? status}
+        </span>
+    );
+}
+
+// Keep for any external callers
 export function statusVariant(status: string): "destructive" | "default" | "secondary" {
     if (status === "not_interested") return "destructive";
     if (status === "complete") return "default";
@@ -111,9 +138,7 @@ export function LeadMobileCard({ lead, isSelected, onSelect, onDelete }: {
 
             {/* Row 2: status + category */}
             <div className="flex items-center gap-2 mt-2 flex-wrap">
-                <Badge variant={statusVariant(lead.status)} className="text-xs">
-                    {STATUS_LABELS[lead.status] ?? lead.status}
-                </Badge>
+                <StatusBadge status={lead.status} />
                 {lead.category && (
                     <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                         <span className="w-2 h-2 rounded-full shrink-0" style={{ background: lead.category.color }} />
@@ -130,18 +155,8 @@ export function LeadMobileCard({ lead, isSelected, onSelect, onDelete }: {
             </div>
 
             {/* Row 3: contact details */}
-            {(lead.email || lead.phone || lead.source) && (
+            {(lead.phone || lead.source) && (
                 <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-2">
-                    {lead.email && (
-                        <a
-                            href={`mailto:${lead.email}`}
-                            className="text-xs text-muted-foreground flex items-center gap-1 hover:text-primary transition-colors min-w-0"
-                            onClick={e => e.stopPropagation()}
-                        >
-                            <Mail className="h-3 w-3 shrink-0" />
-                            <span className="truncate">{lead.email}</span>
-                        </a>
-                    )}
                     {lead.phone && (
                         <a
                             href={`tel:${lead.phone}`}
@@ -175,7 +190,7 @@ export function createColumns(onDelete: (id: string) => void): ColumnDef<Lead>[]
     return [
         {
             accessorKey: "companyName",
-            header: "Company",
+            header: "Lead",
             cell: ({ row }) => (
                 <div>
                     <p className="font-medium text-sm">{row.original.firstName} {row.original.lastName}</p>
@@ -186,24 +201,13 @@ export function createColumns(onDelete: (id: string) => void): ColumnDef<Lead>[]
             ),
         },
         {
-            accessorKey: "email",
-            header: "Email",
-        },
-        {
             accessorKey: "phone",
             header: "Phone",
         },
         {
             accessorKey: "status",
             header: "Status",
-            cell: ({ row }) => {
-                const status = row.getValue("status") as string;
-                return (
-                    <Badge variant={statusVariant(status)}>
-                        {STATUS_LABELS[status] ?? status}
-                    </Badge>
-                );
-            },
+            cell: ({ row }) => <StatusBadge status={row.getValue("status")} />,
         },
         {
             accessorKey: "createdAt",

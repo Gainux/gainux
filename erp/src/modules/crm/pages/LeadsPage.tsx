@@ -2,7 +2,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { DataTable } from "@/modules/crm/components/leads/data-table";
-import { createColumns, LeadMobileCard } from "@/modules/crm/components/leads/columns";
+import { createColumns, LeadMobileCard, STATUS_LABELS, STATUS_COLORS } from "@/modules/crm/components/leads/columns";
 import type { Lead, LeadCategory, LeadLocation } from "@/modules/crm/types";
 import { crmService } from "@/modules/crm/services/crmService";
 import { Button } from "@/components/ui/button";
@@ -233,6 +233,7 @@ export default function LeadsPage() {
     const [customerDialogOpen, setCustomerDialogOpen] = useState(false);
     const [manageOpen, setManageOpen] = useState(false);
     const [search, setSearch] = useState("");
+    const [statusFilter, setStatusFilter] = useState<string[]>([]);
     const [addingLocation, setAddingLocation] = useState(false);
 
     // Bulk selection
@@ -278,13 +279,17 @@ export default function LeadsPage() {
     }, [view, allLeads]);
 
     const tableLeads = useMemo(() => {
-        if (!search.trim()) return baseLeads;
+        let leads = baseLeads;
+        if (statusFilter.length > 0) {
+            leads = leads.filter(l => statusFilter.includes(l.status));
+        }
+        if (!search.trim()) return leads;
         const q = search.toLowerCase();
-        return baseLeads.filter(l =>
+        return leads.filter(l =>
             [l.firstName, l.lastName, l.email, l.phone, l.companyName, l.source]
                 .filter(Boolean).join(" ").toLowerCase().includes(q)
         );
-    }, [baseLeads, search]);
+    }, [baseLeads, search, statusFilter]);
 
     const handleCreateLead = async (leadData: Partial<Lead>) => {
         try {
@@ -646,6 +651,42 @@ export default function LeadsPage() {
                 <div>
                     <StatusPills summary={summarize(baseLeads)} />
                     <div className="mt-4">
+                        {/* Status filter pills */}
+                        <div className="flex flex-wrap gap-1.5 mb-3">
+                            <button
+                                type="button"
+                                onClick={() => setStatusFilter([])}
+                                className={cn(
+                                    "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors",
+                                    statusFilter.length === 0
+                                        ? "bg-foreground text-background border-foreground"
+                                        : "bg-muted text-muted-foreground border-border hover:border-foreground/40"
+                                )}
+                            >
+                                All
+                            </button>
+                            {Object.entries(STATUS_LABELS).map(([value, label]) => {
+                                const active = statusFilter.includes(value);
+                                return (
+                                    <button
+                                        key={value}
+                                        type="button"
+                                        onClick={() => setStatusFilter(prev =>
+                                            active ? prev.filter(s => s !== value) : [...prev, value]
+                                        )}
+                                        className={cn(
+                                            "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium transition-all",
+                                            active
+                                                ? STATUS_COLORS[value]
+                                                : "bg-transparent text-muted-foreground border-border hover:border-foreground/40"
+                                        )}
+                                    >
+                                        {label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
                         {selectedLeadIds.length > 0 && (
                             <BulkActionBar
                                 count={selectedLeadIds.length}

@@ -3,7 +3,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
     AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -17,22 +16,7 @@ import { format } from "date-fns";
 import { CreateCustomerFromLeadDialog } from "../components/leads/CreateCustomerFromLeadDialog";
 import PageLoading from "../../../components/common/PageLoading";
 import { cn } from "@/lib/utils";
-
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-const STATUS_LABELS: Record<string, string> = {
-    do_cold_call: "Do Cold Call",
-    collecting_requirements: "Collecting Requirements",
-    not_interested: "Not Interested",
-    preparing_proposal: "Preparing Proposal",
-    waiting_for_proposal_response: "Waiting for Proposal Response",
-    negotiating: "Negotiating",
-    waiting_for_advance_amount: "Waiting for Advance Amount",
-    work_ongoing: "Work Ongoing",
-    do_completion_call: "Do Completion Call",
-    waiting_for_full_payment: "Waiting for Full Payment",
-    complete: "Complete",
-};
+import { STATUS_LABELS, StatusBadge } from "../components/leads/columns";
 
 const STATUS_OPTIONS = Object.entries(STATUS_LABELS).map(([value, label]) => ({ value, label }));
 
@@ -305,7 +289,6 @@ export default function LeadDetailsPage() {
     if (loading) return <PageLoading />;
     if (!lead) return <div>Lead not found</div>;
 
-    const statusVariant = lead.status === "not_interested" ? "destructive" : lead.status === "complete" ? "default" : "secondary";
     const filteredLocations = locations.filter(l => l.categoryId === lead.categoryId);
 
     return (
@@ -350,9 +333,7 @@ export default function LeadDetailsPage() {
                         {lead.companyName && (
                             <p className="text-sm text-muted-foreground mt-0.5">{lead.companyName}</p>
                         )}
-                        <Badge variant={statusVariant} className="mt-2">
-                            {STATUS_LABELS[lead.status] ?? lead.status}
-                        </Badge>
+                        <StatusBadge status={lead.status} className="mt-2" />
                     </div>
                 </div>
                 <Button
