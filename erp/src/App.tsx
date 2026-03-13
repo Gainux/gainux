@@ -76,6 +76,7 @@ import AssetList from "./modules/finance/pages/AssetList";
 import AssetDetails from "./modules/finance/pages/AssetDetails";
 import TaxRates from "./modules/finance/pages/TaxRates";
 import ReferralPayoutsPage from "./modules/finance/pages/ReferralPayoutsPage";
+import RecurringPaymentsPage from "./modules/finance/pages/RecurringPaymentsPage";
 import RecruitmentPage from "./modules/hrm/pages/RecruitmentPage";
 import { PublicJobLayout } from "./modules/recruitment/public/PublicJobLayout";
 import PublicJobBoard from "./modules/recruitment/public/PublicJobBoard";
@@ -198,6 +199,7 @@ function App() {
                       <Route path="/finance/assets" element={<AssetList />} />
                       <Route path="/finance/assets/:id" element={<AssetDetails />} />
                       <Route path="/finance/referral-payouts" element={<ReferralPayoutsPage />} />
+                      <Route path="/finance/recurring" element={<RecurringPaymentsPage />} />
 
                       <Route path="/finance/*" element={<ComingSoonPage title="Finance & Accounting" />} />
                     </Route>
