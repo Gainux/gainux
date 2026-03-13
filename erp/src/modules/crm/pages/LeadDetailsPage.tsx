@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,14 +9,19 @@ import type { Lead } from "../types";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ConvertLeadModal } from "../components/leads/ConvertLeadModal";
+import { LeadForm } from "../components/leads/LeadForm";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import PageLoading from "../../../components/common/PageLoading";
 
 export default function LeadDetailsPage() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
     const [lead, setLead] = useState<Lead | null>(null);
     const [loading, setLoading] = useState(true);
     const [convertOpen, setConvertOpen] = useState(false);
+    const [editOpen, setEditOpen] = useState(searchParams.get("edit") === "true");
+    const [saving, setSaving] = useState(false);
 
     useEffect(() => {
         const loadLead = async (leadId: string) => {
@@ -36,11 +41,51 @@ export default function LeadDetailsPage() {
         if (id) loadLead(id);
     }, [id, navigate]);
 
+    const handleEdit = async (data: Partial<Lead>) => {
+        if (!lead) return;
+        try {
+            setSaving(true);
+            const updated = await crmService.updateLead(lead.id, data);
+            setLead(updated);
+            setEditOpen(false);
+            setSearchParams({});
+            toast.success("Lead updated");
+        } catch (err: any) {
+            toast.error(err.message || "Failed to update lead");
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const openEdit = () => {
+        setEditOpen(true);
+    };
+
+    const closeEdit = () => {
+        setEditOpen(false);
+        setSearchParams({});
+    };
+
     if (loading) return <PageLoading />;
     if (!lead) return <div>Lead not found</div>;
 
     return (
         <div className="flex-1 space-y-4 p-8 pt-6">
+            <Dialog open={editOpen} onOpenChange={open => { if (!open) closeEdit(); }}>
+                <DialogContent className="sm:max-w-[600px]">
+                    <DialogHeader>
+                        <DialogTitle>Edit Lead</DialogTitle>
+                        <DialogDescription>Update the lead details below.</DialogDescription>
+                    </DialogHeader>
+                    <LeadForm
+                        initialData={lead}
+                        onSubmit={handleEdit}
+                        onCancel={closeEdit}
+                        loading={saving}
+                    />
+                </DialogContent>
+            </Dialog>
+
             <ConvertLeadModal
                 open={convertOpen}
                 onOpenChange={setConvertOpen}
@@ -65,7 +110,7 @@ export default function LeadDetailsPage() {
                     </div>
                 </div>
                 <div className="flex gap-2">
-                    <Button variant="outline">Edit</Button>
+                    <Button variant="outline" onClick={openEdit}>Edit</Button>
                     <Button onClick={() => setConvertOpen(true)}>
                         <ArrowRightLeft className="mr-2 h-4 w-4" /> Convert to Deal
                     </Button>

@@ -4,7 +4,7 @@ import type { Lead } from "@/modules/crm/types"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { MoreHorizontal } from "lucide-react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -59,6 +59,7 @@ export const columns: ColumnDef<Lead>[] = [
         id: "actions",
         cell: ({ row }) => {
             const lead = row.original
+            const navigate = useNavigate()
 
             return (
                 <DropdownMenu>
@@ -79,7 +80,9 @@ export const columns: ColumnDef<Lead>[] = [
                         <DropdownMenuItem asChild>
                             <Link to={`/crm/leads/${lead.id}`}>View Details</Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem>Edit Lead</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => navigate(`/crm/leads/${lead.id}?edit=true`)}>
+                            Edit Lead
+                        </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             )
