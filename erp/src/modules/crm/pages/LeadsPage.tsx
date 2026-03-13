@@ -227,10 +227,7 @@ export default function LeadsPage() {
                 <>
                     <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                     <button type="button"
-                        onClick={() => {
-                            if (view.type !== "categories")
-                                setView({ type: "locations", category: view.category });
-                        }}
+                        onClick={() => setView({ type: "locations", category: view.category })}
                         className={cn("hover:text-primary transition-colors flex items-center gap-1",
                             view.type === "locations" ? "font-semibold text-foreground" : "text-muted-foreground")}>
                         <span className="w-2 h-2 rounded-full shrink-0" style={{ background: view.category.color }} />
