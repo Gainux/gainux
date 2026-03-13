@@ -104,15 +104,14 @@ export default function RecurringPaymentsPage() {
         if (!orgId) return;
         try {
             setLoading(true);
-            const [paymentsData, companiesData] = await Promise.all([
+            const [paymentsResult, companiesResult] = await Promise.allSettled([
                 recurringPaymentService.getAll(orgId),
                 crmService.getCompanies(orgId),
             ]);
-            setPayments(paymentsData);
-            setCompanies(companiesData);
-        } catch (err: any) {
-            toast.error("Failed to load recurring payments");
-            console.error(err);
+            if (paymentsResult.status === "fulfilled") setPayments(paymentsResult.value);
+            else { toast.error("Failed to load recurring payments"); console.error(paymentsResult.reason); }
+            if (companiesResult.status === "fulfilled") setCompanies(companiesResult.value);
+            else { toast.error("Failed to load clients"); console.error(companiesResult.reason); }
         } finally {
             setLoading(false);
         }
@@ -378,9 +377,15 @@ export default function RecurringPaymentsPage() {
                                     <SelectValue placeholder="Select client" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {companies.map(c => (
-                                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                                    ))}
+                                    {companies.length === 0 ? (
+                                        <div className="px-3 py-2 text-sm text-muted-foreground">
+                                            No clients found. Add companies in CRM first.
+                                        </div>
+                                    ) : (
+                                        companies.map(c => (
+                                            <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                                        ))
+                                    )}
                                 </SelectContent>
                             </Select>
                         </div>

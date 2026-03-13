@@ -345,7 +345,7 @@ export const crmService = {
 
         const { data, error } = await query;
         if (error) throw error;
-        return data.map(mapToCompany);
+        return (data || []).map(mapToCompany);
     },
 
     async createCompany(company: Partial<Company>) {
