@@ -10,11 +10,12 @@ export default function SubscriptionGuard() {
     useEffect(() => {
         console.log("SubscriptionGuard: Effect triggered", { profileOrgId: profile?.org_id });
 
-        // Safety timeout to prevent infinite loading
+        // Safety timeout – longer than the 12s fetch timeout so the request
+        // has a chance to fail/succeed before we force-activate.
         const timeoutId = setTimeout(() => {
             console.warn("SubscriptionGuard: Timeout reached, forcing active state");
             setStatus((prev) => prev === 'loading' ? 'active' : prev);
-        }, 5000); // 5 seconds timeout
+        }, 15_000);
 
         const checkSubscription = async () => {
             console.log("SubscriptionGuard: Checking subscription...");
