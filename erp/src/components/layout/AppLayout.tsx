@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Outlet } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { Header, HeaderActions } from "./Header";
@@ -7,9 +7,32 @@ import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
+// How long the tab can be hidden before we reload on return (10 minutes).
+const RELOAD_AFTER_HIDDEN_MS = 10 * 60 * 1000;
+
 export default function AppLayout() {
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
+
+    // Reload the page when the user returns after a long idle period so that
+    // stale connections / expired tokens don't leave the app in a stuck state.
+    useEffect(() => {
+        let hiddenAt: number | null = null;
+
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'hidden') {
+                hiddenAt = Date.now();
+            } else if (document.visibilityState === 'visible' && hiddenAt !== null) {
+                if (Date.now() - hiddenAt > RELOAD_AFTER_HIDDEN_MS) {
+                    window.location.reload();
+                }
+                hiddenAt = null;
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    }, []);
 
     return (
         <div className="flex h-screen w-full flex-col md:flex-row overflow-hidden bg-muted/10">

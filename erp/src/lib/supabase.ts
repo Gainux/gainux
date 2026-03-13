@@ -12,7 +12,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
 // throw an error instead of hanging forever (common after long inactivity).
 const fetchWithTimeout: typeof fetch = (input, init) => {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 12_000);
+    const timer = setTimeout(() => controller.abort(), 8_000);
     // If the caller already supplies a signal, honour both
     const existingSignal = (init as RequestInit | undefined)?.signal;
     if (existingSignal) {

@@ -15,7 +15,7 @@ export default function SubscriptionGuard() {
         const timeoutId = setTimeout(() => {
             console.warn("SubscriptionGuard: Timeout reached, forcing active state");
             setStatus((prev) => prev === 'loading' ? 'active' : prev);
-        }, 15_000);
+        }, 10_000);
 
         const checkSubscription = async () => {
             console.log("SubscriptionGuard: Checking subscription...");
