@@ -50,7 +50,6 @@ export function LeadForm({ initialData, onSubmit, onCancel, loading }: LeadFormP
                     <Label htmlFor="firstName">First Name</Label>
                     <Input
                         id="firstName"
-                        required
                         value={formData.firstName}
                         onChange={e => handleChange("firstName", e.target.value)}
                     />
@@ -59,7 +58,6 @@ export function LeadForm({ initialData, onSubmit, onCancel, loading }: LeadFormP
                     <Label htmlFor="lastName">Last Name</Label>
                     <Input
                         id="lastName"
-                        required
                         value={formData.lastName}
                         onChange={e => handleChange("lastName", e.target.value)}
                     />
