@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { RefreshCw, Plus, Pencil, Trash2, Pause, Play, XCircle, TrendingUp } from "lucide-react";
+import { RefreshCw, Plus, Pencil, Trash2, Pause, Play, XCircle, TrendingDown } from "lucide-react";
 import { toast } from "sonner";
 import { format, addWeeks, addMonths, addQuarters, addYears } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -21,9 +21,9 @@ import {
     DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/context/AuthContext";
-import { recurringPaymentService } from "../services/recurringPaymentService";
+import { recurringExpenseService } from "../services/recurringExpenseService";
 import { crmService } from "@/modules/crm/services/crmService";
-import type { RecurringPayment, RecurringFrequency, RecurringStatus } from "../types";
+import type { RecurringExpense, RecurringFrequency, RecurringStatus } from "../types";
 import type { Company } from "@/modules/crm/types";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
@@ -51,7 +51,6 @@ function computeNextDate(startDate: string, frequency: RecurringFrequency, payme
         else if (frequency === "quarterly") next = addQuarters(next, 1);
         else next = addYears(next, 1);
     }
-    // Override day-of-month for non-weekly frequencies
     if (frequency !== "weekly") {
         next.setDate(Math.min(paymentDay, new Date(next.getFullYear(), next.getMonth() + 1, 0).getDate()));
     }
@@ -63,8 +62,8 @@ const formatCurrency = (amount: number, currency = "INR") =>
 
 // ─── empty form ──────────────────────────────────────────────────────────────
 
-const emptyForm = (): Omit<RecurringPayment, "id" | "org_id" | "occurrences_completed" | "created_at" | "updated_at" | "client"> => ({
-    client_id: "",
+const emptyForm = (): Omit<RecurringExpense, "id" | "org_id" | "occurrences_completed" | "created_at" | "updated_at" | "vendor"> => ({
+    vendor_id: "",
     description: "",
     amount: 0,
     currency: "INR",
@@ -81,12 +80,12 @@ const emptyForm = (): Omit<RecurringPayment, "id" | "org_id" | "occurrences_comp
 
 // ─── component ───────────────────────────────────────────────────────────────
 
-export default function RecurringPaymentsPage() {
+export default function RecurringExpensesPage() {
     const { profile } = useAuth();
     const orgId = profile?.org_id;
 
-    const [payments, setPayments] = useState<RecurringPayment[]>([]);
-    const [companies, setCompanies] = useState<Company[]>([]);
+    const [expenses, setExpenses] = useState<RecurringExpense[]>([]);
+    const [vendors, setVendors] = useState<Company[]>([]);
     const [loading, setLoading] = useState(true);
 
     const [dialogOpen, setDialogOpen] = useState(false);
@@ -96,23 +95,21 @@ export default function RecurringPaymentsPage() {
     const [errors, setErrors] = useState<Record<string, string>>({});
 
     useEffect(() => {
-        if (orgId) {
-            loadData();
-        }
+        if (orgId) loadData();
     }, [orgId]);
 
     const loadData = async () => {
         if (!orgId) return;
         try {
             setLoading(true);
-            const [paymentsResult, companiesResult] = await Promise.allSettled([
-                recurringPaymentService.getAll(orgId),
+            const [expensesResult, vendorsResult] = await Promise.allSettled([
+                recurringExpenseService.getAll(orgId),
                 crmService.getCompanies(orgId),
             ]);
-            if (paymentsResult.status === "fulfilled") setPayments(paymentsResult.value);
-            else { toast.error("Failed to load recurring payments"); console.error(paymentsResult.reason); }
-            if (companiesResult.status === "fulfilled") setCompanies(companiesResult.value);
-            else { toast.error("Failed to load clients"); console.error(companiesResult.reason); }
+            if (expensesResult.status === "fulfilled") setExpenses(expensesResult.value);
+            else { toast.error("Failed to load recurring expenses"); console.error(expensesResult.reason); }
+            if (vendorsResult.status === "fulfilled") setVendors(vendorsResult.value);
+            else { toast.error("Failed to load vendors"); console.error(vendorsResult.reason); }
         } finally {
             setLoading(false);
         }
@@ -125,23 +122,23 @@ export default function RecurringPaymentsPage() {
         setDialogOpen(true);
     };
 
-    const openEdit = (p: RecurringPayment) => {
-        setEditingId(p.id);
+    const openEdit = (e: RecurringExpense) => {
+        setEditingId(e.id);
         setErrors({});
         setForm({
-            client_id: p.client_id,
-            description: p.description,
-            amount: p.amount,
-            currency: p.currency,
-            frequency: p.frequency,
-            payment_day: p.payment_day,
-            start_date: p.start_date,
-            end_date: p.end_date,
-            occurrences: p.occurrences,
-            status: p.status,
-            tax_rate: p.tax_rate,
-            notes: p.notes || "",
-            next_payment_date: p.next_payment_date,
+            vendor_id: e.vendor_id,
+            description: e.description,
+            amount: e.amount,
+            currency: e.currency,
+            frequency: e.frequency,
+            payment_day: e.payment_day,
+            start_date: e.start_date,
+            end_date: e.end_date,
+            occurrences: e.occurrences,
+            status: e.status,
+            tax_rate: e.tax_rate,
+            notes: e.notes || "",
+            next_payment_date: e.next_payment_date,
         });
         setDialogOpen(true);
     };
@@ -150,7 +147,7 @@ export default function RecurringPaymentsPage() {
         if (!orgId) { toast.error("Organization not found. Please refresh and try again."); return; }
 
         const newErrors: Record<string, string> = {};
-        if (!form.client_id) newErrors.client_id = "Please select a client";
+        if (!form.vendor_id) newErrors.vendor_id = "Please select a vendor";
         if (!form.description.trim()) newErrors.description = "Description is required";
         if (form.amount <= 0) newErrors.amount = "Amount must be greater than 0";
         if (!form.start_date) newErrors.start_date = "Start date is required";
@@ -167,13 +164,13 @@ export default function RecurringPaymentsPage() {
             const payload = { ...form, next_payment_date: nextDate };
 
             if (editingId) {
-                const updated = await recurringPaymentService.update(editingId, payload);
-                setPayments(prev => prev.map(p => p.id === editingId ? updated : p));
-                toast.success("Recurring payment updated");
+                const updated = await recurringExpenseService.update(editingId, payload);
+                setExpenses(prev => prev.map(e => e.id === editingId ? updated : e));
+                toast.success("Recurring expense updated");
             } else {
-                const created = await recurringPaymentService.create(orgId, payload);
-                setPayments(prev => [created, ...prev]);
-                toast.success("Recurring payment added");
+                const created = await recurringExpenseService.create(orgId, payload);
+                setExpenses(prev => [created, ...prev]);
+                toast.success("Recurring expense added");
             }
             setDialogOpen(false);
         } catch (err: any) {
@@ -185,21 +182,21 @@ export default function RecurringPaymentsPage() {
 
     const handleStatusChange = async (id: string, status: RecurringStatus) => {
         try {
-            const updated = await recurringPaymentService.updateStatus(id, status);
-            setPayments(prev => prev.map(p => p.id === id ? updated : p));
+            const updated = await recurringExpenseService.updateStatus(id, status);
+            setExpenses(prev => prev.map(e => e.id === id ? updated : e));
             toast.success(`Marked as ${STATUS_META[status].label}`);
-        } catch (err: any) {
+        } catch {
             toast.error("Failed to update status");
         }
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm("Delete this recurring payment?")) return;
+        if (!confirm("Delete this recurring expense?")) return;
         try {
-            await recurringPaymentService.delete(id);
-            setPayments(prev => prev.filter(p => p.id !== id));
+            await recurringExpenseService.delete(id);
+            setExpenses(prev => prev.filter(e => e.id !== id));
             toast.success("Deleted");
-        } catch (err: any) {
+        } catch {
             toast.error("Failed to delete");
         }
     };
@@ -210,8 +207,8 @@ export default function RecurringPaymentsPage() {
     };
 
     // ── totals ────────────────────────────────────────────────────────────────
-    const activePayments = payments.filter(p => p.status === "active");
-    const totalReceivable = activePayments.reduce((sum, p) => sum + p.amount + p.amount * (p.tax_rate / 100), 0);
+    const activeExpenses = expenses.filter(e => e.status === "active");
+    const totalPayable = activeExpenses.reduce((sum, e) => sum + e.amount + e.amount * (e.tax_rate / 100), 0);
 
     // ── render ────────────────────────────────────────────────────────────────
 
@@ -220,26 +217,26 @@ export default function RecurringPaymentsPage() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight">Recurring Payments</h2>
-                    <p className="text-muted-foreground">Manage automatic recurring billing for clients.</p>
+                    <h2 className="text-3xl font-bold tracking-tight">Recurring Expenses</h2>
+                    <p className="text-muted-foreground">Manage automatic recurring payables to vendors.</p>
                 </div>
                 <Button onClick={openAdd}>
                     <Plus className="mr-2 h-4 w-4" />
-                    Add Client
+                    Add Expense
                 </Button>
             </div>
 
             {/* Summary cards */}
             <div className="grid gap-4 md:grid-cols-5">
-                {/* Total Receivable highlight */}
-                <Card className="md:col-span-1 border-green-500/40 bg-green-500/5">
+                {/* Total Payable highlight */}
+                <Card className="md:col-span-1 border-destructive/40 bg-destructive/5">
                     <CardHeader className="pb-2">
                         <CardDescription className="flex items-center gap-1">
-                            <TrendingUp className="h-3.5 w-3.5 text-green-600" />
-                            Total Receivable / cycle
+                            <TrendingDown className="h-3.5 w-3.5 text-destructive" />
+                            Total Payable / cycle
                         </CardDescription>
-                        <CardTitle className="text-xl text-green-700">
-                            {formatCurrency(totalReceivable)}
+                        <CardTitle className="text-xl text-destructive">
+                            {formatCurrency(totalPayable)}
                         </CardTitle>
                     </CardHeader>
                 </Card>
@@ -249,7 +246,7 @@ export default function RecurringPaymentsPage() {
                         <CardHeader className="pb-2">
                             <CardDescription className="capitalize">{s}</CardDescription>
                             <CardTitle className="text-2xl">
-                                {payments.filter(p => p.status === s).length}
+                                {expenses.filter(e => e.status === s).length}
                             </CardTitle>
                         </CardHeader>
                     </Card>
@@ -259,17 +256,17 @@ export default function RecurringPaymentsPage() {
             {/* Table */}
             <Card>
                 <CardHeader>
-                    <CardTitle>All Recurring Payments</CardTitle>
+                    <CardTitle>All Recurring Expenses</CardTitle>
                 </CardHeader>
                 <CardContent>
                     {loading ? (
                         <div className="py-12 text-center text-muted-foreground">Loading...</div>
-                    ) : payments.length === 0 ? (
+                    ) : expenses.length === 0 ? (
                         <div className="py-12 text-center border-2 border-dashed rounded-lg">
                             <RefreshCw className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
-                            <p className="text-muted-foreground">No recurring payments yet.</p>
+                            <p className="text-muted-foreground">No recurring expenses yet.</p>
                             <Button className="mt-4" onClick={openAdd}>
-                                <Plus className="mr-2 h-4 w-4" /> Add Client
+                                <Plus className="mr-2 h-4 w-4" /> Add Expense
                             </Button>
                         </div>
                     ) : (
@@ -277,7 +274,7 @@ export default function RecurringPaymentsPage() {
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>Client</TableHead>
+                                        <TableHead>Vendor</TableHead>
                                         <TableHead>Description</TableHead>
                                         <TableHead>Amount</TableHead>
                                         <TableHead>Frequency</TableHead>
@@ -288,46 +285,46 @@ export default function RecurringPaymentsPage() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {payments.map(p => {
-                                        const meta = STATUS_META[p.status];
-                                        const taxAmount = p.amount * (p.tax_rate / 100);
-                                        const total = p.amount + taxAmount;
+                                    {expenses.map(e => {
+                                        const meta = STATUS_META[e.status];
+                                        const taxAmount = e.amount * (e.tax_rate / 100);
+                                        const total = e.amount + taxAmount;
                                         return (
-                                            <TableRow key={p.id}>
+                                            <TableRow key={e.id}>
                                                 <TableCell className="font-medium">
-                                                    {p.client?.name ?? p.client_id}
+                                                    {e.vendor?.name ?? e.vendor_id}
                                                 </TableCell>
                                                 <TableCell className="max-w-[180px] truncate">
-                                                    {p.description}
+                                                    {e.description}
                                                 </TableCell>
                                                 <TableCell>
-                                                    <div className="font-semibold">{formatCurrency(total, p.currency)}</div>
-                                                    {p.tax_rate > 0 && (
+                                                    <div className="font-semibold">{formatCurrency(total, e.currency)}</div>
+                                                    {e.tax_rate > 0 && (
                                                         <div className="text-xs text-muted-foreground">
-                                                            +{p.tax_rate}% tax
+                                                            +{e.tax_rate}% tax
                                                         </div>
                                                     )}
                                                 </TableCell>
-                                                <TableCell className="capitalize">{p.frequency}</TableCell>
+                                                <TableCell className="capitalize">{e.frequency}</TableCell>
                                                 <TableCell>
-                                                    {p.next_payment_date
-                                                        ? format(new Date(p.next_payment_date), "dd MMM yyyy")
+                                                    {e.next_payment_date
+                                                        ? format(new Date(e.next_payment_date), "dd MMM yyyy")
                                                         : "—"}
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="text-sm">
-                                                        {format(new Date(p.start_date), "dd MMM yyyy")}
-                                                        {p.end_date && (
+                                                        {format(new Date(e.start_date), "dd MMM yyyy")}
+                                                        {e.end_date && (
                                                             <span className="text-muted-foreground">
-                                                                {" "}→ {format(new Date(p.end_date), "dd MMM yyyy")}
+                                                                {" "}→ {format(new Date(e.end_date), "dd MMM yyyy")}
                                                             </span>
                                                         )}
-                                                        {p.occurrences && (
+                                                        {e.occurrences && (
                                                             <div className="text-xs text-muted-foreground">
-                                                                {p.occurrences_completed}/{p.occurrences} completed
+                                                                {e.occurrences_completed}/{e.occurrences} completed
                                                             </div>
                                                         )}
-                                                        {!p.end_date && !p.occurrences && (
+                                                        {!e.end_date && !e.occurrences && (
                                                             <div className="text-xs text-muted-foreground">Indefinite</div>
                                                         )}
                                                     </div>
@@ -340,39 +337,37 @@ export default function RecurringPaymentsPage() {
                                                 <TableCell className="text-right">
                                                     <DropdownMenu>
                                                         <DropdownMenuTrigger asChild>
-                                                            <Button variant="ghost" size="sm">
-                                                                Actions
-                                                            </Button>
+                                                            <Button variant="ghost" size="sm">Actions</Button>
                                                         </DropdownMenuTrigger>
                                                         <DropdownMenuContent align="end">
-                                                            <DropdownMenuItem onClick={() => openEdit(p)}>
+                                                            <DropdownMenuItem onClick={() => openEdit(e)}>
                                                                 <Pencil className="mr-2 h-4 w-4" /> Edit
                                                             </DropdownMenuItem>
                                                             <DropdownMenuSeparator />
-                                                            {p.status === "active" && (
-                                                                <DropdownMenuItem onClick={() => handleStatusChange(p.id, "paused")}>
+                                                            {e.status === "active" && (
+                                                                <DropdownMenuItem onClick={() => handleStatusChange(e.id, "paused")}>
                                                                     <Pause className="mr-2 h-4 w-4" /> Pause
                                                                 </DropdownMenuItem>
                                                             )}
-                                                            {p.status === "paused" && (
-                                                                <DropdownMenuItem onClick={() => handleStatusChange(p.id, "active")}>
+                                                            {e.status === "paused" && (
+                                                                <DropdownMenuItem onClick={() => handleStatusChange(e.id, "active")}>
                                                                     <Play className="mr-2 h-4 w-4" /> Resume
                                                                 </DropdownMenuItem>
                                                             )}
-                                                            {p.status !== "cancelled" && p.status !== "completed" && (
-                                                                <DropdownMenuItem onClick={() => handleStatusChange(p.id, "cancelled")}>
+                                                            {e.status !== "cancelled" && e.status !== "completed" && (
+                                                                <DropdownMenuItem onClick={() => handleStatusChange(e.id, "cancelled")}>
                                                                     <XCircle className="mr-2 h-4 w-4" /> Cancel
                                                                 </DropdownMenuItem>
                                                             )}
-                                                            {p.status !== "completed" && (
-                                                                <DropdownMenuItem onClick={() => handleStatusChange(p.id, "completed")}>
+                                                            {e.status !== "completed" && (
+                                                                <DropdownMenuItem onClick={() => handleStatusChange(e.id, "completed")}>
                                                                     <RefreshCw className="mr-2 h-4 w-4" /> Mark Completed
                                                                 </DropdownMenuItem>
                                                             )}
                                                             <DropdownMenuSeparator />
                                                             <DropdownMenuItem
                                                                 className="text-destructive focus:text-destructive"
-                                                                onClick={() => handleDelete(p.id)}
+                                                                onClick={() => handleDelete(e.id)}
                                                             >
                                                                 <Trash2 className="mr-2 h-4 w-4" /> Delete
                                                             </DropdownMenuItem>
@@ -393,40 +388,40 @@ export default function RecurringPaymentsPage() {
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
-                        <DialogTitle>{editingId ? "Edit Recurring Payment" : "Add Recurring Payment"}</DialogTitle>
+                        <DialogTitle>{editingId ? "Edit Recurring Expense" : "Add Recurring Expense"}</DialogTitle>
                         <DialogDescription>
-                            Configure automatic recurring billing for a client.
+                            Configure automatic recurring payable to a vendor.
                         </DialogDescription>
                     </DialogHeader>
 
                     <div className="space-y-4 py-2">
-                        {/* Client */}
+                        {/* Vendor */}
                         <div className="space-y-2">
-                            <Label>Client *</Label>
-                            <Select value={form.client_id} onValueChange={v => setField("client_id", v)}>
-                                <SelectTrigger className={errors.client_id ? "border-destructive" : ""}>
-                                    <SelectValue placeholder="Select client" />
+                            <Label>Vendor *</Label>
+                            <Select value={form.vendor_id} onValueChange={v => setField("vendor_id", v)}>
+                                <SelectTrigger className={errors.vendor_id ? "border-destructive" : ""}>
+                                    <SelectValue placeholder="Select vendor" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {companies.length === 0 ? (
+                                    {vendors.length === 0 ? (
                                         <div className="px-3 py-2 text-sm text-muted-foreground">
-                                            No clients found. Add companies in CRM first.
+                                            No vendors found. Add companies in CRM first.
                                         </div>
                                     ) : (
-                                        companies.map(c => (
-                                            <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                                        vendors.map(v => (
+                                            <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>
                                         ))
                                     )}
                                 </SelectContent>
                             </Select>
-                            {errors.client_id && <p className="text-xs text-destructive">{errors.client_id}</p>}
+                            {errors.vendor_id && <p className="text-xs text-destructive">{errors.vendor_id}</p>}
                         </div>
 
                         {/* Description */}
                         <div className="space-y-2">
                             <Label>Description *</Label>
                             <Input
-                                placeholder="e.g. Monthly retainer fee"
+                                placeholder="e.g. Monthly SaaS subscription"
                                 value={form.description}
                                 onChange={e => setField("description", e.target.value)}
                                 className={errors.description ? "border-destructive" : ""}
@@ -521,7 +516,7 @@ export default function RecurringPaymentsPage() {
                             />
                         </div>
 
-                        {/* Occurrences (optional) */}
+                        {/* Occurrences */}
                         <div className="space-y-2">
                             <Label>
                                 Max Occurrences{" "}
@@ -565,7 +560,7 @@ export default function RecurringPaymentsPage() {
                             <div className="rounded-md bg-muted p-3 text-sm space-y-1">
                                 <p className="font-medium">Preview</p>
                                 <p>
-                                    Billing{" "}
+                                    Paying{" "}
                                     <span className="font-semibold">
                                         {formatCurrency(form.amount + form.amount * (form.tax_rate / 100), form.currency)}
                                     </span>{" "}
@@ -590,7 +585,7 @@ export default function RecurringPaymentsPage() {
                             Cancel
                         </Button>
                         <Button type="button" onClick={handleSave} disabled={saving}>
-                            {saving ? "Saving..." : editingId ? "Update" : "Add Payment"}
+                            {saving ? "Saving..." : editingId ? "Update" : "Add Expense"}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import BillList from '../components/BillList';
 import { Button } from '@/components/ui/button';
-import { Users } from 'lucide-react';
+import { Users, RefreshCw } from 'lucide-react';
 
 export default function PayablesPage() {
     const navigate = useNavigate();
@@ -16,10 +16,16 @@ export default function PayablesPage() {
                             Manage vendor bills and outgoing payments.
                         </p>
                     </div>
-                    <Button variant="outline" onClick={() => navigate("/procurement/vendors")}>
-                        <Users className="h-4 w-4 mr-2" />
-                        Manage Vendors
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button variant="outline" onClick={() => navigate("/finance/recurring-expenses")}>
+                            <RefreshCw className="h-4 w-4 mr-2" />
+                            Recurring Expenses
+                        </Button>
+                        <Button variant="outline" onClick={() => navigate("/procurement/vendors")}>
+                            <Users className="h-4 w-4 mr-2" />
+                            Manage Vendors
+                        </Button>
+                    </div>
                 </div>
             </div>
 

@@ -244,3 +244,25 @@ export interface RecurringPayment {
     updated_at?: string;
     client?: { id: string; name: string };
 }
+
+export interface RecurringExpense {
+    id: string;
+    org_id: string;
+    vendor_id: string;
+    description: string;
+    amount: number;
+    currency: string;
+    frequency: RecurringFrequency;
+    payment_day: number; // 1–31 (day of month)
+    start_date: string;
+    end_date?: string;
+    occurrences?: number;
+    occurrences_completed: number;
+    status: RecurringStatus;
+    tax_rate: number;
+    notes?: string;
+    next_payment_date?: string;
+    created_at?: string;
+    updated_at?: string;
+    vendor?: { id: string; name: string };
+}

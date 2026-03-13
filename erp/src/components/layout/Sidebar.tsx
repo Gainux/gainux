@@ -31,7 +31,8 @@ import {
     FileSpreadsheet,
     ShieldAlert,
     FileCheck,
-    Landmark
+    Landmark,
+    RefreshCw
 } from "lucide-react";
 import { useModules } from "@/context/ModuleContext";
 import { useAuth } from "@/context/AuthContext";
@@ -162,6 +163,18 @@ export function Sidebar({ className, isCollapsed = false, onToggle }: SidebarPro
                     label: "Tax & Compliance",
                     icon: Shield,
                     active: pathname.startsWith("/finance/tax"),
+                },
+                {
+                    href: "/finance/recurring",
+                    label: "Recurring Receivable",
+                    icon: RefreshCw,
+                    active: pathname.startsWith("/finance/recurring") && !pathname.startsWith("/finance/recurring-expenses"),
+                },
+                {
+                    href: "/finance/recurring-expenses",
+                    label: "Recurring Payable",
+                    icon: RefreshCw,
+                    active: pathname.startsWith("/finance/recurring-expenses"),
                 },
                 {
                     href: "/finance/referral-payouts",
