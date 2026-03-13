@@ -10,7 +10,7 @@ export interface Lead {
     phone?: string;
     companyName?: string;
     source?: string;
-    status: string; // 'new' | 'contacted' | 'qualified' | 'lost'
+    status: string; // 'do_cold_call' | 'collecting_requirements' | 'not_interested' | 'preparing_proposal' | 'waiting_for_proposal_response' | 'negotiating' | 'waiting_for_advance_amount' | 'work_ongoing' | 'do_completion_call' | 'waiting_for_full_payment'
     ownerId?: string;
     owner?: {
         id: string;

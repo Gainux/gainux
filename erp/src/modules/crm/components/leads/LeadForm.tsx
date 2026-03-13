@@ -29,7 +29,7 @@ export function LeadForm({ initialData, onSubmit, onCancel, loading }: LeadFormP
             phone: "",
             companyName: "",
             source: "",
-            status: "new",
+            status: "do_cold_call",
             notes: "",
         }
     );
@@ -103,10 +103,16 @@ export function LeadForm({ initialData, onSubmit, onCancel, loading }: LeadFormP
                             <SelectValue placeholder="Select status" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="new">New</SelectItem>
-                            <SelectItem value="contacted">Contacted</SelectItem>
-                            <SelectItem value="qualified">Qualified</SelectItem>
-                            <SelectItem value="lost">Lost</SelectItem>
+                            <SelectItem value="do_cold_call">Do Cold Call</SelectItem>
+                            <SelectItem value="collecting_requirements">Collecting Requirements</SelectItem>
+                            <SelectItem value="not_interested">Not Interested</SelectItem>
+                            <SelectItem value="preparing_proposal">Preparing Proposal</SelectItem>
+                            <SelectItem value="waiting_for_proposal_response">Waiting for Proposal Response</SelectItem>
+                            <SelectItem value="negotiating">Negotiating</SelectItem>
+                            <SelectItem value="waiting_for_advance_amount">Waiting for Advance Amount</SelectItem>
+                            <SelectItem value="work_ongoing">Work Ongoing</SelectItem>
+                            <SelectItem value="do_completion_call">Do Completion Call</SelectItem>
+                            <SelectItem value="waiting_for_full_payment">Waiting for Full Payment</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>

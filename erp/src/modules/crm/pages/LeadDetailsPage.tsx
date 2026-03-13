@@ -102,7 +102,20 @@ export default function LeadDetailsPage() {
                     <div>
                         <h2 className="text-3xl font-bold tracking-tight flex items-center gap-2">
                             {lead.firstName} {lead.lastName}
-                            <Badge variant={lead.status === 'new' ? 'default' : 'secondary'}>{lead.status}</Badge>
+                            <Badge variant={lead.status === 'not_interested' ? 'destructive' : 'secondary'}>
+                                {({
+                                    do_cold_call: "Do Cold Call",
+                                    collecting_requirements: "Collecting Requirements",
+                                    not_interested: "Not Interested",
+                                    preparing_proposal: "Preparing Proposal",
+                                    waiting_for_proposal_response: "Waiting for Proposal Response",
+                                    negotiating: "Negotiating",
+                                    waiting_for_advance_amount: "Waiting for Advance Amount",
+                                    work_ongoing: "Work Ongoing",
+                                    do_completion_call: "Do Completion Call",
+                                    waiting_for_full_payment: "Waiting for Full Payment",
+                                } as Record<string, string>)[lead.status] ?? lead.status}
+                            </Badge>
                         </h2>
                         <p className="text-muted-foreground flex items-center gap-2">
                             <Building className="h-3 w-3" /> {lead.companyName || 'No Company'}

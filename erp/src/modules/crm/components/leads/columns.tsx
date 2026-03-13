@@ -41,9 +41,22 @@ export const columns: ColumnDef<Lead>[] = [
         header: "Status",
         cell: ({ row }) => {
             const status = row.getValue("status") as string
+            const statusLabels: Record<string, string> = {
+                do_cold_call: "Do Cold Call",
+                collecting_requirements: "Collecting Requirements",
+                not_interested: "Not Interested",
+                preparing_proposal: "Preparing Proposal",
+                waiting_for_proposal_response: "Waiting for Proposal Response",
+                negotiating: "Negotiating",
+                waiting_for_advance_amount: "Waiting for Advance Amount",
+                work_ongoing: "Work Ongoing",
+                do_completion_call: "Do Completion Call",
+                waiting_for_full_payment: "Waiting for Full Payment",
+            }
+            const negativeStatuses = ["not_interested"]
             return (
-                <Badge variant={status === "qualified" ? "default" : "secondary"}>
-                    {status}
+                <Badge variant={negativeStatuses.includes(status) ? "destructive" : "secondary"}>
+                    {statusLabels[status] ?? status}
                 </Badge>
             )
         },
