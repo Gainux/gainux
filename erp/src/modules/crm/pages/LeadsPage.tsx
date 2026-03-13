@@ -1,24 +1,146 @@
 
 import { useState, useEffect, useMemo } from "react";
-import { DataTable } from "@/modules/crm/components/leads/data-table"
-import { columns } from "@/modules/crm/components/leads/columns"
-import type { Lead, LeadCategory, LeadLocation } from "@/modules/crm/types"
+import { DataTable } from "@/modules/crm/components/leads/data-table";
+import { columns } from "@/modules/crm/components/leads/columns";
+import type { Lead, LeadCategory, LeadLocation } from "@/modules/crm/types";
 import { crmService } from "@/modules/crm/services/crmService";
 import { Button } from "@/components/ui/button";
-import { Plus, Loader2, SlidersHorizontal, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+    Plus, Loader2, ChevronRight, Settings2,
+    FolderOpen, Users, TrendingUp, CheckCircle2, XCircle, MapPin,
+} from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
+    Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { LeadForm } from "@/modules/crm/components/leads/LeadForm";
 import { CreateCustomerFromLeadDialog } from "@/modules/crm/components/leads/CreateCustomerFromLeadDialog";
-import { CategorySidebar, type CategoryFilter } from "@/modules/crm/components/leads/CategorySidebar";
+import { ManageCategoriesDialog } from "@/modules/crm/components/leads/ManageCategoriesDialog";
+import { cn } from "@/lib/utils";
+
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+type ViewState =
+    | { type: "categories" }
+    | { type: "locations"; category: LeadCategory }
+    | { type: "leads"; category: LeadCategory; location: LeadLocation | null };
+
+interface StatusSummary { total: number; active: number; complete: number; lost: number; }
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function summarize(leads: Lead[]): StatusSummary {
+    return {
+        total: leads.length,
+        active: leads.filter(l => l.status !== "complete" && l.status !== "not_interested").length,
+        complete: leads.filter(l => l.status === "complete").length,
+        lost: leads.filter(l => l.status === "not_interested").length,
+    };
+}
+
+// ─── Sub-components ──────────────────────────────────────────────────────────
+
+function StatusPills({ summary }: { summary: StatusSummary }) {
+    return (
+        <div className="flex flex-wrap gap-1.5 mt-3">
+            <span className="inline-flex items-center gap-1 text-xs bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 rounded-full px-2 py-0.5 font-medium">
+                <TrendingUp className="h-3 w-3" /> {summary.active} Active
+            </span>
+            <span className="inline-flex items-center gap-1 text-xs bg-green-50 dark:bg-green-950/40 text-green-700 dark:text-green-300 rounded-full px-2 py-0.5 font-medium">
+                <CheckCircle2 className="h-3 w-3" /> {summary.complete} Done
+            </span>
+            {summary.lost > 0 && (
+                <span className="inline-flex items-center gap-1 text-xs bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 rounded-full px-2 py-0.5 font-medium">
+                    <XCircle className="h-3 w-3" /> {summary.lost} Lost
+                </span>
+            )}
+        </div>
+    );
+}
+
+function CategoryCard({ category, leads, onClick }: { category: LeadCategory; leads: Lead[]; onClick: () => void }) {
+    const summary = summarize(leads);
+    return (
+        <button type="button" onClick={onClick}
+            className="group text-left border rounded-xl bg-card hover:shadow-md hover:border-primary/40 transition-all duration-200 overflow-hidden w-full">
+            <div className="h-1.5 w-full" style={{ background: category.color }} />
+            <div className="p-4">
+                <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: category.color }} />
+                        <span className="font-semibold text-sm truncate">{category.name}</span>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0 mt-0.5" />
+                </div>
+                <p className="text-2xl md:text-3xl font-bold mt-3 tabular-nums">{summary.total}</p>
+                <p className="text-xs text-muted-foreground">total leads</p>
+                <StatusPills summary={summary} />
+            </div>
+        </button>
+    );
+}
+
+function LocationCard({ name, leads, color, onClick, isUnassigned }: {
+    name: string; leads: Lead[]; color?: string; onClick: () => void; isUnassigned?: boolean;
+}) {
+    const summary = summarize(leads);
+    return (
+        <button type="button" onClick={onClick}
+            className="group text-left border rounded-xl bg-card hover:shadow-md hover:border-primary/40 transition-all duration-200 overflow-hidden w-full">
+            {color && <div className="h-1 w-full opacity-50" style={{ background: color }} />}
+            <div className="p-4">
+                <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                        {isUnassigned
+                            ? <FolderOpen className="h-4 w-4 text-muted-foreground shrink-0" />
+                            : <MapPin className="h-4 w-4 shrink-0" style={{ color: color ?? 'currentColor' }} />}
+                        <span className="font-semibold text-sm truncate">{name}</span>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0 mt-0.5" />
+                </div>
+                <p className="text-2xl md:text-3xl font-bold mt-3 tabular-nums">{summary.total}</p>
+                <p className="text-xs text-muted-foreground">leads</p>
+                <StatusPills summary={summary} />
+            </div>
+        </button>
+    );
+}
+
+function AddLocationCard({ onAdd, saving }: { onAdd: (name: string) => Promise<void>; saving: boolean; }) {
+    const [editing, setEditing] = useState(false);
+    const [name, setName] = useState("");
+    const save = async () => {
+        if (!name.trim()) return;
+        await onAdd(name.trim());
+        setName(""); setEditing(false);
+    };
+    if (editing) {
+        return (
+            <div className="border-2 border-primary/40 rounded-xl p-4 bg-card">
+                <Input autoFocus placeholder="Location name…" value={name}
+                    onChange={e => setName(e.target.value)}
+                    onKeyDown={e => { if (e.key === "Enter") save(); if (e.key === "Escape") setEditing(false); }}
+                    className="mb-3" />
+                <div className="flex gap-2">
+                    <Button size="sm" onClick={save} disabled={!name.trim() || saving}>
+                        {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Add"}
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => { setEditing(false); setName(""); }}>Cancel</Button>
+                </div>
+            </div>
+        );
+    }
+    return (
+        <button type="button" onClick={() => setEditing(true)}
+            className="border-2 border-dashed rounded-xl p-4 text-muted-foreground hover:text-primary hover:border-primary/50 transition-colors flex flex-col items-center justify-center gap-2 min-h-[140px] w-full">
+            <Plus className="h-5 w-5" />
+            <span className="text-sm font-medium">Add Location</span>
+        </button>
+    );
+}
+
+// ─── Main Page ───────────────────────────────────────────────────────────────
 
 export default function LeadsPage() {
     const [allLeads, setAllLeads] = useState<Lead[]>([]);
@@ -26,11 +148,13 @@ export default function LeadsPage() {
     const [locations, setLocations] = useState<LeadLocation[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [open, setOpen] = useState(false);
+    const [view, setView] = useState<ViewState>({ type: "categories" });
+    const [addLeadOpen, setAddLeadOpen] = useState(false);
     const [completedLead, setCompletedLead] = useState<Lead | null>(null);
     const [customerDialogOpen, setCustomerDialogOpen] = useState(false);
-    const [filter, setFilter] = useState<CategoryFilter>({ categoryId: null, locationId: null });
-    const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+    const [manageOpen, setManageOpen] = useState(false);
+    const [search, setSearch] = useState("");
+    const [addingLocation, setAddingLocation] = useState(false);
 
     const fetchAll = async () => {
         try {
@@ -40,11 +164,8 @@ export default function LeadsPage() {
                 crmService.getLeadCategories(),
                 crmService.getLeadLocations(),
             ]);
-            setAllLeads(leads);
-            setCategories(cats);
-            setLocations(locs);
+            setAllLeads(leads); setCategories(cats); setLocations(locs);
         } catch (err: any) {
-            console.error("Error fetching leads:", err);
             setError(err.message);
         } finally {
             setLoading(false);
@@ -52,153 +173,234 @@ export default function LeadsPage() {
     };
 
     useEffect(() => { fetchAll(); }, []);
+    useEffect(() => { setSearch(""); }, [view]);
 
-    const filteredLeads = useMemo(() => {
-        if (filter.locationId) return allLeads.filter(l => l.locationId === filter.locationId);
-        if (filter.categoryId) return allLeads.filter(l => l.categoryId === filter.categoryId);
-        return allLeads;
-    }, [allLeads, filter]);
+    const leadsForCategory = (catId: string) => allLeads.filter(l => l.categoryId === catId);
+    const leadsForLocation = (locId: string) => allLeads.filter(l => l.locationId === locId);
+    const unassignedInCategory = (catId: string) => allLeads.filter(l => l.categoryId === catId && !l.locationId);
 
-    const handleCreate = async (leadData: Partial<Lead>) => {
+    // Leads shown in the table (based on location context + search)
+    const baseLeads = useMemo(() => {
+        if (view.type !== "leads") return [];
+        return view.location === null
+            ? unassignedInCategory(view.category.id)
+            : leadsForLocation(view.location.id);
+    }, [view, allLeads]);
+
+    const tableLeads = useMemo(() => {
+        if (!search.trim()) return baseLeads;
+        const q = search.toLowerCase();
+        return baseLeads.filter(l =>
+            [l.firstName, l.lastName, l.email, l.phone, l.companyName, l.source]
+                .filter(Boolean).join(" ").toLowerCase().includes(q)
+        );
+    }, [baseLeads, search]);
+
+    const handleCreateLead = async (leadData: Partial<Lead>) => {
         try {
             const newLead = await crmService.createLead(leadData);
             setAllLeads(prev => [newLead, ...prev]);
-            setOpen(false);
-            if (newLead.status === "complete") {
-                setCompletedLead(newLead);
-                setCustomerDialogOpen(true);
-            }
-        } catch (err: any) {
-            console.error("Error creating lead:", err);
-            setError("Failed to create lead");
-        }
+            setAddLeadOpen(false);
+            if (newLead.status === "complete") { setCompletedLead(newLead); setCustomerDialogOpen(true); }
+        } catch { setError("Failed to create lead"); }
     };
 
-    // Active filter label for mobile chip
-    const activeFilterLabel = useMemo(() => {
-        if (filter.locationId) {
-            const loc = locations.find(l => l.id === filter.locationId);
-            const cat = categories.find(c => c.id === filter.categoryId);
-            return loc ? `${cat?.name} › ${loc.name}` : null;
-        }
-        if (filter.categoryId) {
-            return categories.find(c => c.id === filter.categoryId)?.name ?? null;
-        }
-        return null;
-    }, [filter, categories, locations]);
+    const handleAddLocation = async (name: string) => {
+        if (view.type !== "locations") return;
+        setAddingLocation(true);
+        try {
+            const created = await crmService.createLeadLocation(view.category.id, name);
+            setLocations(prev => [...prev, created]);
+        } finally { setAddingLocation(false); }
+    };
 
-    const sidebar = (
-        <CategorySidebar
-            categories={categories}
-            locations={locations}
-            leads={allLeads}
-            filter={filter}
-            onFilterChange={f => { setFilter(f); setMobileSidebarOpen(false); }}
-            onRefresh={fetchAll}
-        />
+    // ── Breadcrumb ──────────────────────────────────────────────────────────
+    const breadcrumb = (
+        <nav className="flex items-center gap-1 text-sm mb-4 flex-wrap">
+            <button type="button"
+                onClick={() => setView({ type: "categories" })}
+                className={cn("hover:text-primary transition-colors",
+                    view.type === "categories" ? "font-semibold text-foreground" : "text-muted-foreground")}>
+                Leads
+            </button>
+            {view.type !== "categories" && (
+                <>
+                    <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                    <button type="button"
+                        onClick={() => {
+                            if (view.type !== "categories")
+                                setView({ type: "locations", category: view.category });
+                        }}
+                        className={cn("hover:text-primary transition-colors flex items-center gap-1",
+                            view.type === "locations" ? "font-semibold text-foreground" : "text-muted-foreground")}>
+                        <span className="w-2 h-2 rounded-full shrink-0" style={{ background: view.category.color }} />
+                        {view.category.name}
+                    </button>
+                </>
+            )}
+            {view.type === "leads" && (
+                <>
+                    <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                    <span className="font-semibold text-foreground">
+                        {view.location ? view.location.name : "Unassigned"}
+                    </span>
+                </>
+            )}
+        </nav>
     );
 
-    return (
-        <div className="flex-1 space-y-4 p-4 md:p-8 md:pt-6">
-            <CreateCustomerFromLeadDialog
-                lead={completedLead}
-                open={customerDialogOpen}
-                onOpenChange={open => {
-                    setCustomerDialogOpen(open);
-                    if (!open) setCompletedLead(null);
-                }}
-            />
+    // ── Page header ─────────────────────────────────────────────────────────
+    const title = view.type === "categories" ? "Leads"
+        : view.type === "locations" ? view.category.name
+        : view.location ? view.location.name : "Unassigned";
 
-            {/* Header */}
-            <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 min-w-0">
-                    <h2 className="text-xl md:text-3xl font-bold tracking-tight shrink-0">Leads</h2>
-                    {activeFilterLabel && (
-                        <span className="hidden sm:inline-flex items-center gap-1 text-xs bg-primary/10 text-primary rounded-full px-2 py-0.5 font-medium max-w-[160px] truncate">
-                            {activeFilterLabel}
-                            <button onClick={() => setFilter({ categoryId: null, locationId: null })} className="ml-0.5 hover:text-primary/70">
-                                <X className="h-3 w-3" />
-                            </button>
-                        </span>
-                    )}
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                    {/* Mobile sidebar toggle */}
-                    <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
-                        <SheetTrigger asChild>
-                            <Button variant="outline" size="sm" className="md:hidden gap-1.5">
-                                <SlidersHorizontal className="h-4 w-4" />
-                                Filter
-                                {activeFilterLabel && <span className="ml-1 w-2 h-2 rounded-full bg-primary" />}
-                            </Button>
-                        </SheetTrigger>
-                        <SheetContent side="left" className="w-64 p-4">
-                            <p className="font-semibold text-sm mb-4">Categories</p>
-                            {sidebar}
-                        </SheetContent>
-                    </Sheet>
-
-                    <Dialog open={open} onOpenChange={setOpen}>
+    const header = (
+        <div className="flex items-center justify-between gap-2 mb-6">
+            <h2 className="text-xl md:text-2xl font-bold tracking-tight">{title}</h2>
+            <div className="flex items-center gap-2">
+                {view.type === "categories" && (
+                    <Button variant="outline" size="sm" onClick={() => setManageOpen(true)} className="gap-1.5">
+                        <Settings2 className="h-4 w-4" />
+                        <span className="hidden sm:inline">Manage</span>
+                    </Button>
+                )}
+                {view.type === "leads" && (
+                    <Dialog open={addLeadOpen} onOpenChange={setAddLeadOpen}>
                         <DialogTrigger asChild>
-                            <Button size="sm">
-                                <Plus className="mr-1.5 h-4 w-4" /> Add Lead
+                            <Button size="sm" className="gap-1.5">
+                                <Plus className="h-4 w-4" /> Add Lead
                             </Button>
                         </DialogTrigger>
                         <DialogContent className="sm:max-w-[600px]">
                             <DialogHeader>
                                 <DialogTitle>Add New Lead</DialogTitle>
                                 <DialogDescription>
-                                    Enter the details of the new lead. Click save when you're done.
+                                    Adding to {view.category.name}{view.location ? ` › ${view.location.name}` : ""}.
                                 </DialogDescription>
                             </DialogHeader>
                             <LeadForm
-                                onSubmit={handleCreate}
-                                onCancel={() => setOpen(false)}
-                                defaultCategoryId={filter.categoryId ?? undefined}
-                                defaultLocationId={filter.locationId ?? undefined}
+                                onSubmit={handleCreateLead}
+                                onCancel={() => setAddLeadOpen(false)}
+                                defaultCategoryId={view.category.id}
+                                defaultLocationId={view.location?.id}
                             />
                         </DialogContent>
                     </Dialog>
-                </div>
+                )}
             </div>
+        </div>
+    );
+
+    if (loading) {
+        return (
+            <div className="flex-1 p-4 md:p-8 md:pt-6 flex items-center justify-center h-64">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+        );
+    }
+
+    return (
+        <div className="flex-1 p-4 md:p-8 md:pt-6">
+            <CreateCustomerFromLeadDialog
+                lead={completedLead}
+                open={customerDialogOpen}
+                onOpenChange={o => { setCustomerDialogOpen(o); if (!o) setCompletedLead(null); }}
+            />
+            <ManageCategoriesDialog
+                open={manageOpen}
+                onOpenChange={setManageOpen}
+                onChanged={() => { setManageOpen(false); fetchAll(); }}
+            />
+
+            {breadcrumb}
+            {header}
 
             {error && (
-                <Alert variant="destructive">
+                <Alert variant="destructive" className="mb-4">
                     <AlertDescription>{error}</AlertDescription>
                 </Alert>
             )}
 
-            {/* Mobile active filter chip */}
-            {activeFilterLabel && (
-                <div className="flex sm:hidden items-center gap-2">
-                    <span className="text-xs text-muted-foreground">Filtered by:</span>
-                    <span className="inline-flex items-center gap-1 text-xs bg-primary/10 text-primary rounded-full px-2 py-0.5 font-medium">
-                        {activeFilterLabel}
-                        <button onClick={() => setFilter({ categoryId: null, locationId: null })}>
-                            <X className="h-3 w-3" />
-                        </button>
-                    </span>
+            {/* ── CATEGORIES VIEW ───────────────────────────────────── */}
+            {view.type === "categories" && (
+                categories.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-20 text-center gap-4">
+                        <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
+                            <Users className="h-8 w-8 text-muted-foreground" />
+                        </div>
+                        <div>
+                            <p className="font-semibold text-lg">No categories yet</p>
+                            <p className="text-sm text-muted-foreground mt-1">
+                                Create categories like Medical, Manufacturing to organise your leads.
+                            </p>
+                        </div>
+                        <Button onClick={() => setManageOpen(true)} className="gap-2">
+                            <Plus className="h-4 w-4" /> Create First Category
+                        </Button>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        {categories.map(cat => (
+                            <CategoryCard
+                                key={cat.id}
+                                category={cat}
+                                leads={leadsForCategory(cat.id)}
+                                onClick={() => setView({ type: "locations", category: cat })}
+                            />
+                        ))}
+                    </div>
+                )
+            )}
+
+            {/* ── LOCATIONS VIEW ────────────────────────────────────── */}
+            {view.type === "locations" && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {locations
+                        .filter(l => l.categoryId === view.category.id)
+                        .map(loc => (
+                            <LocationCard
+                                key={loc.id}
+                                name={loc.name}
+                                leads={leadsForLocation(loc.id)}
+                                color={view.category.color}
+                                onClick={() => setView({ type: "leads", category: view.category, location: loc })}
+                            />
+                        ))}
+
+                    {/* Unassigned card */}
+                    {(() => {
+                        const unassigned = unassignedInCategory(view.category.id);
+                        return unassigned.length > 0 ? (
+                            <LocationCard
+                                key="unassigned"
+                                name="Unassigned"
+                                leads={unassigned}
+                                isUnassigned
+                                onClick={() => setView({ type: "leads", category: view.category, location: null })}
+                            />
+                        ) : null;
+                    })()}
+
+                    <AddLocationCard onAdd={handleAddLocation} saving={addingLocation} />
                 </div>
             )}
 
-            {/* Main content: sidebar + table */}
-            <div className="flex gap-4 h-full">
-                {/* Desktop sidebar */}
-                <aside className="hidden md:flex flex-col w-52 shrink-0 border rounded-lg p-3 bg-card h-fit max-h-[calc(100vh-12rem)] sticky top-4">
-                    {sidebar}
-                </aside>
-
-                {/* Table */}
-                <div className="flex-1 min-w-0">
-                    {loading ? (
-                        <div className="flex items-center justify-center h-24">
-                            <Loader2 className="h-6 w-6 animate-spin" />
-                        </div>
-                    ) : (
-                        <DataTable columns={columns} data={filteredLeads} searchKey="firstName" />
-                    )}
+            {/* ── LEADS VIEW ────────────────────────────────────────── */}
+            {view.type === "leads" && (
+                <div>
+                    <StatusPills summary={summarize(baseLeads)} />
+                    <div className="mt-4">
+                        <DataTable
+                            columns={columns}
+                            data={tableLeads}
+                            searchKey="firstName"
+                            searchValue={search}
+                            onSearchChange={setSearch}
+                            searchPlaceholder="Search by name, email, phone, company…"
+                        />
+                    </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 }
