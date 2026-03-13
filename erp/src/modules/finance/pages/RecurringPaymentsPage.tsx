@@ -220,7 +220,7 @@ export default function RecurringPaymentsPage() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight">Recurring Payments</h2>
+                    <h2 className="text-xl md:text-3xl font-bold tracking-tight">Recurring Payments</h2>
                     <p className="text-muted-foreground">Manage automatic recurring billing for clients.</p>
                 </div>
                 <Button onClick={openAdd}>

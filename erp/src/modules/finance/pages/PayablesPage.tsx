@@ -11,7 +11,7 @@ export default function PayablesPage() {
             <div className="flex flex-col gap-2">
                 <div className="flex justify-between items-start">
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight">Accounts Payable</h1>
+                        <h1 className="text-xl md:text-3xl font-bold tracking-tight">Accounts Payable</h1>
                         <p className="text-muted-foreground">
                             Manage vendor bills and outgoing payments.
                         </p>

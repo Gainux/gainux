@@ -37,7 +37,7 @@ export default function ExpenseStats({ metrics, loading }: ExpenseStatsProps) {
                     <TrendingDown className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">{formatCurrency(metrics.totalThisMonth)}</div>
+                    <div className="text-lg md:text-2xl font-bold">{formatCurrency(metrics.totalThisMonth)}</div>
                     <p className="text-xs text-muted-foreground">
                         +20.1% from last month
                     </p>
@@ -52,7 +52,7 @@ export default function ExpenseStats({ metrics, loading }: ExpenseStatsProps) {
                     <AlertCircle className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">{formatCurrency(metrics.totalPending)}</div>
+                    <div className="text-lg md:text-2xl font-bold">{formatCurrency(metrics.totalPending)}</div>
                     <p className="text-xs text-muted-foreground">
                         Requires attention
                     </p>

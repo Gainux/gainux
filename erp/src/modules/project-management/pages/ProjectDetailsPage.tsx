@@ -221,7 +221,7 @@ export default function ProjectDetailsPage() {
     if (!project) {
         return (
             <div className="p-8 text-center">
-                <h2 className="text-2xl font-bold">Project not found</h2>
+                <h2 className="text-lg md:text-2xl font-bold">Project not found</h2>
                 <Button onClick={() => navigate("/projects")} className="mt-4">Back to Projects</Button>
             </div>
         );
@@ -307,7 +307,7 @@ export default function ProjectDetailsPage() {
                     <Card className="p-4 flex flex-row items-center justify-between pb-4">
                         <div className="space-y-1">
                             <p className="text-sm font-medium text-muted-foreground">Total Tasks</p>
-                            <div className="text-2xl font-bold">{tasks.length}</div>
+                            <div className="text-lg md:text-2xl font-bold">{tasks.length}</div>
                         </div>
                         <ListTodo className="h-4 w-4 text-muted-foreground" />
                     </Card>
@@ -321,7 +321,7 @@ export default function ProjectDetailsPage() {
                     <Card className="p-4 flex flex-row items-center justify-between pb-4">
                         <div className="space-y-1">
                             <p className="text-sm font-medium text-muted-foreground">Progress</p>
-                            <div className="text-2xl font-bold">{progress}%</div>
+                            <div className="text-lg md:text-2xl font-bold">{progress}%</div>
                         </div>
                         <div className="h-4 w-4 rounded-full border-2 border-primary/20 border-t-primary" />
                     </Card>

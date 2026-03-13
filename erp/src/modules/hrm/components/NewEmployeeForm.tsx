@@ -285,12 +285,12 @@ export function NewEmployeeForm({ employeeId, onSuccess }: { employeeId?: string
     };
 
     return (
-        <div className="flex-1 p-8">
+        <div className="flex-1 p-4 md:p-8">
             <div className="flex items-center space-x-2 mb-4">
                 <Button variant="ghost" size="icon" onClick={() => navigate('/hrm/employees')}>
                     <ArrowLeft className="h-4 w-4" />
                 </Button>
-                <h2 className="text-3xl font-bold tracking-tight">
+                <h2 className="text-xl md:text-3xl font-bold tracking-tight">
                     {employeeId ? 'Edit Employee' : 'Add New Employee'}
                 </h2>
             </div>

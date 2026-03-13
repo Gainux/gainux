@@ -146,7 +146,7 @@ export default function PerformanceDashboard() {
     // If viewing a specific employee as admin/manager
     if (paramEmployeeId && employee) {
         return (
-            <div className="flex-1 space-y-4 p-8 pt-6">
+            <div className="flex-1 space-y-4 p-4 md:p-8 md:pt-6">
                 <div className="flex items-center space-x-2">
                     <Button variant="ghost" size="sm" onClick={() => navigate('/hrm/performance')}>
                         <ArrowLeft className="mr-2 h-4 w-4" />
@@ -155,7 +155,7 @@ export default function PerformanceDashboard() {
                 </div>
                 <div className="flex items-center justify-between space-y-2">
                     <div>
-                        <h2 className="text-3xl font-bold tracking-tight">
+                        <h2 className="text-xl md:text-3xl font-bold tracking-tight">
                             {employee.firstName} {employee.lastName}
                         </h2>
                         <p className="text-muted-foreground">
@@ -176,7 +176,7 @@ export default function PerformanceDashboard() {
                                 <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
                             </CardHeader>
                             <CardContent>
-                                <div className="text-2xl font-bold">{stats?.taskCompletionRate?.toFixed(0)}%</div>
+                                <div className="text-lg md:text-2xl font-bold">{stats?.taskCompletionRate?.toFixed(0)}%</div>
                                 <p className="text-xs text-muted-foreground">
                                     {stats?.completedTasks} / {stats?.totalTasks} tasks completed
                                 </p>
@@ -190,7 +190,7 @@ export default function PerformanceDashboard() {
                                 <UserCheck className="h-4 w-4 text-muted-foreground" />
                             </CardHeader>
                             <CardContent>
-                                <div className="text-2xl font-bold">{stats?.attendanceRate?.toFixed(0)}%</div>
+                                <div className="text-lg md:text-2xl font-bold">{stats?.attendanceRate?.toFixed(0)}%</div>
                                 <p className="text-xs text-muted-foreground">
                                     {stats?.presentDays} present days this month
                                 </p>
@@ -204,7 +204,7 @@ export default function PerformanceDashboard() {
                                 <Clock className="h-4 w-4 text-muted-foreground" />
                             </CardHeader>
                             <CardContent>
-                                <div className="text-2xl font-bold">{stats?.timesheetHours}h</div>
+                                <div className="text-lg md:text-2xl font-bold">{stats?.timesheetHours}h</div>
                                 <p className="text-xs text-muted-foreground">
                                     Logged this month
                                 </p>
@@ -217,7 +217,7 @@ export default function PerformanceDashboard() {
                                 <Activity className="h-4 w-4 text-muted-foreground" />
                             </CardHeader>
                             <CardContent>
-                                <div className="text-2xl font-bold">{stats?.averageRating || '-'} / 5</div>
+                                <div className="text-lg md:text-2xl font-bold">{stats?.averageRating || '-'} / 5</div>
                                 <p className="text-xs text-muted-foreground">
                                     Last review score
                                 </p>
@@ -275,10 +275,10 @@ export default function PerformanceDashboard() {
     }
 
     return (
-        <div className="flex-1 space-y-4 p-8 pt-6">
+        <div className="flex-1 space-y-4 p-4 md:p-8 md:pt-6">
             <div className="flex items-center justify-between space-y-2">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight">Performance Overview</h2>
+                    <h2 className="text-xl md:text-3xl font-bold tracking-tight">Performance Overview</h2>
                     <p className="text-muted-foreground">
                         Track your goals, reviews, and productivity metrics.
                     </p>
@@ -308,7 +308,7 @@ export default function PerformanceDashboard() {
                                     <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
                                 </CardHeader>
                                 <CardContent>
-                                    <div className="text-2xl font-bold">{stats?.taskCompletionRate?.toFixed(0)}%</div>
+                                    <div className="text-lg md:text-2xl font-bold">{stats?.taskCompletionRate?.toFixed(0)}%</div>
                                     <p className="text-xs text-muted-foreground">
                                         {stats?.completedTasks} / {stats?.totalTasks} tasks completed
                                     </p>
@@ -322,7 +322,7 @@ export default function PerformanceDashboard() {
                                     <UserCheck className="h-4 w-4 text-muted-foreground" />
                                 </CardHeader>
                                 <CardContent>
-                                    <div className="text-2xl font-bold">{stats?.attendanceRate?.toFixed(0)}%</div>
+                                    <div className="text-lg md:text-2xl font-bold">{stats?.attendanceRate?.toFixed(0)}%</div>
                                     <p className="text-xs text-muted-foreground">
                                         {stats?.presentDays} present days this month
                                     </p>
@@ -336,7 +336,7 @@ export default function PerformanceDashboard() {
                                     <Clock className="h-4 w-4 text-muted-foreground" />
                                 </CardHeader>
                                 <CardContent>
-                                    <div className="text-2xl font-bold">{stats?.timesheetHours}h</div>
+                                    <div className="text-lg md:text-2xl font-bold">{stats?.timesheetHours}h</div>
                                     <p className="text-xs text-muted-foreground">
                                         Logged this month
                                     </p>
@@ -349,7 +349,7 @@ export default function PerformanceDashboard() {
                                     <Activity className="h-4 w-4 text-muted-foreground" />
                                 </CardHeader>
                                 <CardContent>
-                                    <div className="text-2xl font-bold">{stats?.averageRating || '-'} / 5</div>
+                                    <div className="text-lg md:text-2xl font-bold">{stats?.averageRating || '-'} / 5</div>
                                     <p className="text-xs text-muted-foreground">
                                         Last review score
                                     </p>

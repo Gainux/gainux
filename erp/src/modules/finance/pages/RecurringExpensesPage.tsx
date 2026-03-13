@@ -217,7 +217,7 @@ export default function RecurringExpensesPage() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight">Recurring Expenses</h2>
+                    <h2 className="text-xl md:text-3xl font-bold tracking-tight">Recurring Expenses</h2>
                     <p className="text-muted-foreground">Manage automatic recurring payables to vendors.</p>
                 </div>
                 <Button onClick={openAdd}>

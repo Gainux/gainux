@@ -8,7 +8,7 @@ export default function GeneralLedgerPage() {
     return (
         <div className="space-y-6 p-4 md:p-6">
             <div className="flex flex-col gap-2">
-                <h1 className="text-3xl font-bold tracking-tight">General Ledger</h1>
+                <h1 className="text-xl md:text-3xl font-bold tracking-tight">General Ledger</h1>
                 <p className="text-muted-foreground">
                     Manage your Chart of Accounts, Journal Entries, and Financial Reports.
                 </p>

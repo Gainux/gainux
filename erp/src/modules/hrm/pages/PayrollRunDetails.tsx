@@ -78,7 +78,7 @@ export default function PayrollRunDetails() {
     };
 
     return (
-        <div className="flex-1 space-y-4 p-8 pt-6">
+        <div className="flex-1 space-y-4 p-4 md:p-8 md:pt-6">
             <div className="flex items-center gap-4">
                 <Button variant="outline" size="icon" asChild>
                     <Link to="/hrm/payroll">
@@ -86,7 +86,7 @@ export default function PayrollRunDetails() {
                     </Link>
                 </Button>
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight">Payroll Details</h2>
+                    <h2 className="text-xl md:text-3xl font-bold tracking-tight">Payroll Details</h2>
                     <p className="text-muted-foreground">
                         Review payslips and payout summary.
                     </p>
@@ -99,7 +99,7 @@ export default function PayrollRunDetails() {
                         <CardTitle className="text-sm font-medium">Total Payout</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">
+                        <div className="text-lg md:text-2xl font-bold">
                             {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'INR' }).format(totalAmount)}
                         </div>
                     </CardContent>

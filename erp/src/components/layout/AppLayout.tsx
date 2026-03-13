@@ -48,7 +48,7 @@ export default function AppLayout() {
                             </SheetContent>
                         </Sheet>
                         <div className="flex items-center gap-2">
-                            <img src="/src/assets/logo.png" alt="Gainux Logo" className="h-6 w-auto" />
+                            <img src="/logo.png" alt="Gainux Logo" className="h-6 w-auto" />
                             <span className="font-bold text-lg">Gainux</span>
                         </div>
                     </div>

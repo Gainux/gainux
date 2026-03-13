@@ -88,7 +88,7 @@ export default function ReferralLeadsPage() {
     return (
         <div className="space-y-6">
             <div>
-                <h2 className="text-3xl font-bold tracking-tight">Lead Management</h2>
+                <h2 className="text-xl md:text-3xl font-bold tracking-tight">Lead Management</h2>
                 <p className="text-muted-foreground">Sales Admin view of all submitted leads across the platform.</p>
             </div>
 

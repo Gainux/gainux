@@ -146,12 +146,12 @@ export default function CreateInvoice() {
     const { subtotal, tax, total } = calculateTotals();
 
     return (
-        <div className="flex-1 space-y-4 p-8 pt-6">
+        <div className="flex-1 space-y-4 p-4 md:p-8 md:pt-6">
             <div className="flex items-center gap-4">
                 <Button variant="ghost" size="icon" onClick={() => navigate("/finance/invoices")}>
                     <ArrowLeft className="h-4 w-4" />
                 </Button>
-                <h2 className="text-3xl font-bold tracking-tight">Create Invoice</h2>
+                <h2 className="text-xl md:text-3xl font-bold tracking-tight">Create Invoice</h2>
             </div>
 
             <form onSubmit={handleSubmit}>

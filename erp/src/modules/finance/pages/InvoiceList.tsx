@@ -83,7 +83,7 @@ export default function InvoiceList() {
     return (
         <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
             <div className="flex items-center justify-between">
-                <h2 className="text-3xl font-bold tracking-tight">Invoices</h2>
+                <h2 className="text-xl md:text-3xl font-bold tracking-tight">Invoices</h2>
                 <div className="flex gap-2">
                     <Button variant="outline" onClick={() => navigate("/finance/recurring")}>
                         <RefreshCw className="mr-2 h-4 w-4" />

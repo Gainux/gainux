@@ -83,7 +83,7 @@ export default function AdvancedAnalyticsPage() {
         <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
             <div className="flex items-center justify-between space-y-2">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight">Advanced Analytics</h2>
+                    <h2 className="text-xl md:text-3xl font-bold tracking-tight">Advanced Analytics</h2>
                     <p className="text-muted-foreground">Comprehensive insights across your organization.</p>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -118,7 +118,7 @@ export default function AdvancedAnalyticsPage() {
                                 <DollarSign className="h-4 w-4 text-muted-foreground" />
                             </CardHeader>
                             <CardContent>
-                                <div className="text-2xl font-bold">{formatAmount(financial.revenue)}</div>
+                                <div className="text-lg md:text-2xl font-bold">{formatAmount(financial.revenue)}</div>
                                 <p className="text-xs text-muted-foreground flex items-center mt-1">
                                     <TrendingUp className="h-3 w-3 text-green-500 mr-1" />
                                     +20.1% from last month
@@ -131,7 +131,7 @@ export default function AdvancedAnalyticsPage() {
                                 <Briefcase className="h-4 w-4 text-muted-foreground" />
                             </CardHeader>
                             <CardContent>
-                                <div className="text-2xl font-bold">{projects.activeProjects}</div>
+                                <div className="text-lg md:text-2xl font-bold">{projects.activeProjects}</div>
                                 <p className="text-xs text-muted-foreground flex items-center mt-1">
                                     <Activity className="h-3 w-3 text-blue-500 mr-1" />
                                     {projects.completedProjects} completed total
@@ -144,7 +144,7 @@ export default function AdvancedAnalyticsPage() {
                                 <Users className="h-4 w-4 text-muted-foreground" />
                             </CardHeader>
                             <CardContent>
-                                <div className="text-2xl font-bold">{hrm.totalEmployees}</div>
+                                <div className="text-lg md:text-2xl font-bold">{hrm.totalEmployees}</div>
                                 <p className="text-xs text-muted-foreground flex items-center mt-1">
                                     across {Object.keys(hrm.byDepartment).length} departments
                                 </p>
@@ -156,7 +156,7 @@ export default function AdvancedAnalyticsPage() {
                                 <Calendar className="h-4 w-4 text-muted-foreground" />
                             </CardHeader>
                             <CardContent>
-                                <div className="text-2xl font-bold">{formatAmount(financial.expenses)}</div>
+                                <div className="text-lg md:text-2xl font-bold">{formatAmount(financial.expenses)}</div>
                                 <p className="text-xs text-muted-foreground flex items-center mt-1">
                                     <ArrowDownRight className="h-3 w-3 text-red-500 mr-1" />
                                     Total expenses

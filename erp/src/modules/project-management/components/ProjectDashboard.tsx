@@ -80,7 +80,7 @@ export function ProjectDashboard({ projectId }: ProjectDashboardProps) {
                         <DollarSign className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{formatAmount(metrics.budgetTotal)}</div>
+                        <div className="text-lg md:text-2xl font-bold">{formatAmount(metrics.budgetTotal)}</div>
                         <p className="text-xs text-muted-foreground">Total project budget</p>
                     </CardContent>
                 </Card>
@@ -109,7 +109,7 @@ export function ProjectDashboard({ projectId }: ProjectDashboardProps) {
                     <Clock className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">{metrics.hoursLogged}h</div>
+                    <div className="text-lg md:text-2xl font-bold">{metrics.hoursLogged}h</div>
                     <p className="text-xs text-muted-foreground">
                         {metrics.nonBillableHours}h non-billable
                     </p>

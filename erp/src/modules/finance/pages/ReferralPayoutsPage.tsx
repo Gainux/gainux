@@ -207,7 +207,7 @@ export default function ReferralPayoutsPage() {
     return (
         <div className="space-y-6">
             <div>
-                <h2 className="text-3xl font-bold tracking-tight">Finance Control Panel</h2>
+                <h2 className="text-xl md:text-3xl font-bold tracking-tight">Finance Control Panel</h2>
                 <p className="text-muted-foreground">Manage wallet credits and process referrer payouts.</p>
             </div>
 

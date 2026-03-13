@@ -123,7 +123,7 @@ export default function ProjectsListPage() {
         <div className="flex-1 h-[calc(100vh-4rem)] p-4 md:p-8 pt-6 flex flex-col space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight">Projects</h2>
+                    <h2 className="text-xl md:text-3xl font-bold tracking-tight">Projects</h2>
                     <p className="text-muted-foreground">
                         Manage your projects, track progress, and assign tasks.
                     </p>

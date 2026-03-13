@@ -96,10 +96,10 @@ export default function BudgetList() {
     };
 
     return (
-        <div className="flex-1 space-y-6 p-8 pt-6">
+        <div className="flex-1 space-y-6 p-4 md:p-8 md:pt-6">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Budgets</h1>
+                    <h1 className="text-xl md:text-3xl font-bold tracking-tight">Budgets</h1>
                     <p className="text-muted-foreground">Manage financial budgets and track performance.</p>
                 </div>
                 <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>

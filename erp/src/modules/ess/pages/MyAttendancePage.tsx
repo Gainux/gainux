@@ -129,7 +129,7 @@ export default function MyAttendancePage() {
     };
 
     return (
-        <div className="flex-1 p-8 pt-6 space-y-6">
+        <div className="flex-1 p-4 md:p-8 md:pt-6 space-y-6">
             {!employeeId && !loading && (
                 <div className="bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200 p-4 rounded-md flex items-center gap-2 border border-yellow-200 dark:border-yellow-800">
                     <Clock className="h-5 w-5" />
@@ -148,7 +148,7 @@ export default function MyAttendancePage() {
                         </CardHeader>
                         <CardContent className="space-y-6">
                             <div className="text-center">
-                                <div className="text-4xl font-bold mb-2">{format(new Date(), 'h:mm a')}</div>
+                                <div className="text-2xl md:text-4xl font-bold mb-2">{format(new Date(), 'h:mm a')}</div>
                                 <div className="text-muted-foreground">{format(new Date(), 'EEEE, MMMM do')}</div>
                             </div>
 

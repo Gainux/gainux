@@ -87,7 +87,7 @@ export default function SecuritySettingsPage() {
     return (
         <div className="space-y-6 p-4 md:p-6 pb-8">
             <div className="flex flex-col gap-2">
-                <h1 className="text-3xl font-bold tracking-tight">Security & Access</h1>
+                <h1 className="text-xl md:text-3xl font-bold tracking-tight">Security & Access</h1>
                 <p className="text-muted-foreground">
                     Manage your account security and monitor access activity.
                 </p>

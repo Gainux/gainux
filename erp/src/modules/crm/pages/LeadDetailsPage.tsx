@@ -85,7 +85,7 @@ export default function LeadDetailsPage() {
     const statusVariant = lead.status === "not_interested" ? "destructive" : lead.status === "complete" ? "default" : "secondary";
 
     return (
-        <div className="flex-1 space-y-4 p-8 pt-6">
+        <div className="flex-1 space-y-4 p-4 md:p-8 md:pt-6">
             <Dialog open={editOpen} onOpenChange={open => { if (!open) closeEdit(); }}>
                 <DialogContent className="sm:max-w-[600px]">
                     <DialogHeader>
@@ -114,7 +114,7 @@ export default function LeadDetailsPage() {
                         <ArrowLeft className="h-4 w-4" />
                     </Button>
                     <div>
-                        <h2 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+                        <h2 className="text-xl md:text-3xl font-bold tracking-tight flex items-center gap-2">
                             {lead.firstName} {lead.lastName}
                             <Badge variant={statusVariant}>
                                 {STATUS_LABELS[lead.status] ?? lead.status}

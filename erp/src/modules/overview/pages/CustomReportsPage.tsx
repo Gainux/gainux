@@ -52,7 +52,7 @@ export default function CustomReportsPage() {
         <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight">Custom Reports</h2>
+                    <h2 className="text-xl md:text-3xl font-bold tracking-tight">Custom Reports</h2>
                     <p className="text-muted-foreground">Generate and download detailed reports for your organization.</p>
                 </div>
             </div>

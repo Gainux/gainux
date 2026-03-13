@@ -169,7 +169,7 @@ export default function SubscriptionExpiredPage() {
                                     {selectedPlanId === plan.id && <Check className="h-4 w-4 text-primary" />}
                                 </div>
                                 <div className="mb-4">
-                                    <span className="text-2xl font-bold">{formatAmount(plan.price)}</span>
+                                    <span className="text-lg md:text-2xl font-bold">{formatAmount(plan.price)}</span>
                                     <span className="text-muted-foreground text-sm">/{plan.interval}</span>
                                     {plan.id === 'yearly' && (
                                         <p className="text-xs text-green-600 font-medium mt-1">

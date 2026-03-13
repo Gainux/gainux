@@ -110,7 +110,7 @@ export default function PublicJobDetails() {
                     <Send className="h-10 w-10" />
                 </div>
                 <div className="space-y-2">
-                    <h2 className="text-3xl font-bold text-gray-900">Application Sent!</h2>
+                    <h2 className="text-xl md:text-3xl font-bold text-gray-900">Application Sent!</h2>
                     <p className="text-muted-foreground text-lg max-w-sm mx-auto">
                         Thank you for applying to the <span className="font-semibold text-gray-900">{job.title}</span> position.
                     </p>

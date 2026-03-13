@@ -538,7 +538,7 @@ export default function AttendancePage() {
                                 <UserCheck className="h-4 w-4 text-green-600" />
                             </CardHeader>
                             <CardContent>
-                                <div className="text-2xl font-bold">{stats.present}</div>
+                                <div className="text-lg md:text-2xl font-bold">{stats.present}</div>
                                 <p className="text-xs text-muted-foreground">{stats.total > 0 ? ((stats.present / stats.total) * 100).toFixed(0) : 0}% of workforce</p>
                             </CardContent>
                         </Card>
@@ -548,7 +548,7 @@ export default function AttendancePage() {
                                 <Clock className="h-4 w-4 text-red-600" />
                             </CardHeader>
                             <CardContent>
-                                <div className="text-2xl font-bold">{stats.absent}</div>
+                                <div className="text-lg md:text-2xl font-bold">{stats.absent}</div>
                             </CardContent>
                         </Card>
                         <Card>
@@ -557,7 +557,7 @@ export default function AttendancePage() {
                                 <UserCheck className="h-4 w-4 text-gray-600" />
                             </CardHeader>
                             <CardContent>
-                                <div className="text-2xl font-bold">{stats.total}</div>
+                                <div className="text-lg md:text-2xl font-bold">{stats.total}</div>
                             </CardContent>
                         </Card>
                     </div>

@@ -58,7 +58,7 @@ export default function AssetList() {
         <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight">Fixed Assets</h2>
+                    <h2 className="text-xl md:text-3xl font-bold tracking-tight">Fixed Assets</h2>
                     <p className="text-muted-foreground">Manage your organization's assets and depreciation.</p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -82,7 +82,7 @@ export default function AssetList() {
                         <Building2 className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{formatCurrency(totalAssetValue)}</div>
+                        <div className="text-lg md:text-2xl font-bold">{formatCurrency(totalAssetValue)}</div>
                         <p className="text-xs text-muted-foreground">Book value of all active assets</p>
                     </CardContent>
                 </Card>
@@ -92,7 +92,7 @@ export default function AssetList() {
                         <Building2 className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{assets.length}</div>
+                        <div className="text-lg md:text-2xl font-bold">{assets.length}</div>
                         <p className="text-xs text-muted-foreground">Registered items</p>
                     </CardContent>
                 </Card>

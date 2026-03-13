@@ -88,7 +88,7 @@ export default function Dashboard() {
                         <DollarSign className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{formatCurrency(metrics.financial.revenue)}</div>
+                        <div className="text-lg md:text-2xl font-bold">{formatCurrency(metrics.financial.revenue)}</div>
                         <p className="text-xs text-muted-foreground">
                             +20.1% from last month
                         </p>
@@ -100,7 +100,7 @@ export default function Dashboard() {
                         <Briefcase className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{metrics.projects.activeProjects}</div>
+                        <div className="text-lg md:text-2xl font-bold">{metrics.projects.activeProjects}</div>
                         <p className="text-xs text-muted-foreground">
                             {metrics.projects.completedProjects} completed projects
                         </p>
@@ -112,7 +112,7 @@ export default function Dashboard() {
                         <TrendingUp className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{formatCurrency(metrics.crm.pipelineValue)}</div>
+                        <div className="text-lg md:text-2xl font-bold">{formatCurrency(metrics.crm.pipelineValue)}</div>
                         <p className="text-xs text-muted-foreground">
                             {metrics.crm.activeDeals} active opportunities
                         </p>
@@ -124,7 +124,7 @@ export default function Dashboard() {
                         <Users className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{metrics.hrm.totalEmployees}</div>
+                        <div className="text-lg md:text-2xl font-bold">{metrics.hrm.totalEmployees}</div>
                         <p className="text-xs text-muted-foreground">
                             Across {Object.keys(metrics.hrm.byDepartment).length} departments
                         </p>

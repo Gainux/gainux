@@ -83,7 +83,7 @@ export default function BankDetails() {
     if (!account) return <div className="p-8" > Account not found </div>;
 
     return (
-        <div className="flex-1 space-y-4 p-8 pt-6" >
+        <div className="flex-1 space-y-4 p-4 md:p-8 md:pt-6" >
             <div className="flex items-center space-x-2 mb-4" >
                 <Button variant="ghost" size="sm" onClick={() => navigate('/finance/banking')
                 }>
@@ -93,7 +93,7 @@ export default function BankDetails() {
 
             < div className="flex items-center justify-between" >
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight" > {account.bankName} - {account.accountName} </h2>
+                    <h2 className="text-xl md:text-3xl font-bold tracking-tight" > {account.bankName} - {account.accountName} </h2>
                     < p className="text-muted-foreground" > {account.currency} •••• {account.accountNumber?.slice(-4)} </p>
                 </div>
                 < div className="flex space-x-2" >
@@ -118,7 +118,7 @@ export default function BankDetails() {
                         <CardTitle className="text-sm font-medium" > Current Balance </CardTitle>
                     </CardHeader>
                     < CardContent >
-                        <div className="text-2xl font-bold" > {formatCurrency(account.balance, account.currency)} </div>
+                        <div className="text-lg md:text-2xl font-bold" > {formatCurrency(account.balance, account.currency)} </div>
                     </CardContent>
                 </Card>
                 {/* Add more stats later if needed */}

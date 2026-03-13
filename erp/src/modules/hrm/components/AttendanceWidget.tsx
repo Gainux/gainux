@@ -44,7 +44,7 @@ export default function AttendanceWidget({ employeeId = DEMO_EMPLOYEE_ID }: { em
             </CardHeader>
             <CardContent>
                 <div className="flex flex-col gap-4">
-                    <div className="text-2xl font-bold">
+                    <div className="text-lg md:text-2xl font-bold">
                         {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </div>
                     <div className="flex gap-2">

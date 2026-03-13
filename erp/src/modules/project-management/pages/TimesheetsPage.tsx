@@ -100,7 +100,7 @@ export default function TimesheetsPage() {
         <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight">Timesheets</h2>
+                    <h2 className="text-xl md:text-3xl font-bold tracking-tight">Timesheets</h2>
                     <p className="text-muted-foreground">Track projected hours and approvals.</p>
                 </div>
                 <Dialog open={open} onOpenChange={(val) => {
