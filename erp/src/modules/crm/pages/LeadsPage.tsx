@@ -7,8 +7,11 @@ import { crmService } from "@/modules/crm/services/crmService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+    Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import {
     Plus, Loader2, ChevronRight, Settings2,
-    FolderOpen, Users, TrendingUp, CheckCircle2, XCircle, MapPin,
+    FolderOpen, Users, TrendingUp, CheckCircle2, XCircle, MapPin, X,
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
@@ -24,9 +27,26 @@ import { cn } from "@/lib/utils";
 type ViewState =
     | { type: "categories" }
     | { type: "locations"; category: LeadCategory }
-    | { type: "leads"; category: LeadCategory; location: LeadLocation | null };
+    | { type: "leads"; category: LeadCategory; location: LeadLocation | null }
+    | { type: "unassigned-leads" };
+
+type BulkAction = "status" | "location" | "category" | null;
 
 interface StatusSummary { total: number; active: number; complete: number; lost: number; }
+
+const LEAD_STATUSES = [
+    { value: "do_cold_call", label: "Do Cold Call" },
+    { value: "collecting_requirements", label: "Collecting Requirements" },
+    { value: "preparing_proposal", label: "Preparing Proposal" },
+    { value: "waiting_for_proposal_response", label: "Waiting for Proposal Response" },
+    { value: "negotiating", label: "Negotiating" },
+    { value: "waiting_for_advance_amount", label: "Waiting for Advance Amount" },
+    { value: "work_ongoing", label: "Work Ongoing" },
+    { value: "do_completion_call", label: "Do Completion Call" },
+    { value: "waiting_for_full_payment", label: "Waiting for Full Payment" },
+    { value: "complete", label: "Complete" },
+    { value: "not_interested", label: "Not Interested" },
+];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -70,6 +90,28 @@ function CategoryCard({ category, leads, onClick }: { category: LeadCategory; le
                     <div className="flex items-center gap-2 min-w-0">
                         <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: category.color }} />
                         <span className="font-semibold text-sm truncate">{category.name}</span>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0 mt-0.5" />
+                </div>
+                <p className="text-2xl md:text-3xl font-bold mt-3 tabular-nums">{summary.total}</p>
+                <p className="text-xs text-muted-foreground">total leads</p>
+                <StatusPills summary={summary} />
+            </div>
+        </button>
+    );
+}
+
+function UnassignedCategoryCard({ leads, onClick }: { leads: Lead[]; onClick: () => void }) {
+    const summary = summarize(leads);
+    return (
+        <button type="button" onClick={onClick}
+            className="group text-left border rounded-xl bg-card hover:shadow-md hover:border-primary/40 transition-all duration-200 overflow-hidden w-full">
+            <div className="h-1.5 w-full bg-muted-foreground/30" />
+            <div className="p-4">
+                <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                        <FolderOpen className="w-3 h-3 shrink-0 text-muted-foreground" />
+                        <span className="font-semibold text-sm truncate text-muted-foreground">Unassigned</span>
                     </div>
                     <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0 mt-0.5" />
                 </div>
@@ -140,6 +182,34 @@ function AddLocationCard({ onAdd, saving }: { onAdd: (name: string) => Promise<v
     );
 }
 
+// ─── Bulk Action Bar ──────────────────────────────────────────────────────────
+
+function BulkActionBar({ count, onAction, onClear }: {
+    count: number;
+    onAction: (action: BulkAction) => void;
+    onClear: () => void;
+}) {
+    return (
+        <div className="flex items-center gap-2 px-3 py-2 bg-primary/5 border border-primary/20 rounded-lg mb-3 flex-wrap">
+            <span className="text-sm font-medium text-primary shrink-0">{count} selected</span>
+            <div className="flex items-center gap-1.5 flex-wrap">
+                <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => onAction("status")}>
+                    Update Status
+                </Button>
+                <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => onAction("location")}>
+                    Change Location
+                </Button>
+                <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => onAction("category")}>
+                    Change Category
+                </Button>
+            </div>
+            <button type="button" onClick={onClear} className="ml-auto text-muted-foreground hover:text-foreground transition-colors">
+                <X className="h-4 w-4" />
+            </button>
+        </div>
+    );
+}
+
 // ─── Main Page ───────────────────────────────────────────────────────────────
 
 export default function LeadsPage() {
@@ -155,6 +225,12 @@ export default function LeadsPage() {
     const [manageOpen, setManageOpen] = useState(false);
     const [search, setSearch] = useState("");
     const [addingLocation, setAddingLocation] = useState(false);
+
+    // Bulk selection
+    const [selectedLeadIds, setSelectedLeadIds] = useState<string[]>([]);
+    const [bulkAction, setBulkAction] = useState<BulkAction>(null);
+    const [bulkValue, setBulkValue] = useState("");
+    const [bulkSaving, setBulkSaving] = useState(false);
 
     const fetchAll = async () => {
         try {
@@ -173,14 +249,16 @@ export default function LeadsPage() {
     };
 
     useEffect(() => { fetchAll(); }, []);
-    useEffect(() => { setSearch(""); }, [view]);
+    useEffect(() => { setSearch(""); setSelectedLeadIds([]); }, [view]);
 
     const leadsForCategory = (catId: string) => allLeads.filter(l => l.categoryId === catId);
     const leadsForLocation = (locId: string) => allLeads.filter(l => l.locationId === locId);
     const unassignedInCategory = (catId: string) => allLeads.filter(l => l.categoryId === catId && !l.locationId);
+    const unassignedLeads = useMemo(() => allLeads.filter(l => !l.categoryId), [allLeads]);
 
     // Leads shown in the table (based on location context + search)
     const baseLeads = useMemo(() => {
+        if (view.type === "unassigned-leads") return unassignedLeads;
         if (view.type !== "leads") return [];
         return view.location === null
             ? unassignedInCategory(view.category.id)
@@ -214,6 +292,40 @@ export default function LeadsPage() {
         } finally { setAddingLocation(false); }
     };
 
+    // ── Bulk actions ────────────────────────────────────────────────────────
+    const openBulkAction = (action: BulkAction) => {
+        setBulkValue("");
+        setBulkAction(action);
+    };
+
+    const clearSelection = () => {
+        setSelectedLeadIds([]);
+        setBulkAction(null);
+        setBulkValue("");
+    };
+
+    const applyBulkAction = async () => {
+        if (!bulkValue || selectedLeadIds.length === 0) return;
+        setBulkSaving(true);
+        try {
+            const updates: Partial<Lead> = {};
+            if (bulkAction === "status") updates.status = bulkValue;
+            if (bulkAction === "location") updates.locationId = bulkValue === "__none__" ? undefined : bulkValue;
+            if (bulkAction === "category") { updates.categoryId = bulkValue === "__none__" ? undefined : bulkValue; updates.locationId = undefined; }
+            await Promise.all(selectedLeadIds.map(id => crmService.updateLead(id, updates)));
+            await fetchAll();
+            clearSelection();
+            setBulkAction(null);
+        } catch { setError("Failed to apply bulk update"); }
+        finally { setBulkSaving(false); }
+    };
+
+    // Locations relevant to the bulk location picker
+    const bulkLocationOptions = useMemo(() => {
+        if (view.type === "leads") return locations.filter(l => l.categoryId === view.category.id);
+        return locations;
+    }, [view, locations]);
+
     // ── Breadcrumb ──────────────────────────────────────────────────────────
     const breadcrumb = (
         <nav className="flex items-center gap-1 text-sm mb-4 flex-wrap">
@@ -223,7 +335,13 @@ export default function LeadsPage() {
                     view.type === "categories" ? "font-semibold text-foreground" : "text-muted-foreground")}>
                 Leads
             </button>
-            {view.type !== "categories" && (
+            {view.type === "unassigned-leads" && (
+                <>
+                    <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                    <span className="font-semibold text-foreground">Unassigned</span>
+                </>
+            )}
+            {(view.type === "locations" || view.type === "leads") && (
                 <>
                     <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                     <button type="button"
@@ -248,8 +366,11 @@ export default function LeadsPage() {
 
     // ── Page header ─────────────────────────────────────────────────────────
     const title = view.type === "categories" ? "Leads"
+        : view.type === "unassigned-leads" ? "Unassigned Leads"
         : view.type === "locations" ? view.category.name
         : view.location ? view.location.name : "Unassigned";
+
+    const isLeadsView = view.type === "leads" || view.type === "unassigned-leads";
 
     const header = (
         <div className="flex items-center justify-between gap-2 mb-6">
@@ -309,6 +430,67 @@ export default function LeadsPage() {
                 onChanged={() => { setManageOpen(false); fetchAll(); }}
             />
 
+            {/* ── Bulk Action Dialogs ────────────────────────────────── */}
+            <Dialog open={bulkAction !== null} onOpenChange={open => { if (!open) setBulkAction(null); }}>
+                <DialogContent className="sm:max-w-[400px]">
+                    <DialogHeader>
+                        <DialogTitle>
+                            {bulkAction === "status" ? "Update Status"
+                                : bulkAction === "location" ? "Change Location"
+                                : "Change Category"}
+                        </DialogTitle>
+                        <DialogDescription>
+                            Apply to {selectedLeadIds.length} selected lead{selectedLeadIds.length !== 1 ? "s" : ""}.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-2">
+                        {bulkAction === "status" && (
+                            <Select value={bulkValue} onValueChange={setBulkValue}>
+                                <SelectTrigger><SelectValue placeholder="Select status…" /></SelectTrigger>
+                                <SelectContent>
+                                    {LEAD_STATUSES.map(s => (
+                                        <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        )}
+                        {bulkAction === "location" && (
+                            <Select value={bulkValue} onValueChange={setBulkValue}>
+                                <SelectTrigger><SelectValue placeholder="Select location…" /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="__none__">— None (unassign)</SelectItem>
+                                    {bulkLocationOptions.map(loc => (
+                                        <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        )}
+                        {bulkAction === "category" && (
+                            <Select value={bulkValue} onValueChange={setBulkValue}>
+                                <SelectTrigger><SelectValue placeholder="Select category…" /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="__none__">— None (unassign)</SelectItem>
+                                    {categories.map(cat => (
+                                        <SelectItem key={cat.id} value={cat.id}>
+                                            <span className="flex items-center gap-2">
+                                                <span className="inline-block w-2 h-2 rounded-full" style={{ background: cat.color }} />
+                                                {cat.name}
+                                            </span>
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        )}
+                    </div>
+                    <div className="flex justify-end gap-2 mt-2">
+                        <Button variant="ghost" size="sm" onClick={() => setBulkAction(null)}>Cancel</Button>
+                        <Button size="sm" onClick={applyBulkAction} disabled={!bulkValue || bulkSaving}>
+                            {bulkSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Apply"}
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
             {breadcrumb}
             {header}
 
@@ -320,7 +502,7 @@ export default function LeadsPage() {
 
             {/* ── CATEGORIES VIEW ───────────────────────────────────── */}
             {view.type === "categories" && (
-                categories.length === 0 ? (
+                categories.length === 0 && unassignedLeads.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 text-center gap-4">
                         <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
                             <Users className="h-8 w-8 text-muted-foreground" />
@@ -345,6 +527,12 @@ export default function LeadsPage() {
                                 onClick={() => setView({ type: "locations", category: cat })}
                             />
                         ))}
+                        {unassignedLeads.length > 0 && (
+                            <UnassignedCategoryCard
+                                leads={unassignedLeads}
+                                onClick={() => setView({ type: "unassigned-leads" })}
+                            />
+                        )}
                     </div>
                 )
             )}
@@ -383,10 +571,17 @@ export default function LeadsPage() {
             )}
 
             {/* ── LEADS VIEW ────────────────────────────────────────── */}
-            {view.type === "leads" && (
+            {isLeadsView && (
                 <div>
                     <StatusPills summary={summarize(baseLeads)} />
                     <div className="mt-4">
+                        {selectedLeadIds.length > 0 && (
+                            <BulkActionBar
+                                count={selectedLeadIds.length}
+                                onAction={openBulkAction}
+                                onClear={clearSelection}
+                            />
+                        )}
                         <DataTable
                             columns={columns}
                             data={tableLeads}
@@ -394,6 +589,8 @@ export default function LeadsPage() {
                             searchValue={search}
                             onSearchChange={setSearch}
                             searchPlaceholder="Search by name, email, phone, company…"
+                            enableSelection
+                            onSelectionChange={setSelectedLeadIds}
                         />
                     </div>
                 </div>

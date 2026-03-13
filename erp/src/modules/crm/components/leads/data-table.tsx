@@ -9,6 +9,7 @@ import {
     type SortingState,
     getFilteredRowModel,
     type ColumnFiltersState,
+    type RowSelectionState,
 } from "@tanstack/react-table"
 
 import {
@@ -21,7 +22,8 @@ import {
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { useState } from "react"
+import { Checkbox } from "@/components/ui/checkbox"
+import { useState, useEffect, useMemo } from "react"
 
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[]
@@ -31,6 +33,9 @@ interface DataTableProps<TData, TValue> {
     searchValue?: string
     onSearchChange?: (value: string) => void
     searchPlaceholder?: string
+    /** Enable row checkboxes. Requires rows to have an `id` field. */
+    enableSelection?: boolean
+    onSelectionChange?: (ids: string[]) => void
 }
 
 export function DataTable<TData, TValue>({
@@ -40,22 +45,70 @@ export function DataTable<TData, TValue>({
     searchValue,
     onSearchChange,
     searchPlaceholder = "Search…",
+    enableSelection,
+    onSelectionChange,
 }: DataTableProps<TData, TValue>) {
     const [sorting, setSorting] = useState<SortingState>([])
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+    const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
 
     const isControlled = searchValue !== undefined && onSearchChange !== undefined;
 
+    // Reset selection when data changes
+    useEffect(() => { setRowSelection({}) }, [data])
+
+    // Notify parent when selection changes
+    useEffect(() => {
+        if (!onSelectionChange) return;
+        const ids = Object.keys(rowSelection).filter(k => rowSelection[k]);
+        onSelectionChange(ids);
+    }, [rowSelection, onSelectionChange])
+
+    const checkboxColumn: ColumnDef<TData, unknown> = useMemo(() => ({
+        id: "__select__",
+        header: ({ table }) => (
+            <Checkbox
+                checked={
+                    table.getIsAllPageRowsSelected()
+                        ? true
+                        : table.getIsSomePageRowsSelected()
+                        ? "indeterminate"
+                        : false
+                }
+                onCheckedChange={v => table.toggleAllPageRowsSelected(!!v)}
+                aria-label="Select all"
+            />
+        ),
+        cell: ({ row }) => (
+            <Checkbox
+                checked={row.getIsSelected()}
+                onCheckedChange={v => row.toggleSelected(!!v)}
+                aria-label="Select row"
+                onClick={e => e.stopPropagation()}
+            />
+        ),
+        enableSorting: false,
+        enableHiding: false,
+        size: 40,
+    }), [])
+
+    const allColumns = useMemo(
+        () => (enableSelection ? [checkboxColumn, ...columns] : columns),
+        [enableSelection, checkboxColumn, columns]
+    )
+
     const table = useReactTable({
         data,
-        columns,
+        columns: allColumns,
         getCoreRowModel: getCoreRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
         onSortingChange: setSorting,
         getSortedRowModel: getSortedRowModel(),
         onColumnFiltersChange: setColumnFilters,
         getFilteredRowModel: getFilteredRowModel(),
-        state: { sorting, columnFilters },
+        onRowSelectionChange: setRowSelection,
+        getRowId: (row: any) => row.id,
+        state: { sorting, columnFilters, rowSelection },
     })
 
     return (
@@ -84,7 +137,7 @@ export function DataTable<TData, TValue>({
                         {table.getHeaderGroups().map(headerGroup => (
                             <TableRow key={headerGroup.id}>
                                 {headerGroup.headers.map(header => (
-                                    <TableHead key={header.id}>
+                                    <TableHead key={header.id} style={header.column.id === "__select__" ? { width: 40 } : undefined}>
                                         {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                                     </TableHead>
                                 ))}
@@ -104,7 +157,7 @@ export function DataTable<TData, TValue>({
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
+                                <TableCell colSpan={allColumns.length} className="h-24 text-center text-muted-foreground">
                                     No leads found.
                                 </TableCell>
                             </TableRow>
