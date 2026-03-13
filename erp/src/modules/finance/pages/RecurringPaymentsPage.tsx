@@ -93,6 +93,7 @@ export default function RecurringPaymentsPage() {
     const [editingId, setEditingId] = useState<string | null>(null);
     const [saving, setSaving] = useState(false);
     const [form, setForm] = useState(emptyForm());
+    const [errors, setErrors] = useState<Record<string, string>>({});
 
     useEffect(() => {
         if (orgId) {
@@ -120,11 +121,13 @@ export default function RecurringPaymentsPage() {
     const openAdd = () => {
         setEditingId(null);
         setForm(emptyForm());
+        setErrors({});
         setDialogOpen(true);
     };
 
     const openEdit = (p: RecurringPayment) => {
         setEditingId(p.id);
+        setErrors({});
         setForm({
             client_id: p.client_id,
             description: p.description,
@@ -145,10 +148,18 @@ export default function RecurringPaymentsPage() {
 
     const handleSave = async () => {
         if (!orgId) { toast.error("Organization not found. Please refresh and try again."); return; }
-        if (!form.client_id) { toast.error("Please select a client"); return; }
-        if (!form.description.trim()) { toast.error("Please enter a description"); return; }
-        if (form.amount <= 0) { toast.error("Amount must be greater than 0"); return; }
-        if (!form.start_date) { toast.error("Please enter a start date"); return; }
+
+        const newErrors: Record<string, string> = {};
+        if (!form.client_id) newErrors.client_id = "Please select a client";
+        if (!form.description.trim()) newErrors.description = "Description is required";
+        if (form.amount <= 0) newErrors.amount = "Amount must be greater than 0";
+        if (!form.start_date) newErrors.start_date = "Start date is required";
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            return;
+        }
+        setErrors({});
 
         try {
             setSaving(true);
@@ -193,8 +204,10 @@ export default function RecurringPaymentsPage() {
         }
     };
 
-    const setField = (key: keyof typeof form, value: any) =>
+    const setField = (key: keyof typeof form, value: any) => {
         setForm(prev => ({ ...prev, [key]: value }));
+        if (errors[key]) setErrors(prev => { const e = { ...prev }; delete e[key]; return e; });
+    };
 
     // ── render ────────────────────────────────────────────────────────────────
 
@@ -374,7 +387,7 @@ export default function RecurringPaymentsPage() {
                         <div className="space-y-2">
                             <Label>Client *</Label>
                             <Select value={form.client_id} onValueChange={v => setField("client_id", v)}>
-                                <SelectTrigger>
+                                <SelectTrigger className={errors.client_id ? "border-destructive" : ""}>
                                     <SelectValue placeholder="Select client" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -389,6 +402,7 @@ export default function RecurringPaymentsPage() {
                                     )}
                                 </SelectContent>
                             </Select>
+                            {errors.client_id && <p className="text-xs text-destructive">{errors.client_id}</p>}
                         </div>
 
                         {/* Description */}
@@ -398,7 +412,9 @@ export default function RecurringPaymentsPage() {
                                 placeholder="e.g. Monthly retainer fee"
                                 value={form.description}
                                 onChange={e => setField("description", e.target.value)}
+                                className={errors.description ? "border-destructive" : ""}
                             />
+                            {errors.description && <p className="text-xs text-destructive">{errors.description}</p>}
                         </div>
 
                         {/* Amount + Currency */}
@@ -411,7 +427,9 @@ export default function RecurringPaymentsPage() {
                                     step="0.01"
                                     value={form.amount}
                                     onChange={e => setField("amount", parseFloat(e.target.value) || 0)}
+                                    className={errors.amount ? "border-destructive" : ""}
                                 />
+                                {errors.amount && <p className="text-xs text-destructive">{errors.amount}</p>}
                             </div>
                             <div className="space-y-2">
                                 <Label>Currency</Label>
@@ -471,7 +489,9 @@ export default function RecurringPaymentsPage() {
                                 type="date"
                                 value={form.start_date}
                                 onChange={e => setField("start_date", e.target.value)}
+                                className={errors.start_date ? "border-destructive" : ""}
                             />
+                            {errors.start_date && <p className="text-xs text-destructive">{errors.start_date}</p>}
                         </div>
 
                         {/* End Date (optional) */}
