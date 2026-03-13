@@ -204,7 +204,6 @@ export const crmService = {
             name: lead.companyName || `${lead.firstName} ${lead.lastName}'s Company`,
             email: lead.email,
             phone: lead.phone,
-            source: lead.source // if supported
         });
 
         // 3. Create Contact
@@ -280,6 +279,8 @@ export const crmService = {
             .eq('id', profile.user?.id)
             .single();
 
+        if (!userProfile?.org_id) throw new Error("User organization not found");
+
         const { data, error } = await supabase
             .from('deals')
             .insert({
@@ -350,6 +351,8 @@ export const crmService = {
     async createCompany(company: Partial<Company>) {
         const { data: profile } = await supabase.auth.getUser();
         const { data: userProfile } = await supabase.from('profiles').select('org_id').eq('id', profile.user?.id).single();
+
+        if (!userProfile?.org_id) throw new Error("User organization not found");
 
         const { data, error } = await supabase
             .from('companies')
@@ -476,6 +479,8 @@ export const crmService = {
         const { data: profile } = await supabase.auth.getUser();
         const { data: userProfile } = await supabase.from('profiles').select('org_id').eq('id', profile.user?.id).single();
 
+        if (!userProfile?.org_id) throw new Error("User organization not found");
+
         const { data, error } = await supabase
             .from('contacts')
             .insert({
@@ -512,6 +517,8 @@ export const crmService = {
     async createActivity(activity: Partial<CRMActivity>) {
         const { data: profile } = await supabase.auth.getUser();
         const { data: userProfile } = await supabase.from('profiles').select('org_id').eq('id', profile.user?.id).single();
+
+        if (!userProfile?.org_id) throw new Error("User organization not found");
 
         const { data, error } = await supabase
             .from('crm_activities')

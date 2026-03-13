@@ -48,10 +48,11 @@ export default function CreateInvoice() {
     }, [orgId]);
 
     const fetchData = async () => {
+        if (!orgId) return;
         try {
             const [companiesData, taxRatesData] = await Promise.all([
                 crmService.getCompanies(),
-                taxService.getTaxRates(orgId!)
+                taxService.getTaxRates(orgId)
             ]);
             setCompanies(companiesData);
             setTaxRates(taxRatesData);

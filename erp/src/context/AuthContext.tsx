@@ -76,7 +76,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                             profileData.full_name = `${employeeData.first_name} ${employeeData.last_name}`;
                         }
                         // Optional: Heal the profile in DB asynchronously
-                        supabase.from('profiles').update({ org_id: employeeData.org_id }).eq('id', profileData.id).then();
+                        supabase.from('profiles').update({ org_id: employeeData.org_id }).eq('id', profileData.id).then(
+                            () => {},
+                            (err) => console.error('AuthContext: Failed to heal profile org_id:', err)
+                        );
                     } else {
                         // Create a temporary profile object if completely missing (rare but possible)
                         profileData = {

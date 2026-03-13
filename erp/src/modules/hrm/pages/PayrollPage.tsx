@@ -71,28 +71,23 @@ export default function PayrollPage() {
             const existing = runs.find(r => r.month === month && r.year === year);
             if (existing) {
                 toast.error(`Payroll for ${format(new Date(year, month - 1), 'MMMM yyyy')} already exists`);
-                setIsSubmitting(false); // Ensure submitting state is reset
                 return;
             }
 
             // 1. Create Run
             const newRun = await payrollService.createPayrollRun(profile.org_id, month, year, profile.auth_id);
 
-            // 2. Generate Payslips
-            toast.promise(
+            // 2. Generate Payslips — await so isSubmitting stays true and we reload after completion
+            await toast.promise(
                 payrollService.generatePayslips(newRun.id, profile.org_id),
                 {
                     loading: 'Generating payslips...',
-                    success: () => {
-                        loadRuns();
-                        setIsRunDialogOpen(false);
-                        return 'Payroll generated successfully';
-                    },
+                    success: 'Payroll generated successfully',
                     error: 'Failed to generate payslips'
                 }
             );
-            setIsRunDialogOpen(false); // Close dialog immediately after creating run and starting payslip generation
-            loadRuns(); // Reload runs to show the new run in 'processing' state
+            setIsRunDialogOpen(false);
+            loadRuns();
         } catch (error) {
             console.error(error);
             toast.error("Failed to generate payroll run");

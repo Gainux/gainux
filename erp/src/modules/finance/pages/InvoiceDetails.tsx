@@ -78,6 +78,7 @@ export default function InvoiceDetails() {
             // Write the invoice content to the iframe
             const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
             if (!iframeDoc) {
+                document.body.removeChild(iframe);
                 throw new Error("Could not create iframe document");
             }
 

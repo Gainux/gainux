@@ -133,7 +133,7 @@ export const dashboardService = {
                 .reduce((sum, inv) => sum + (inv.total || 0), 0);
 
             const expense = allExpenses
-                .filter((exp: any) => exp.date && new Date(exp.date).toLocaleString('default', { month: 'short' }) === month)
+                .filter((exp: any) => exp.expense_date && new Date(exp.expense_date).toLocaleString('default', { month: 'short' }) === month)
                 .reduce((sum: number, exp: any) => sum + (Number(exp.amount) || 0), 0);
 
             return { name: month, revenue, expense };
