@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { DataTable } from "@/modules/crm/components/leads/data-table";
-import { columns } from "@/modules/crm/components/leads/columns";
+import { columns, LeadMobileCard } from "@/modules/crm/components/leads/columns";
 import type { Lead, LeadCategory, LeadLocation } from "@/modules/crm/types";
 import { crmService } from "@/modules/crm/services/crmService";
 import { Button } from "@/components/ui/button";
@@ -591,6 +591,14 @@ export default function LeadsPage() {
                             searchPlaceholder="Search by name, email, phone, company…"
                             enableSelection
                             onSelectionChange={setSelectedLeadIds}
+                            renderMobileCard={(lead, { isSelected, onSelect }) => (
+                                <LeadMobileCard
+                                    key={(lead as any).id}
+                                    lead={lead as any}
+                                    isSelected={isSelected}
+                                    onSelect={onSelect}
+                                />
+                            )}
                         />
                     </div>
                 </div>
