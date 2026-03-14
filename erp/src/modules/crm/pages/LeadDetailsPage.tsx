@@ -240,6 +240,7 @@ export default function LeadDetailsPage() {
     const [deleteOpen, setDeleteOpen] = useState(false);
     const [deleting, setDeleting] = useState(false);
     const [customerDialogOpen, setCustomerDialogOpen] = useState(false);
+    const [pendingComplete, setPendingComplete] = useState<Partial<Lead> | null>(null);
     const [categories, setCategories] = useState<LeadCategory[]>([]);
     const [locations, setLocations] = useState<LeadLocation[]>([]);
 
@@ -257,18 +258,46 @@ export default function LeadDetailsPage() {
         }).finally(() => setLoading(false));
     }, [id, navigate]);
 
-    // Generic field saver
+    // Generic field saver — intercepts "complete" status to enforce customer creation first
     const save = async (updates: Partial<Lead>) => {
         if (!lead) return;
+        if (updates.status === "complete") {
+            // Hold the update and show customer creation dialog.
+            // Status is only written to DB after onConfirm fires (success or explicit skip).
+            setPendingComplete(updates);
+            setCustomerDialogOpen(true);
+            return; // InlineSelectField resolves → closes; displayed value stays old until confirmed
+        }
         try {
             const updated = await crmService.updateLead(lead.id, updates);
             setLead(updated);
             toast.success("Saved");
-            if (updated.status === "complete") setCustomerDialogOpen(true);
         } catch (err: any) {
             toast.error(err.message || "Failed to save");
             throw err; // let inline component stay in edit mode
         }
+    };
+
+    // Called by CreateCustomerFromLeadDialog when customer is created OR user explicitly skips
+    const handleCompleteConfirm = async () => {
+        if (!pendingComplete || !lead) return;
+        try {
+            const updated = await crmService.updateLead(lead.id, pendingComplete);
+            setLead(updated);
+            toast.success("Status set to Complete");
+        } catch (err: any) {
+            toast.error(err.message || "Failed to update status");
+        } finally {
+            setPendingComplete(null);
+        }
+    };
+
+    const handleCustomerDialogClose = (open: boolean) => {
+        if (!open && pendingComplete) {
+            // Dialog closed via × without creating customer or skipping → cancel the status change
+            setPendingComplete(null);
+        }
+        setCustomerDialogOpen(open);
     };
 
     const handleDelete = async () => {
@@ -296,7 +325,8 @@ export default function LeadDetailsPage() {
             <CreateCustomerFromLeadDialog
                 lead={lead}
                 open={customerDialogOpen}
-                onOpenChange={setCustomerDialogOpen}
+                onOpenChange={handleCustomerDialogClose}
+                onConfirm={handleCompleteConfirm}
             />
 
             <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
