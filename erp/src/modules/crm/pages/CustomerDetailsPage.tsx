@@ -162,7 +162,7 @@ export default function CustomerDetailsPage() {
                                 {company.website && (
                                     <div className="flex items-center">
                                         <Globe className="mr-2 h-4 w-4 text-muted-foreground" />
-                                        <a href={company.website} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">
+                                        <a href={company.website.startsWith('http') ? company.website : `https://${company.website}`} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">
                                             {company.website}
                                         </a>
                                     </div>

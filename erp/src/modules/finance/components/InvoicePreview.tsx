@@ -97,7 +97,14 @@ export default function InvoicePreview({ invoice }: InvoicePreviewProps) {
                                 <p style={{ fontSize: '0.875rem', color: '#6B7280', margin: 0 }}>{invoice.customer.phone}</p>
                             )}
                             {invoice.customer?.website && (
-                                <p style={{ fontSize: '0.875rem', color: '#6B7280', margin: 0 }}>{invoice.customer.website}</p>
+                                <a
+                                    href={invoice.customer.website.startsWith('http') ? invoice.customer.website : `https://${invoice.customer.website}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    style={{ fontSize: '0.875rem', color: '#2563EB', margin: 0, textDecoration: 'underline' }}
+                                >
+                                    {invoice.customer.website}
+                                </a>
                             )}
                         </div>
                         <div style={{ textAlign: 'right' }}>
