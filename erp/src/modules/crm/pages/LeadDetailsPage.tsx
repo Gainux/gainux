@@ -59,13 +59,13 @@ function InlineTextField({
                         value={draft}
                         onChange={e => setDraft(e.target.value)}
                         onKeyDown={e => { if (e.key === "Enter") save(); if (e.key === "Escape") cancel(); }}
-                        className="flex-1 h-8"
+                        className="flex-1"
                     />
-                    <Button size="icon" className="h-7 w-7 shrink-0" onClick={save} disabled={saving}>
-                        {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                    <Button size="icon" className="shrink-0" onClick={save} disabled={saving}>
+                        {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                     </Button>
-                    <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={cancel} disabled={saving}>
-                        <X className="h-3.5 w-3.5" />
+                    <Button size="icon" variant="ghost" className="shrink-0" onClick={cancel} disabled={saving}>
+                        <X className="h-4 w-4" />
                     </Button>
                 </div>
             ) : (
@@ -174,7 +174,7 @@ function InlineSelectField({
             {editing ? (
                 <div className="flex items-center gap-2">
                     <Select value={draft} onValueChange={setDraft}>
-                        <SelectTrigger className="flex-1 h-8">
+                        <SelectTrigger className="flex-1">
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -191,11 +191,11 @@ function InlineSelectField({
                             ))}
                         </SelectContent>
                     </Select>
-                    <Button size="icon" className="h-7 w-7 shrink-0" onClick={save} disabled={saving}>
-                        {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                    <Button size="icon" className="shrink-0" onClick={save} disabled={saving}>
+                        {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                     </Button>
-                    <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={cancel} disabled={saving}>
-                        <X className="h-3.5 w-3.5" />
+                    <Button size="icon" variant="ghost" className="shrink-0" onClick={cancel} disabled={saving}>
+                        <X className="h-4 w-4" />
                     </Button>
                 </div>
             ) : (
