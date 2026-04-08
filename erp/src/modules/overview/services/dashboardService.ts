@@ -1,5 +1,6 @@
 import { invoiceService } from "@/modules/finance/services/invoiceService";
 import { dealService } from "@/modules/crm/services/dealService";
+import { salesOrderService } from "@/modules/crm/services/salesOrderService";
 import { projectService } from "@/modules/project-management/services/projectService";
 import { employeeService } from "@/modules/hrm/services/employeeService";
 import { userService } from "@/modules/system/services/userService";
@@ -16,6 +17,8 @@ export interface DashboardMetrics {
         activeDeals: number;
         pipelineValue: number;
         recentDeals: any[];
+        recentOrders: any[];
+        funnel: { name: string; value: number }[];
     };
     projects: {
         activeProjects: number;
@@ -37,13 +40,15 @@ export const dashboardService = {
         const [
             financialMetrics,
             deals,
+            orders,
             projects,
             employees,
             users
         ] = await Promise.all([
-            invoiceService.getFinancialMetrics(),
-            dealService.getDeals(),
-            projectService.getProjects(),
+            invoiceService.getFinancialMetrics(orgId),
+            dealService.getDeals(orgId),
+            salesOrderService.getOrders(orgId),
+            projectService.getProjects(undefined, orgId),
             employeeService.getEmployees(orgId),
             userService.getUsers() // Users might be global or needing filter, checking userService later
         ]);
@@ -76,6 +81,14 @@ export const dashboardService = {
                 activeDeals: activeDeals.length,
                 pipelineValue,
                 recentDeals,
+                recentOrders: orders.slice(0, 5),
+                funnel: [
+                    { name: 'Lead', value: deals.filter(d => d.stage === 'lead').length },
+                    { name: 'Proposal', value: deals.filter(d => d.stage === 'proposal').length },
+                    { name: 'Negotiation', value: deals.filter(d => d.stage === 'negotiation').length },
+                    { name: 'Won', value: deals.filter(d => d.stage === 'won').length },
+                    { name: 'Lost', value: deals.filter(d => d.stage === 'lost').length }
+                ]
             },
             projects: {
                 activeProjects: activeProjects.length,
@@ -92,12 +105,15 @@ export const dashboardService = {
         };
     },
 
-    async getAnalyticsData() {
+    async getAnalyticsData(orgId?: string) {
         // Fetch data
+        let expensesQuery = supabase.from("expenses").select("*");
+        if (orgId) expensesQuery = expensesQuery.eq("org_id", orgId);
+
         const [invoices, expenses, deals] = await Promise.all([
-            invoiceService.getInvoices(),
-            supabase.from("expenses").select("*"),
-            dealService.getDeals()
+            invoiceService.getInvoices(orgId),
+            expensesQuery,
+            dealService.getDeals(orgId)
         ]);
 
         const allInvoices = invoices;
@@ -117,7 +133,7 @@ export const dashboardService = {
                 .reduce((sum, inv) => sum + (inv.total || 0), 0);
 
             const expense = allExpenses
-                .filter((exp: any) => exp.date && new Date(exp.date).toLocaleString('default', { month: 'short' }) === month)
+                .filter((exp: any) => exp.expense_date && new Date(exp.expense_date).toLocaleString('default', { month: 'short' }) === month)
                 .reduce((sum: number, exp: any) => sum + (Number(exp.amount) || 0), 0);
 
             return { name: month, revenue, expense };

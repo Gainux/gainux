@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { format, startOfMonth, endOfMonth, subMonths, addMonths } from "date-fns";
-import { Calendar, Clock, ChevronLeft, ChevronRight, LogIn, LogOut } from "lucide-react";
+import { Clock, ChevronLeft, ChevronRight, LogIn, LogOut } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+
 import { attendanceService } from "../../hrm/services/attendanceService";
 import { useAuth } from "@/context/AuthContext";
 import type { AttendanceLog } from "../../hrm/types";
@@ -120,21 +120,7 @@ export default function MyAttendancePage() {
         }
     };
 
-    const getStatusBadge = (status?: string) => {
-        if (!status) return <Badge variant="outline" className="text-gray-500">Not Marked</Badge>;
-        const styles = {
-            present: "bg-green-100 text-green-800",
-            absent: "bg-red-100 text-red-800",
-            late: "bg-yellow-100 text-yellow-800",
-            'half-day': "bg-blue-100 text-blue-800",
-            'on-leave': "bg-purple-100 text-purple-800",
-        };
-        return (
-            <Badge className={styles[status as keyof typeof styles] || ""} variant="secondary">
-                {status.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
-            </Badge>
-        );
-    };
+
 
     const stats = {
         present: monthlyLogs.filter(l => l.status === 'present').length,
@@ -143,7 +129,7 @@ export default function MyAttendancePage() {
     };
 
     return (
-        <div className="flex-1 p-8 pt-6 space-y-6">
+        <div className="flex-1 p-4 md:p-8 md:pt-6 space-y-6">
             {!employeeId && !loading && (
                 <div className="bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200 p-4 rounded-md flex items-center gap-2 border border-yellow-200 dark:border-yellow-800">
                     <Clock className="h-5 w-5" />
@@ -162,7 +148,7 @@ export default function MyAttendancePage() {
                         </CardHeader>
                         <CardContent className="space-y-6">
                             <div className="text-center">
-                                <div className="text-4xl font-bold mb-2">{format(new Date(), 'h:mm a')}</div>
+                                <div className="text-2xl md:text-4xl font-bold mb-2">{format(new Date(), 'h:mm a')}</div>
                                 <div className="text-muted-foreground">{format(new Date(), 'EEEE, MMMM do')}</div>
                             </div>
 

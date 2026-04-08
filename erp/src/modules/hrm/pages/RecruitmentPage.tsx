@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { recruitmentService } from "../services/recruitmentService";
-import type { JobPosting, Candidate, JobApplication, Interview } from "../types";
+import type { JobPosting, Candidate } from "../types";
 import { toast } from "sonner";
 import JobForm from "../components/recruitment/JobForm";
 import CandidateList from "../components/recruitment/CandidateList";
@@ -13,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 
 export default function RecruitmentPage() {
-    const { user, profile } = useAuth();
+    const { profile } = useAuth();
     const [activeTab, setActiveTab] = useState("jobs");
     const [jobs, setJobs] = useState<JobPosting[]>([]);
     const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -65,10 +65,10 @@ export default function RecruitmentPage() {
     };
 
     return (
-        <div className="flex-1 space-y-4 p-8 pt-6">
+        <div className="flex-1 space-y-4 p-4 md:p-8 md:pt-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight">Recruitment</h2>
+                    <h2 className="text-xl md:text-3xl font-bold tracking-tight">Recruitment</h2>
                     <p className="text-muted-foreground">Manage job postings, candidates, and hiring workflows.</p>
                 </div>
                 <div className="flex items-center space-x-2">

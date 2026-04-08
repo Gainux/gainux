@@ -17,7 +17,8 @@ const mapToProject = (data: any): Project => ({
     endDate: data.end_date,
     budget: Number(data.budget),
     createdAt: data.created_at,
-    updatedAt: data.updated_at
+    updatedAt: data.updated_at,
+    orgId: data.org_id
 });
 
 const mapToTask = (data: any): Task => ({
@@ -39,7 +40,12 @@ const mapToTask = (data: any): Task => ({
     priority: data.priority,
     dueDate: data.due_date,
     createdAt: data.created_at,
-    updatedAt: data.updated_at
+    updatedAt: data.updated_at,
+    sprintId: data.sprint_id,
+    sprint: data.sprints ? {
+        id: data.sprints.id,
+        name: data.sprints.name
+    } : undefined
 });
 
 const mapToMember = (data: any): ProjectMember => ({
@@ -60,9 +66,9 @@ const mapToMember = (data: any): ProjectMember => ({
 
 export const projectService = {
     // Projects
-    async getProjects(employeeId?: string) {
+    async getProjects(employeeId?: string, orgId?: string) {
         if (employeeId) {
-            const { data, error } = await supabase
+            let query = supabase
                 .from('projects')
                 .select(`
                     *,
@@ -72,10 +78,15 @@ export const projectService = {
                 .eq('resource_allocations.employee_id', employeeId)
                 .order('created_at', { ascending: false });
 
+            if (orgId) {
+                query = query.eq('org_id', orgId);
+            }
+
+            const { data, error } = await query;
             if (error) throw error;
             return data.map(mapToProject);
         } else {
-            const { data, error } = await supabase
+            let query = supabase
                 .from('projects')
                 .select(`
                     *,
@@ -83,6 +94,11 @@ export const projectService = {
                 `)
                 .order('created_at', { ascending: false });
 
+            if (orgId) {
+                query = query.eq('org_id', orgId);
+            }
+
+            const { data, error } = await query;
             if (error) throw error;
             return data.map(mapToProject);
         }
@@ -108,11 +124,12 @@ export const projectService = {
             .insert({
                 name: project.name,
                 description: project.description,
-                client_id: project.clientId,
+                client_id: project.clientId || null,
                 status: project.status || 'planning',
-                start_date: project.startDate,
-                end_date: project.endDate,
-                budget: project.budget
+                start_date: project.startDate || null,
+                end_date: project.endDate || null,
+                budget: project.budget,
+                org_id: project.orgId || null
             })
             .select()
             .single();
@@ -193,7 +210,8 @@ export const projectService = {
             .from('tasks')
             .select(`
                 *,
-                employees (id, first_name, last_name)
+                employees (id, first_name, last_name),
+                sprints (id, name)
             `)
             .eq('project_id', projectId)
             .order('created_at', { ascending: false });
@@ -212,7 +230,8 @@ export const projectService = {
                 description: task.description,
                 status: task.status || 'todo',
                 priority: task.priority || 'medium',
-                due_date: task.dueDate
+                due_date: task.dueDate,
+                sprint_id: task.sprintId
             })
             .select()
             .single();
@@ -229,6 +248,7 @@ export const projectService = {
         if (updates.status !== undefined) dbUpdates.status = updates.status;
         if (updates.priority !== undefined) dbUpdates.priority = updates.priority;
         if (updates.dueDate !== undefined) dbUpdates.due_date = updates.dueDate;
+        if (updates.sprintId !== undefined) dbUpdates.sprint_id = updates.sprintId;
 
         const { data, error } = await supabase
             .from('tasks')
@@ -334,7 +354,7 @@ export const projectService = {
     },
 
     // Timesheets
-    async getTimesheets(projectId?: string) {
+    async getTimesheets(projectId?: string, orgId?: string) {
         let query = supabase
             .from('timesheets')
             .select(`
@@ -345,6 +365,10 @@ export const projectService = {
 
         if (projectId) {
             query = query.eq('project_id', projectId);
+        }
+
+        if (orgId) {
+            query = query.eq('org_id', orgId);
         }
 
         const { data, error } = await query;
@@ -358,7 +382,11 @@ export const projectService = {
             date: item.date,
             hours: Number(item.hours),
             description: item.description,
-            status: item.status
+            status: item.status,
+            isBillable: item.is_billable,
+            hourlyRate: item.hourly_rate ? Number(item.hourly_rate) : undefined,
+            startTime: item.start_time,
+            endTime: item.end_time
         }));
     },
 
@@ -382,6 +410,8 @@ export const projectService = {
                 hours: entry.hours,
                 description: entry.description,
                 status: entry.status || 'draft',
+                is_billable: entry.isBillable ?? false,
+                hourly_rate: entry.hourlyRate || 0,
                 org_id: employee.org_id
             })
             .select()
@@ -399,6 +429,10 @@ export const projectService = {
         if (updates.date !== undefined) dbUpdates.date = updates.date;
         if (updates.projectId !== undefined) dbUpdates.project_id = updates.projectId;
         if (updates.taskId !== undefined) dbUpdates.task_id = updates.taskId;
+        if (updates.isBillable !== undefined) dbUpdates.is_billable = updates.isBillable;
+        if (updates.hourlyRate !== undefined) dbUpdates.hourly_rate = updates.hourlyRate;
+        if (updates.startTime !== undefined) dbUpdates.start_time = updates.startTime;
+        if (updates.endTime !== undefined) dbUpdates.end_time = updates.endTime;
 
         const { data, error } = await supabase
             .from('timesheets')
@@ -417,6 +451,103 @@ export const projectService = {
             .delete()
             .eq('id', id);
         if (error) throw error;
+    },
+
+    // Timer Methods
+    async getActiveTimer(employeeId: string) {
+        const { data, error } = await supabase
+            .from('timesheets')
+            .select(`
+                *,
+                projects (name)
+            `)
+            .eq('employee_id', employeeId)
+            .is('end_time', null)
+            .maybeSingle();
+
+        if (error) throw error;
+        if (!data) return null;
+
+        return {
+            id: data.id,
+            projectId: data.project_id,
+            projectName: data.projects?.name,
+            taskId: data.task_id,
+            employeeId: data.employee_id,
+            date: data.date,
+            hours: Number(data.hours),
+            description: data.description,
+            status: data.status,
+            startTime: data.start_time
+        };
+    },
+
+    async startTimer(entry: any) {
+        const { data: employee } = await supabase
+            .from('employees')
+            .select('org_id')
+            .eq('id', entry.employeeId)
+            .single();
+
+        if (!employee) throw new Error('Employee not found');
+
+        const { data, error } = await supabase
+            .from('timesheets')
+            .insert({
+                project_id: entry.projectId,
+                task_id: entry.taskId,
+                employee_id: entry.employeeId,
+                date: new Date().toISOString().split('T')[0], // Today
+                hours: 0,
+                description: entry.description,
+                status: 'draft',
+                org_id: employee.org_id,
+                start_time: new Date().toISOString()
+            })
+            .select(`*, projects(name)`)
+            .single();
+
+        if (error) throw error;
+        return {
+            id: data.id,
+            projectId: data.project_id,
+            projectName: data.projects?.name,
+            taskId: data.task_id,
+            employeeId: data.employee_id,
+            date: data.date,
+            description: data.description,
+            startTime: data.start_time
+        };
+    },
+
+    async stopTimer(id: string) {
+        const endTime = new Date();
+
+        // Fetch result first to calculate duration
+        const { data: entry } = await supabase
+            .from('timesheets')
+            .select('start_time')
+            .eq('id', id)
+            .single();
+
+        if (!entry) throw new Error('Timer not found');
+
+        const startTime = new Date(entry.start_time);
+        const durationMs = endTime.getTime() - startTime.getTime();
+        const hours = durationMs / (1000 * 60 * 60);
+
+        const { data, error } = await supabase
+            .from('timesheets')
+            .update({
+                end_time: endTime.toISOString(),
+                hours: Number(hours.toFixed(2))
+            })
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) throw error;
+        return data;
     },
 
     // Expenses
@@ -453,5 +584,70 @@ export const projectService = {
 
         if (error) throw error;
         return data;
+    },
+    // Sprints
+    async getSprints(projectId: string) {
+        const { data, error } = await supabase
+            .from('sprints')
+            .select('*')
+            .eq('project_id', projectId)
+            .order('start_date', { ascending: false });
+
+        if (error) throw error;
+        return data.map((item: any) => ({
+            id: item.id,
+            projectId: item.project_id,
+            name: item.name,
+            startDate: item.start_date,
+            endDate: item.end_date,
+            status: item.status,
+            goal: item.goal,
+            createdAt: item.created_at
+        }));
+    },
+
+    async createSprint(sprint: any) {
+        const { data, error } = await supabase
+            .from('sprints')
+            .insert({
+                project_id: sprint.projectId,
+                name: sprint.name,
+                start_date: sprint.startDate,
+                end_date: sprint.endDate,
+                status: sprint.status || 'planned',
+                goal: sprint.goal
+            })
+            .select()
+            .single();
+
+        if (error) throw error;
+        return data;
+    },
+
+    async updateSprint(id: string, updates: Partial<any>) {
+        const dbUpdates: any = {};
+        if (updates.name !== undefined) dbUpdates.name = updates.name;
+        if (updates.startDate !== undefined) dbUpdates.start_date = updates.startDate;
+        if (updates.endDate !== undefined) dbUpdates.end_date = updates.endDate;
+        if (updates.status !== undefined) dbUpdates.status = updates.status;
+        if (updates.goal !== undefined) dbUpdates.goal = updates.goal;
+
+        const { data, error } = await supabase
+            .from('sprints')
+            .update(dbUpdates)
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) throw error;
+        return data;
+    },
+
+    async deleteSprint(id: string) {
+        const { error } = await supabase
+            .from('sprints')
+            .delete()
+            .eq('id', id);
+        if (error) throw error;
     }
 };

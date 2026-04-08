@@ -1,8 +1,12 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 
-export default function ProtectedRoute() {
-    const { isAuthenticated, loading } = useAuth();
+interface ProtectedRouteProps {
+    requireOrg?: boolean;
+}
+
+export default function ProtectedRoute({ requireOrg = true }: ProtectedRouteProps) {
+    const { isAuthenticated, loading, profile } = useAuth();
 
     if (loading) {
         return (
@@ -17,6 +21,18 @@ export default function ProtectedRoute() {
 
     if (!isAuthenticated) {
         return <Navigate to="/login" replace />;
+    }
+
+    // If org is required but user has no org_id, redirect to onboarding
+    if (requireOrg && !profile?.org_id) {
+        return <Navigate to="/onboarding" replace />;
+    }
+
+    // If user is on onboarding (implied by requireOrg=false) but HAS an org, redirect to dashboard
+    if (!requireOrg && profile?.org_id) {
+        // Check if we are currently mostly on /onboarding pathway to avoid redirect loops if this component is reused elsewhere
+        // But since we use exact routes, this "reverse guard" is helpful.
+        return <Navigate to="/" replace />;
     }
 
     return <Outlet />;

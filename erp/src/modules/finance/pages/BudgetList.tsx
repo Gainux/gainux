@@ -1,6 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
-import { useModules } from '@/context/ModuleContext';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -65,7 +64,6 @@ export default function BudgetList() {
         if (!orgId) return;
         try {
             setLoading(true);
-            // TODO: Get real orgId from context
             const data = await budgetService.getBudgets(orgId);
             setBudgets(data);
         } catch (error) {
@@ -98,10 +96,10 @@ export default function BudgetList() {
     };
 
     return (
-        <div className="flex-1 space-y-6 p-8 pt-6">
+        <div className="flex-1 space-y-6 p-4 md:p-8 md:pt-6">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Budgets</h1>
+                    <h1 className="text-xl md:text-3xl font-bold tracking-tight">Budgets</h1>
                     <p className="text-muted-foreground">Manage financial budgets and track performance.</p>
                 </div>
                 <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>

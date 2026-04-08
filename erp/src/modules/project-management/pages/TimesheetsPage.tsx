@@ -8,6 +8,7 @@ import { Plus, Pencil, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { TimesheetForm } from "../components/TimesheetForm";
 import { useAuth } from "@/context/AuthContext";
+import { useCurrency } from "@/hooks/useCurrency";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -20,7 +21,8 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export default function TimesheetsPage() {
-    const { user } = useAuth();
+    const { user, isAdmin, profile } = useAuth();
+    const { formatAmount } = useCurrency();
     const [timesheets, setTimesheets] = useState<TimesheetEntry[]>([]);
     const [loading, setLoading] = useState(true);
     const [open, setOpen] = useState(false);
@@ -30,12 +32,15 @@ export default function TimesheetsPage() {
     const [deleteId, setDeleteId] = useState<string | null>(null);
 
     useEffect(() => {
-        loadTimesheets();
-    }, []);
+        if (profile) {
+            loadTimesheets();
+        }
+    }, [profile]);
 
     const loadTimesheets = async () => {
         try {
-            const data = await projectService.getTimesheets();
+            // Pass undefined for projectId, and profile.org_id for orgId
+            const data = await projectService.getTimesheets(undefined, profile?.org_id);
             setTimesheets(data);
         } catch (error) {
             console.error("Failed to load timesheets", error);
@@ -92,10 +97,10 @@ export default function TimesheetsPage() {
     };
 
     return (
-        <div className="flex-1 space-y-4 p-8 pt-6">
-            <div className="flex justify-between items-center">
+        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight">Timesheets</h2>
+                    <h2 className="text-xl md:text-3xl font-bold tracking-tight">Timesheets</h2>
                     <p className="text-muted-foreground">Track projected hours and approvals.</p>
                 </div>
                 <Dialog open={open} onOpenChange={(val) => {
@@ -133,50 +138,69 @@ export default function TimesheetsPage() {
                     ) : timesheets.length === 0 ? (
                         <div className="text-center py-6 text-muted-foreground">No entries found.</div>
                     ) : (
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Date</TableHead>
-                                    <TableHead>Project</TableHead>
-                                    <TableHead>Description</TableHead>
-                                    <TableHead>Hours</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {timesheets.map((entry: any) => (
-                                    <TableRow key={entry.id}>
-                                        <TableCell>{entry.date}</TableCell>
-                                        <TableCell className="font-medium">
-                                            {entry.projectName || <span className="text-muted-foreground text-xs">{entry.projectId}</span>}
-                                        </TableCell>
-                                        <TableCell className="max-w-[300px] truncate" title={entry.description}>
-                                            {entry.description}
-                                        </TableCell>
-                                        <TableCell>{entry.hours}</TableCell>
-                                        <TableCell className="capitalize">
-                                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${entry.status === 'approved' ? 'bg-green-100 text-green-800' :
+                        <div className="overflow-x-auto">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Date</TableHead>
+                                        <TableHead>Project</TableHead>
+                                        <TableHead>Description</TableHead>
+                                        <TableHead>Hours</TableHead>
+                                        {isAdmin && <TableHead>Billable</TableHead>}
+                                        <TableHead>Status</TableHead>
+                                        <TableHead className="text-right">Actions</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {timesheets.map((entry: any) => (
+                                        <TableRow key={entry.id}>
+                                            <TableCell>{entry.date}</TableCell>
+                                            <TableCell className="font-medium">
+                                                {entry.projectName || <span className="text-muted-foreground text-xs">{entry.projectId}</span>}
+                                            </TableCell>
+                                            <TableCell className="max-w-[300px] truncate" title={entry.description}>
+                                                {entry.description}
+                                            </TableCell>
+                                            <TableCell>{entry.hours}</TableCell>
+                                            {isAdmin && (
+                                                <TableCell>
+                                                    {entry.isBillable ? (
+                                                        <div className="flex flex-col">
+                                                            <span className="text-green-600 font-medium">✓ Billable</span>
+                                                            {entry.hourlyRate > 0 && (
+                                                                <span className="text-xs text-muted-foreground">
+                                                                    {formatAmount(entry.hours * entry.hourlyRate)}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-muted-foreground">-</span>
+                                                    )}
+                                                </TableCell>
+                                            )}
+                                            <TableCell className="capitalize">
+                                                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${entry.status === 'approved' ? 'bg-green-100 text-green-800' :
                                                     entry.status === 'submitted' ? 'bg-blue-100 text-blue-800' :
                                                         'bg-gray-100 text-gray-800'
-                                                }`}>
-                                                {entry.status}
-                                            </span>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <div className="flex justify-end gap-2">
-                                                <Button variant="ghost" size="icon" onClick={() => openEdit(entry)}>
-                                                    <Pencil className="h-4 w-4" />
-                                                </Button>
-                                                <Button variant="ghost" size="icon" onClick={() => setDeleteId(entry.id)}>
-                                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                                </Button>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
+                                                    }`}>
+                                                    {entry.status}
+                                                </span>
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <div className="flex justify-end gap-2">
+                                                    <Button variant="ghost" size="icon" onClick={() => openEdit(entry)}>
+                                                        <Pencil className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button variant="ghost" size="icon" onClick={() => setDeleteId(entry.id)}>
+                                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                                    </Button>
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
                     )}
                 </CardContent>
             </Card>

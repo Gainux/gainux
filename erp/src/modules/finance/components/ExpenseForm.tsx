@@ -30,7 +30,7 @@ import {
 import { expenseService } from "../services/expenseService";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { supabase } from "@/lib/supabase"; // Needed if we used it, but useAuth is better
+
 import type { Expense } from "../types";
 
 const formSchema = z.object({

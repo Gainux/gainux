@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select";
 import { crmService } from "@/modules/crm/services/crmService";
 import type { Deal, Contact, Company } from "@/modules/crm/types";
+import { useCurrency } from "@/hooks/useCurrency";
 
 interface DealFormProps {
     initialData?: Deal | null;
@@ -20,6 +21,7 @@ interface DealFormProps {
 }
 
 export function DealForm({ initialData, onSubmit, onCancel }: DealFormProps) {
+    const { symbol } = useCurrency();
     const [title, setTitle] = useState(initialData?.title || "");
     const [companyId, setCompanyId] = useState(initialData?.companyId || "");
     const [value, setValue] = useState(initialData?.value?.toString() || "");
@@ -126,7 +128,7 @@ export function DealForm({ initialData, onSubmit, onCancel }: DealFormProps) {
             </div>
             <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
-                    <Label htmlFor="value">Value (₹)</Label>
+                    <Label htmlFor="value">Value ({symbol})</Label>
                     <Input
                         id="value"
                         type="number"

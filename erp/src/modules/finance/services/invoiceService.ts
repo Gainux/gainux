@@ -31,17 +31,17 @@ export const invoiceService = {
             dealId: invoice.deal_id,
             issueDate: invoice.issue_date,
             dueDate: invoice.due_date,
-            taxRate: parseFloat(invoice.tax_rate),
-            taxAmount: parseFloat(invoice.tax_amount),
-            subtotal: parseFloat(invoice.subtotal),
-            total: parseFloat(invoice.total),
+            taxRate: Number(invoice.tax_rate) || 0,
+            taxAmount: Number(invoice.tax_amount) || 0,
+            subtotal: Number(invoice.subtotal) || 0,
+            total: Number(invoice.total) || 0,
             items: invoice.invoice_items?.map((item: any) => ({
                 id: item.id,
                 invoiceId: item.invoice_id,
                 description: item.description,
-                quantity: parseFloat(item.quantity),
-                unitPrice: parseFloat(item.unit_price),
-                amount: parseFloat(item.amount),
+                quantity: Number(item.quantity) || 0,
+                unitPrice: Number(item.unit_price) || 0,
+                amount: Number(item.amount) || 0,
             })) || []
         })) as Invoice[];
     },
@@ -66,17 +66,17 @@ export const invoiceService = {
             dealId: data.deal_id,
             issueDate: data.issue_date,
             dueDate: data.due_date,
-            taxRate: parseFloat(data.tax_rate),
-            taxAmount: parseFloat(data.tax_amount),
-            subtotal: parseFloat(data.subtotal),
-            total: parseFloat(data.total),
+            taxRate: Number(data.tax_rate) || 0,
+            taxAmount: Number(data.tax_amount) || 0,
+            subtotal: Number(data.subtotal) || 0,
+            total: Number(data.total) || 0,
             items: data.invoice_items?.map((item: any) => ({
                 id: item.id,
                 invoiceId: item.invoice_id,
                 description: item.description,
-                quantity: parseFloat(item.quantity),
-                unitPrice: parseFloat(item.unit_price),
-                amount: parseFloat(item.amount),
+                quantity: Number(item.quantity) || 0,
+                unitPrice: Number(item.unit_price) || 0,
+                amount: Number(item.amount) || 0,
             })) || [],
             customer: data.companies
         } as Invoice & { customer: any };
@@ -88,6 +88,9 @@ export const invoiceService = {
             .rpc('generate_invoice_number');
 
         if (numberError) throw numberError;
+        if (!invoiceNumberData || typeof invoiceNumberData !== 'string') {
+            throw new Error("Failed to generate a valid invoice number");
+        }
 
         // Create invoice
         const { data: invoice, error: invoiceError } = await supabase
@@ -161,8 +164,11 @@ export const invoiceService = {
                 .eq("invoice_id", id);
 
             // Fetch invoice to get org_id
-            const { data: inv } = await supabase.from('invoices').select('org_id').eq('id', id).single();
-            const orgId = inv?.org_id;
+            const { data: inv, error: invFetchError } = await supabase.from('invoices').select('org_id').eq('id', id).single();
+            if (invFetchError || !inv?.org_id) {
+                throw new Error(`Failed to fetch invoice org_id for item update: ${invFetchError?.message ?? 'invoice not found'}`);
+            }
+            const orgId = inv.org_id;
 
             // Insert new items
             if (items.length > 0) {
@@ -317,9 +323,6 @@ export const invoiceService = {
                         debit: 0,
                         credit: invoice.taxAmount
                     });
-                } else if (invoice.taxAmount > 0) {
-                    // Fallback: Add to sales if tax account couldn't be created (unlikely)
-                    journalItems[1].credit += invoice.taxAmount;
                 }
 
                 // 5. Create Journal Entry

@@ -1,7 +1,23 @@
 import { supabase } from "@/lib/supabase";
-import type { Lead, Deal, Contact, Company, CRMActivity, Quote } from "../types";
+import type { Lead, Deal, Contact, Company, CRMActivity, Quote, LeadCategory, LeadLocation } from "../types";
 
 // --- Helpers ---
+
+const mapToLeadCategory = (data: any): LeadCategory => ({
+    id: data.id,
+    orgId: data.org_id,
+    name: data.name,
+    color: data.color ?? '#6366f1',
+    createdAt: data.created_at,
+});
+
+const mapToLeadLocation = (data: any): LeadLocation => ({
+    id: data.id,
+    orgId: data.org_id,
+    categoryId: data.category_id,
+    name: data.name,
+    createdAt: data.created_at,
+});
 
 const mapToLead = (data: any): Lead => ({
     id: data.id,
@@ -20,6 +36,10 @@ const mapToLead = (data: any): Lead => ({
         lastName: data.employees.last_name
     } : undefined,
     notes: data.notes,
+    categoryId: data.category_id,
+    category: data.lead_categories ? mapToLeadCategory(data.lead_categories) : undefined,
+    locationId: data.location_id,
+    location: data.lead_locations ? mapToLeadLocation(data.lead_locations) : undefined,
     createdAt: data.created_at,
     updatedAt: data.updated_at
 });
@@ -100,24 +120,114 @@ const mapToActivity = (data: any): CRMActivity => ({
 // --- Service ---
 
 export const crmService = {
-    // Leads
-    async getLeads() {
+    // Lead Categories
+    async getLeadCategories(): Promise<LeadCategory[]> {
         const { data, error } = await supabase
+            .from('lead_categories')
+            .select('*')
+            .order('name');
+        if (error) throw error;
+        return data.map(mapToLeadCategory);
+    },
+
+    async createLeadCategory(name: string, color: string): Promise<LeadCategory> {
+        const { data: auth } = await supabase.auth.getUser();
+        const { data: profile } = await supabase
+            .from('profiles').select('org_id').eq('id', auth.user?.id).single();
+        if (!profile) throw new Error('User organization not found');
+        const { data, error } = await supabase
+            .from('lead_categories')
+            .insert({ org_id: profile.org_id, name, color })
+            .select().single();
+        if (error) throw error;
+        return mapToLeadCategory(data);
+    },
+
+    async updateLeadCategory(id: string, updates: { name?: string; color?: string }): Promise<LeadCategory> {
+        const { data, error } = await supabase
+            .from('lead_categories').update(updates).eq('id', id).select().single();
+        if (error) throw error;
+        return mapToLeadCategory(data);
+    },
+
+    async deleteLeadCategory(id: string): Promise<void> {
+        const { error } = await supabase.from('lead_categories').delete().eq('id', id);
+        if (error) throw error;
+    },
+
+    // Lead Locations
+    async getLeadLocations(categoryId?: string): Promise<LeadLocation[]> {
+        let query = supabase.from('lead_locations').select('*').order('name');
+        if (categoryId) query = query.eq('category_id', categoryId);
+        const { data, error } = await query;
+        if (error) throw error;
+        return data.map(mapToLeadLocation);
+    },
+
+    async createLeadLocation(categoryId: string, name: string): Promise<LeadLocation> {
+        const { data: auth } = await supabase.auth.getUser();
+        const { data: profile } = await supabase
+            .from('profiles').select('org_id').eq('id', auth.user?.id).single();
+        if (!profile) throw new Error('User organization not found');
+        const { data, error } = await supabase
+            .from('lead_locations')
+            .insert({ org_id: profile.org_id, category_id: categoryId, name })
+            .select().single();
+        if (error) throw error;
+        return mapToLeadLocation(data);
+    },
+
+    async updateLeadLocation(id: string, name: string): Promise<LeadLocation> {
+        const { data, error } = await supabase
+            .from('lead_locations').update({ name }).eq('id', id).select().single();
+        if (error) throw error;
+        return mapToLeadLocation(data);
+    },
+
+    async deleteLeadLocation(id: string): Promise<void> {
+        const { error } = await supabase.from('lead_locations').delete().eq('id', id);
+        if (error) throw error;
+    },
+
+    // Leads
+    async getLeads(orgId?: string) {
+        let query = supabase
             .from('leads')
             .select(`
                 *,
-                employees (id, first_name, last_name)
+                employees (id, first_name, last_name),
+                lead_categories (id, name, color),
+                lead_locations (id, name, category_id)
             `)
             .order('created_at', { ascending: false });
 
+        if (orgId) {
+            query = query.eq('org_id', orgId);
+        }
+
+        const { data, error } = await query;
         if (error) throw error;
         return data.map(mapToLead);
     },
 
+    async getLeadById(id: string) {
+        const { data, error } = await supabase
+            .from('leads')
+            .select(`
+                *,
+                employees (id, first_name, last_name),
+                lead_categories (id, name, color),
+                lead_locations (id, name, category_id)
+            `)
+            .eq('id', id)
+            .single();
+
+        if (error) throw error;
+        return mapToLead(data);
+    },
+
     async createLead(lead: Partial<Lead>) {
         const { data: profile } = await supabase.auth.getUser();
-        // Assuming profile fetch logic for org_id if needed, but RLS handles view.
-        // For insert, we need org_id. Let's fetch it from user profile table.
         const { data: userProfile } = await supabase
             .from('profiles')
             .select('org_id')
@@ -138,7 +248,9 @@ export const crmService = {
                 source: lead.source,
                 status: lead.status || 'new',
                 owner_id: lead.ownerId,
-                notes: lead.notes
+                notes: lead.notes,
+                category_id: lead.categoryId || null,
+                location_id: lead.locationId || null,
             })
             .select()
             .single();
@@ -158,6 +270,8 @@ export const crmService = {
         if (updates.status !== undefined) dbUpdates.status = updates.status;
         if (updates.ownerId !== undefined) dbUpdates.owner_id = updates.ownerId;
         if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
+        if (updates.categoryId !== undefined) dbUpdates.category_id = updates.categoryId || null;
+        if (updates.locationId !== undefined) dbUpdates.location_id = updates.locationId || null;
 
         const { data, error } = await supabase
             .from('leads')
@@ -175,9 +289,46 @@ export const crmService = {
         if (error) throw error;
     },
 
+    async convertLead(leadId: string, dealData: { title: string, value: number, expectedCloseDate?: string }) {
+        // 1. Get Lead Data
+        const lead = await this.getLeadById(leadId);
+
+        // 2. Create Company
+        const company = await this.createCompany({
+            name: lead.companyName || `${lead.firstName} ${lead.lastName}'s Company`,
+            email: lead.email,
+            phone: lead.phone,
+        });
+
+        // 3. Create Contact
+        const contact = await this.createContact({
+            firstName: lead.firstName,
+            lastName: lead.lastName,
+            email: lead.email,
+            phone: lead.phone,
+            companyId: company.id
+        });
+
+        // 4. Create Deal
+        const deal = await this.createDeal({
+            title: dealData.title,
+            value: dealData.value,
+            expectedCloseDate: dealData.expectedCloseDate,
+            leadId: leadId,
+            companyId: company.id,
+            contactId: contact.id,
+            ownerId: lead.ownerId
+        });
+
+        // 5. Update Lead Status
+        await this.updateLead(leadId, { status: 'won' }); // or 'qualified' / 'converted'
+
+        return deal;
+    },
+
     // Deals
-    async getDeals() {
-        const { data, error } = await supabase
+    async getDeals(orgId?: string) {
+        let query = supabase
             .from('deals')
             .select(`
                 *,
@@ -188,6 +339,11 @@ export const crmService = {
             `)
             .order('created_at', { ascending: false });
 
+        if (orgId) {
+            query = query.eq('org_id', orgId);
+        }
+
+        const { data, error } = await query;
         if (error) throw error;
         return data.map(mapToDeal);
     },
@@ -216,6 +372,8 @@ export const crmService = {
             .select('org_id')
             .eq('id', profile.user?.id)
             .single();
+
+        if (!userProfile?.org_id) throw new Error("User organization not found");
 
         const { data, error } = await supabase
             .from('deals')
@@ -269,19 +427,26 @@ export const crmService = {
     },
 
     // Companies
-    async getCompanies() {
-        const { data, error } = await supabase
+    async getCompanies(orgId?: string) {
+        let query = supabase
             .from('companies')
             .select('*')
             .order('name');
 
+        if (orgId) {
+            query = query.eq('org_id', orgId);
+        }
+
+        const { data, error } = await query;
         if (error) throw error;
-        return data.map(mapToCompany);
+        return (data || []).map(mapToCompany);
     },
 
     async createCompany(company: Partial<Company>) {
         const { data: profile } = await supabase.auth.getUser();
         const { data: userProfile } = await supabase.from('profiles').select('org_id').eq('id', profile.user?.id).single();
+
+        if (!userProfile?.org_id) throw new Error("User organization not found");
 
         const { data, error } = await supabase
             .from('companies')
@@ -333,13 +498,61 @@ export const crmService = {
     },
 
     async deleteCompany(id: string) {
+        // 1. Delete CRM Activities linked to deals or contacts
+        const { data: deals } = await supabase.from('deals').select('id').eq('company_id', id);
+        if (deals && deals.length > 0) {
+            const dealIds = deals.map(d => d.id);
+            await supabase.from('crm_activities').delete().in('deal_id', dealIds);
+        }
+        
+        const { data: contacts } = await supabase.from('contacts').select('id').eq('company_id', id);
+        if (contacts && contacts.length > 0) {
+            const contactIds = contacts.map(c => c.id);
+            await supabase.from('crm_activities').delete().in('contact_id', contactIds);
+        }
+
+        // 2. Identify all Quotes for this company
+        const { data: quotes } = await supabase.from('quotes').select('id').eq('company_id', id);
+        const quoteIds = quotes ? quotes.map(q => q.id) : [];
+
+        // 3. Delete Sales Order Items and Sales Orders
+        // We need to delete SOs that are linked directly to the company OR to the company's quotes
+        let orderIdsToDelete: string[] = [];
+        
+        const { data: salesOrdersCompany } = await supabase.from('sales_orders').select('id').eq('company_id', id);
+        if (salesOrdersCompany) {
+            orderIdsToDelete.push(...salesOrdersCompany.map(o => o.id));
+        }
+
+        if (quoteIds.length > 0) {
+            const { data: salesOrdersQuotes } = await supabase.from('sales_orders').select('id').in('quote_id', quoteIds);
+            if (salesOrdersQuotes) {
+                orderIdsToDelete.push(...salesOrdersQuotes.map(o => o.id));
+            }
+        }
+
+        orderIdsToDelete = [...new Set(orderIdsToDelete)]; // deduplicate
+
+        if (orderIdsToDelete.length > 0) {
+            await supabase.from('sales_order_items').delete().in('order_id', orderIdsToDelete);
+            await supabase.from('sales_orders').delete().in('id', orderIdsToDelete);
+        }
+
+        // 4. Delete dependent records (Quotes, Deals, Contacts)
+        if (quoteIds.length > 0) {
+            await supabase.from('quotes').delete().in('id', quoteIds);
+        }
+        await supabase.from('deals').delete().eq('company_id', id);
+        await supabase.from('contacts').delete().eq('company_id', id);
+
+        // 5. Finally, delete the company itself
         const { error } = await supabase.from('companies').delete().eq('id', id);
         if (error) throw error;
     },
 
     // Contacts
-    async getContacts() {
-        const { data, error } = await supabase
+    async getContacts(orgId?: string) {
+        let query = supabase
             .from('contacts')
             .select(`
                 *,
@@ -347,6 +560,11 @@ export const crmService = {
             `)
             .order('created_at', { ascending: false });
 
+        if (orgId) {
+            query = query.eq('org_id', orgId);
+        }
+
+        const { data, error } = await query;
         if (error) throw error;
         return data.map(mapToContact);
     },
@@ -354,6 +572,8 @@ export const crmService = {
     async createContact(contact: Partial<Contact>) {
         const { data: profile } = await supabase.auth.getUser();
         const { data: userProfile } = await supabase.from('profiles').select('org_id').eq('id', profile.user?.id).single();
+
+        if (!userProfile?.org_id) throw new Error("User organization not found");
 
         const { data, error } = await supabase
             .from('contacts')
@@ -392,6 +612,8 @@ export const crmService = {
         const { data: profile } = await supabase.auth.getUser();
         const { data: userProfile } = await supabase.from('profiles').select('org_id').eq('id', profile.user?.id).single();
 
+        if (!userProfile?.org_id) throw new Error("User organization not found");
+
         const { data, error } = await supabase
             .from('crm_activities')
             .insert({
@@ -414,8 +636,8 @@ export const crmService = {
 
     // --- Quotations ---
 
-    async getQuotes(): Promise<Quote[]> {
-        const { data, error } = await supabase
+    async getQuotes(orgId?: string): Promise<Quote[]> {
+        let query = supabase
             .from('quotes')
             .select(`
                 *,
@@ -424,6 +646,11 @@ export const crmService = {
             `)
             .order('created_at', { ascending: false });
 
+        if (orgId) {
+            query = query.eq('org_id', orgId);
+        }
+
+        const { data, error } = await query;
         if (error) throw error;
 
         return data.map((item: any) => ({
@@ -444,7 +671,8 @@ export const crmService = {
                 orgId: item.org_id,
                 firstName: item.contact.first_name,
                 lastName: item.contact.last_name,
-                createdAt: '', updatedAt: ''
+                createdAt: item.created_at,
+                updatedAt: item.updated_at,
             } : undefined,
             issueDate: item.issue_date,
             validUntil: item.valid_until,
@@ -452,6 +680,12 @@ export const crmService = {
             totalAmount: item.total_amount,
             currency: item.currency,
             notes: item.notes,
+            // New fields
+            scopeOfWork: item.scope_of_work,
+            paymentTerms: item.payment_terms,
+            terms: item.terms,
+            taxRate: item.tax_rate,
+
             items: item.items || [],
             createdAt: item.created_at,
             updatedAt: item.updated_at,
@@ -486,7 +720,12 @@ export const crmService = {
                 total_amount: quote.totalAmount,
                 currency: quote.currency || 'USD',
                 notes: quote.notes,
-                items: quote.items
+                items: quote.items,
+                // New fields
+                scope_of_work: quote.scopeOfWork,
+                payment_terms: quote.paymentTerms,
+                terms: quote.terms,
+                tax_rate: quote.taxRate
             })
             .select()
             .single();
@@ -511,6 +750,11 @@ export const crmService = {
         if (updates.totalAmount) dbUpdates.total_amount = updates.totalAmount;
         if (updates.notes) dbUpdates.notes = updates.notes;
         if (updates.validUntil) dbUpdates.valid_until = updates.validUntil;
+        // New fields
+        if (updates.scopeOfWork !== undefined) dbUpdates.scope_of_work = updates.scopeOfWork;
+        if (updates.paymentTerms !== undefined) dbUpdates.payment_terms = updates.paymentTerms;
+        if (updates.terms !== undefined) dbUpdates.terms = updates.terms;
+        if (updates.taxRate !== undefined) dbUpdates.tax_rate = updates.taxRate;
 
         const { data, error } = await supabase
             .from('quotes')

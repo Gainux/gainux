@@ -57,8 +57,8 @@ export default function MyProfilePage() {
     }
 
     return (
-        <div className="flex-1 p-8 pt-6 space-y-6">
-            <h2 className="text-3xl font-bold tracking-tight">My Profile</h2>
+        <div className="flex-1 p-4 md:p-8 md:pt-6 space-y-6">
+            <h2 className="text-xl md:text-3xl font-bold tracking-tight">My Profile</h2>
 
             <div className="grid gap-6 md:grid-cols-2">
                 <Card className="md:col-span-2">

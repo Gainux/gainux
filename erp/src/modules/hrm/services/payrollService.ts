@@ -230,7 +230,10 @@ export const payrollService = {
                     .select()
                     .single();
 
-                if (!error && data) {
+                if (error) {
+                    throw new Error(`Failed to generate payslip for employee ${emp.id}: ${error.message}`);
+                }
+                if (data) {
                     payslips.push(mapDbToPayslip(data));
                 }
             }

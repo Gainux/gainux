@@ -16,7 +16,7 @@ export default function ComingSoonPage({ title, description }: ComingSoonPagePro
                 <Construction className="h-12 w-12 text-muted-foreground" />
             </div>
             <div className="space-y-2">
-                <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
+                <h1 className="text-xl md:text-3xl font-bold tracking-tight">{title}</h1>
                 <p className="max-w-[600px] text-muted-foreground">
                     {description || "This module is currently under development. Check back soon for updates!"}
                 </p>

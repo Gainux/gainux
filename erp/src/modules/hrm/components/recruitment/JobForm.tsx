@@ -90,7 +90,7 @@ export default function JobForm({ open, onOpenChange, job, onSave }: JobFormProp
             const payload = {
                 orgId: profile.org_id,
                 title: formData.title,
-                departmentId: formData.departmentId || null,
+                departmentId: formData.departmentId || undefined,
                 type: formData.type as any,
                 status: formData.status as any,
                 location: formData.location,

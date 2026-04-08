@@ -1,16 +1,13 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2 } from "lucide-react";
 
 export default function ProfilePage() {
     const { user, profile, updateProfile } = useAuth();
     const [fullName, setFullName] = useState("");
-    const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
     useEffect(() => {
@@ -21,7 +18,6 @@ export default function ProfilePage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setLoading(true);
         setMessage(null);
 
         try {
@@ -29,17 +25,15 @@ export default function ProfilePage() {
             setMessage({ type: 'success', text: "Profile updated successfully!" });
         } catch (error: any) {
             setMessage({ type: 'error', text: error.message });
-        } finally {
-            setLoading(false);
         }
     };
 
     if (!user) return null;
 
     return (
-        <div className="flex-1 space-y-4 p-8 pt-6">
+        <div className="flex-1 space-y-4 p-4 md:p-8 md:pt-6">
             <div className="flex items-center justify-between space-y-2">
-                <h2 className="text-3xl font-bold tracking-tight">Profile</h2>
+                <h2 className="text-xl md:text-3xl font-bold tracking-tight">Profile</h2>
             </div>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Card className="col-span-2">

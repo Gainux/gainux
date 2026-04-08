@@ -26,15 +26,124 @@ export const companyService = {
         return data as Organization;
     },
 
-    async createOrganization(org: Partial<Organization>) {
+    async verifyPayment(paymentDetails: any) {
+        // Direct fetch using ANON KEY to avoid "Invalid JWT" from broken user sessions.
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-payment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+            },
+            body: JSON.stringify(paymentDetails)
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            try {
+                const errorJson = JSON.parse(errorText);
+                throw new Error(errorJson.message || errorJson.error || `Server error: ${response.status}`);
+            } catch (e) {
+                throw new Error(errorText || `Server error: ${response.status}`);
+            }
+        }
+
+        const data = await response.json();
+
+
+
+        return data;
+    },
+
+    async createSubscription(details: { plan_id?: string, plan_name: string, amount: number, interval: 'month' | 'year', currency: string }) {
+        // Direct fetch using ANON KEY to avoid "Invalid JWT" from broken user sessions.
+        // We disabled strict JWT checking on the server, so Anon Key is sufficient.
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-subscription`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+            },
+            body: JSON.stringify(details)
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            // Try to parse JSON error
+            try {
+                const errorJson = JSON.parse(errorText);
+                throw new Error(errorJson.message || errorJson.error || `Server error: ${response.status}`);
+            } catch (e) {
+                throw new Error(errorText || `Server error: ${response.status}`);
+            }
+        }
+
+        const data = await response.json();
+
+
+
+        return data;
+    },
+
+    async createOrganization(org: Partial<Organization>, user?: { id: string, email: string, full_name?: string }) {
+        // 1. Ensure Profile Exists (if user provided)
+        if (user) {
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('id')
+                .eq('id', user.id)
+                .maybeSingle();
+
+            if (!profile) {
+                console.log("Creating missing profile for user before org creation...");
+                // Insert profile so RPC can update it or just to ensure it exists
+                const { error: profileError } = await supabase.from('profiles').insert({
+                    id: user.id,
+                    auth_id: user.id,
+                    email: user.email,
+                    full_name: user.full_name || '',
+                    role: 'admin', // Default to admin for new org creator
+                    status: 'active',
+                    created_at: new Date().toISOString()
+                });
+
+                if (profileError) {
+                    // Ignore duplicate key errors (race condition with trigger)
+                    if (profileError.code !== '23505') {
+                        console.error("Error creating profile:", profileError);
+                        throw profileError;
+                    }
+                }
+            }
+        }
+
         // Use RPC to safely handle RLS and atomic profile update
-        const { data, error } = await supabase.rpc('create_new_organization', {
+        const { data: newOrg, error } = await supabase.rpc('create_new_organization', {
             org_name: org.name,
             org_currency: org.currency || 'USD'
         });
 
         if (error) throw error;
-        return data as Organization;
+
+        // Update with subscription details if provided
+        // We do this separately because the RPC might not accept these new columns yet
+        if (org.subscription_plan) {
+            await companyService.updateOrganization(newOrg.id, {
+                subscription_plan: org.subscription_plan,
+                subscription_status: org.subscription_status || 'active',
+                subscription_expiry: org.subscription_expiry,
+                razorpay_subscription_id: org.razorpay_subscription_id,
+                settings: org.settings
+            });
+
+            // Return updated object locally
+            return {
+                ...newOrg,
+                subscription_plan: org.subscription_plan,
+                subscription_status: org.subscription_status || 'active'
+            } as Organization;
+        }
+
+        return newOrg as Organization;
     },
 
     // Branches

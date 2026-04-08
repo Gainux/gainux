@@ -2,8 +2,8 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Plus, Building2, Search, ArrowRight } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Plus, Building2, ArrowRight } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useNavigate } from 'react-router-dom';
 import { assetService } from '../services/assetService';
@@ -37,7 +37,7 @@ export default function AssetList() {
     const loadAssets = async () => {
         try {
             setLoading(true);
-            const data = await assetService.getAssets(profile!.org_id);
+            const data = await assetService.getAssets(profile?.org_id || "");
             setAssets(data);
         } catch (error) {
             console.error('Failed to load assets', error);
@@ -55,10 +55,10 @@ export default function AssetList() {
     const totalAssetValue = assets.reduce((sum, asset) => sum + (asset.currentValue || asset.purchaseCost), 0);
 
     return (
-        <div className="flex-1 space-y-4 p-8 pt-6">
+        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight">Fixed Assets</h2>
+                    <h2 className="text-xl md:text-3xl font-bold tracking-tight">Fixed Assets</h2>
                     <p className="text-muted-foreground">Manage your organization's assets and depreciation.</p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -75,14 +75,14 @@ export default function AssetList() {
             />
 
             {/* Asset Summary Cards */}
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Total Assets Value</CardTitle>
                         <Building2 className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{formatCurrency(totalAssetValue)}</div>
+                        <div className="text-lg md:text-2xl font-bold">{formatCurrency(totalAssetValue)}</div>
                         <p className="text-xs text-muted-foreground">Book value of all active assets</p>
                     </CardContent>
                 </Card>
@@ -92,7 +92,7 @@ export default function AssetList() {
                         <Building2 className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{assets.length}</div>
+                        <div className="text-lg md:text-2xl font-bold">{assets.length}</div>
                         <p className="text-xs text-muted-foreground">Registered items</p>
                     </CardContent>
                 </Card>
@@ -108,7 +108,7 @@ export default function AssetList() {
             </div>
 
             <Card>
-                <CardContent className="p-0">
+                <CardContent className="p-0 overflow-x-auto">
                     <Table>
                         <TableHeader>
                             <TableRow>

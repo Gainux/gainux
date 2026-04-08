@@ -2,11 +2,21 @@ import { supabase } from "@/lib/supabase";
 import type { Deal } from "../types";
 
 export const dealService = {
-    async getDeals() {
-        const { data, error } = await supabase
+    async getDeals(orgId?: string) {
+        let query = supabase
             .from("deals")
-            .select("*")
+            .select(`
+                *,
+                company:companies(*),
+                contact:contacts(*)
+            `)
             .order("created_at", { ascending: false });
+
+        if (orgId) {
+            query = query.eq('org_id', orgId);
+        }
+
+        const { data, error } = await query;
 
         if (error) throw error;
 
@@ -15,7 +25,11 @@ export const dealService = {
             expectedCloseDate: deal.expected_close_date,
             formattedValue: new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(deal.value || 0),
             customerId: deal.customer_id,
-            requirements: deal.requirements || []
+            companyId: deal.company_id,
+            contactId: deal.contact_id,
+            requirements: deal.requirements || [],
+            createdAt: deal.created_at,
+            updatedAt: deal.updated_at
         })) as Deal[];
     },
 
@@ -27,7 +41,8 @@ export const dealService = {
                     title: deal.title,
                     value: deal.value,
                     stage: deal.stage || 'new',
-                    company: deal.company,
+                    company_id: deal.companyId,
+                    contact_id: deal.contactId,
                     expected_close_date: deal.expectedCloseDate,
                     probability: deal.probability,
                     customer_id: deal.customerId,
@@ -57,8 +72,18 @@ export const dealService = {
             dbUpdates.customer_id = updates.customerId;
             delete dbUpdates.customerId;
         }
+        if (updates.companyId !== undefined) {
+            dbUpdates.company_id = updates.companyId;
+            delete dbUpdates.companyId;
+        }
+        if (updates.contactId !== undefined) {
+            dbUpdates.contact_id = updates.contactId;
+            delete dbUpdates.contactId;
+        }
         // formattedValue is derived, don't send to DB
         if ('formattedValue' in dbUpdates) delete dbUpdates.formattedValue;
+        if ('company' in dbUpdates) delete dbUpdates.company; // Relations not updateable directly
+        if ('contact' in dbUpdates) delete dbUpdates.contact;
 
 
         const { data, error } = await supabase
@@ -104,7 +129,11 @@ export const dealService = {
             expectedCloseDate: deal.expected_close_date,
             formattedValue: new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(deal.value || 0),
             customerId: deal.customer_id,
-            requirements: deal.requirements || []
+            companyId: deal.company_id,
+            contactId: deal.contact_id,
+            requirements: deal.requirements || [],
+            createdAt: deal.created_at,
+            updatedAt: deal.updated_at
         })) as Deal[];
     },
 

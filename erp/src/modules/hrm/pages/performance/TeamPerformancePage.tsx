@@ -62,7 +62,7 @@ export default function TeamPerformancePage({ selectedMonth }: TeamPerformancePa
                         <Users className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{employees.length}</div>
+                        <div className="text-lg md:text-2xl font-bold">{employees.length}</div>
                         <p className="text-xs text-muted-foreground">Active team members</p>
                     </CardContent>
                 </Card>
@@ -72,7 +72,7 @@ export default function TeamPerformancePage({ selectedMonth }: TeamPerformancePa
                         <Activity className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">0</div>
+                        <div className="text-lg md:text-2xl font-bold">0</div>
                         <p className="text-xs text-muted-foreground">For {selectedMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}</p>
                     </CardContent>
                 </Card>
@@ -82,7 +82,7 @@ export default function TeamPerformancePage({ selectedMonth }: TeamPerformancePa
                         <TrendingUp className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">- / 5</div>
+                        <div className="text-lg md:text-2xl font-bold">- / 5</div>
                         <p className="text-xs text-muted-foreground">Overall performance</p>
                     </CardContent>
                 </Card>

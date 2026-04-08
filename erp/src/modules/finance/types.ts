@@ -100,9 +100,9 @@ export interface AccountTypeOption {
     label: string;
 }
 
-import type { Vendor } from "@/modules/procurement/types";
+// import type { Vendor } from "@/modules/procurement/types";
 
-export type { Vendor };
+// export type { Vendor };
 
 export interface Bill {
     id: string;
@@ -122,7 +122,7 @@ export interface Bill {
     items?: BillItem[];
     created_at: string;
     updated_at: string;
-    vendor?: Vendor; // For display
+    // vendor?: Vendor;
 }
 
 export interface BillItem {
@@ -218,4 +218,51 @@ export interface TaxRate {
     isActive: boolean;
     created_at?: string;
     updated_at?: string;
+}
+
+export type RecurringFrequency = 'weekly' | 'monthly' | 'quarterly' | 'yearly';
+export type RecurringStatus = 'active' | 'paused' | 'cancelled' | 'completed';
+
+export interface RecurringPayment {
+    id: string;
+    org_id: string;
+    client_id: string;
+    description: string;
+    amount: number;
+    currency: string;
+    frequency: RecurringFrequency;
+    payment_day: number; // 1–31 (day of month)
+    start_date: string;
+    end_date?: string;
+    occurrences?: number; // max occurrences (null = indefinite)
+    occurrences_completed: number;
+    status: RecurringStatus;
+    tax_rate: number;
+    notes?: string;
+    next_payment_date?: string;
+    created_at?: string;
+    updated_at?: string;
+    client?: { id: string; name: string };
+}
+
+export interface RecurringExpense {
+    id: string;
+    org_id: string;
+    vendor_id: string;
+    description: string;
+    amount: number;
+    currency: string;
+    frequency: RecurringFrequency;
+    payment_day: number; // 1–31 (day of month)
+    start_date: string;
+    end_date?: string;
+    occurrences?: number;
+    occurrences_completed: number;
+    status: RecurringStatus;
+    tax_rate: number;
+    notes?: string;
+    next_payment_date?: string;
+    created_at?: string;
+    updated_at?: string;
+    vendor?: { id: string; name: string };
 }

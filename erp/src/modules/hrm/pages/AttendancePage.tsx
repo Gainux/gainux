@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { format, addDays, subDays, startOfMonth, endOfMonth, addMonths, subMonths } from "date-fns";
-import { Calendar, Clock, UserCheck, Edit, Search, ChevronLeft, ChevronRight, LayoutGrid, List } from "lucide-react";
+import { Clock, UserCheck, Edit, Search, ChevronLeft, ChevronRight, LayoutGrid, List } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AttendanceGrid } from "../components/AttendanceGrid";
@@ -127,7 +127,7 @@ export default function AttendancePage() {
                 if (!empRecord) return;
 
                 await attendanceService.markAttendance({
-                    orgId: profile.org_id,
+                    orgId: profile?.org_id || "",
                     employeeId: id,
                     date: date,
                     status: status,
@@ -267,7 +267,7 @@ export default function AttendancePage() {
                     status: 'present',
                     date: date,
                     checkIn: '09:00',
-                    orgId: profile!.org_id,
+                    orgId: profile?.org_id || "",
                 })
             ));
             toast.success(`Marked ${unmarkedEmployees.length} employees as present`);
@@ -293,7 +293,7 @@ export default function AttendancePage() {
                     employeeId: e.employee.id,
                     status: 'absent',
                     date: date,
-                    orgId: profile!.org_id,
+                    orgId: profile?.org_id || "",
                 })
             ));
             toast.success(`Marked ${unmarkedEmployees.length} employees as absent`);
@@ -366,7 +366,7 @@ export default function AttendancePage() {
     };
 
     return (
-        <div className="flex-1 flex flex-col space-y-4 p-8 pt-6 h-full overflow-hidden">
+        <div className="flex-1 flex flex-col space-y-4 p-4 md:p-8 pt-6 h-full overflow-hidden">
             {/* Header with Date Navigation */}
             <div className="flex flex-col gap-6">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -538,7 +538,7 @@ export default function AttendancePage() {
                                 <UserCheck className="h-4 w-4 text-green-600" />
                             </CardHeader>
                             <CardContent>
-                                <div className="text-2xl font-bold">{stats.present}</div>
+                                <div className="text-lg md:text-2xl font-bold">{stats.present}</div>
                                 <p className="text-xs text-muted-foreground">{stats.total > 0 ? ((stats.present / stats.total) * 100).toFixed(0) : 0}% of workforce</p>
                             </CardContent>
                         </Card>
@@ -548,7 +548,7 @@ export default function AttendancePage() {
                                 <Clock className="h-4 w-4 text-red-600" />
                             </CardHeader>
                             <CardContent>
-                                <div className="text-2xl font-bold">{stats.absent}</div>
+                                <div className="text-lg md:text-2xl font-bold">{stats.absent}</div>
                             </CardContent>
                         </Card>
                         <Card>
@@ -557,13 +557,13 @@ export default function AttendancePage() {
                                 <UserCheck className="h-4 w-4 text-gray-600" />
                             </CardHeader>
                             <CardContent>
-                                <div className="text-2xl font-bold">{stats.total}</div>
+                                <div className="text-lg md:text-2xl font-bold">{stats.total}</div>
                             </CardContent>
                         </Card>
                     </div>
 
 
-                    <div className="rounded-md border">
+                    <div className="rounded-md border overflow-x-auto">
                         <Table>
                             <TableHeader>
                                 <TableRow>

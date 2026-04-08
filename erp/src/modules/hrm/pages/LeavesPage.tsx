@@ -104,12 +104,12 @@ export default function LeavesPage() {
     }
 
     return (
-        <div className="flex-1 p-8 pt-6 space-y-6">
+        <div className="flex-1 p-4 md:p-8 pt-6 space-y-6">
 
 
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight">Leave Management</h2>
+                    <h2 className="text-xl md:text-3xl font-bold tracking-tight">Leave Management</h2>
                     <p className="text-muted-foreground">Manage employee leave requests.</p>
                 </div>
             </div>
@@ -128,47 +128,49 @@ export default function LeavesPage() {
                             {allRequests.length === 0 ? (
                                 <div className="text-center py-8 text-muted-foreground">No pending requests found.</div>
                             ) : (
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Employee</TableHead>
-                                            <TableHead>Type</TableHead>
-                                            <TableHead>Dates</TableHead>
-                                            <TableHead>Reason</TableHead>
-                                            <TableHead>Status</TableHead>
-                                            <TableHead>Actions</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {allRequests.map(req => (
-                                            <TableRow key={req.id}>
-                                                <TableCell className="font-medium">
-                                                    <div>{req.employee?.firstName} {req.employee?.lastName}</div>
-                                                    <div className="text-xs text-muted-foreground">{req.employee?.employeeCode}</div>
-                                                </TableCell>
-                                                <TableCell>{req.leaveType?.name || 'Unknown'}</TableCell>
-                                                <TableCell>
-                                                    {format(new Date(req.startDate), 'MMM dd')} - {format(new Date(req.endDate), 'MMM dd')}
-                                                    <div className="text-xs text-muted-foreground">({req.daysCount} days)</div>
-                                                </TableCell>
-                                                <TableCell className="max-w-[200px] truncate" title={req.reason}>{req.reason || '-'}</TableCell>
-                                                <TableCell>{getStatusBadge(req.status)}</TableCell>
-                                                <TableCell>
-                                                    {req.status === 'pending' && (
-                                                        <div className="flex gap-2">
-                                                            <Button size="sm" className="bg-green-600 hover:bg-green-700 h-8" onClick={() => handleApprove(req.id)}>
-                                                                Approve
-                                                            </Button>
-                                                            <Button size="sm" variant="destructive" className="h-8" onClick={() => handleReject(req.id)}>
-                                                                Reject
-                                                            </Button>
-                                                        </div>
-                                                    )}
-                                                </TableCell>
+                                <div className="overflow-x-auto">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Employee</TableHead>
+                                                <TableHead>Type</TableHead>
+                                                <TableHead>Dates</TableHead>
+                                                <TableHead>Reason</TableHead>
+                                                <TableHead>Status</TableHead>
+                                                <TableHead>Actions</TableHead>
                                             </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {allRequests.map(req => (
+                                                <TableRow key={req.id}>
+                                                    <TableCell className="font-medium">
+                                                        <div>{req.employee?.firstName} {req.employee?.lastName}</div>
+                                                        <div className="text-xs text-muted-foreground">{req.employee?.employeeCode}</div>
+                                                    </TableCell>
+                                                    <TableCell>{req.leaveType?.name || 'Unknown'}</TableCell>
+                                                    <TableCell>
+                                                        {format(new Date(req.startDate), 'MMM dd')} - {format(new Date(req.endDate), 'MMM dd')}
+                                                        <div className="text-xs text-muted-foreground">({req.daysCount} days)</div>
+                                                    </TableCell>
+                                                    <TableCell className="max-w-[200px] truncate" title={req.reason}>{req.reason || '-'}</TableCell>
+                                                    <TableCell>{getStatusBadge(req.status)}</TableCell>
+                                                    <TableCell>
+                                                        {req.status === 'pending' && (
+                                                            <div className="flex gap-2">
+                                                                <Button size="sm" className="bg-green-600 hover:bg-green-700 h-8" onClick={() => handleApprove(req.id)}>
+                                                                    Approve
+                                                                </Button>
+                                                                <Button size="sm" variant="destructive" className="h-8" onClick={() => handleReject(req.id)}>
+                                                                    Reject
+                                                                </Button>
+                                                            </div>
+                                                        )}
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </div>
                             )}
                         </CardContent>
                     </Card>

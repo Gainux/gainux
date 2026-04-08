@@ -17,7 +17,9 @@ export interface Project {
     endDate: string | null;   // ISO Date string
     budget: number;
     createdAt: string;
+
     updatedAt: string;
+    orgId?: string;
 }
 
 export interface ProjectMember {
@@ -56,6 +58,22 @@ export interface Task {
     dueDate: string | null;
     createdAt: string;
     updatedAt: string;
+    sprintId?: string | null;
+    sprint?: {
+        id: string;
+        name: string;
+    };
+}
+
+export interface Sprint {
+    id: string;
+    projectId: string;
+    name: string;
+    startDate: string;
+    endDate: string;
+    status: 'planned' | 'active' | 'completed';
+    goal?: string;
+    createdAt: string;
 }
 
 export interface ResourceAllocation {
@@ -86,4 +104,8 @@ export interface TimesheetEntry {
     hours: number;
     description?: string;
     status: 'draft' | 'submitted' | 'approved' | 'rejected';
+    isBillable?: boolean;
+    hourlyRate?: number;
+    startTime?: string; // ISO date string
+    endTime?: string;   // ISO date string
 }

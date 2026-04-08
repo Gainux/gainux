@@ -21,11 +21,13 @@ import { taxService } from "../services/taxService";
 import type { Company } from "@/modules/crm/types";
 import type { InvoiceItem, TaxRate } from "../types";
 import { useAuth } from "@/context/AuthContext";
+import { useCurrency } from "@/hooks/useCurrency";
 
 export default function EditInvoice() {
     const { id } = useParams();
     const navigate = useNavigate();
     const { profile } = useAuth();
+    const { formatAmount } = useCurrency();
     const orgId = profile?.org_id;
 
     const [companies, setCompanies] = useState<Company[]>([]);
@@ -151,12 +153,12 @@ export default function EditInvoice() {
     }
 
     return (
-        <div className="flex-1 space-y-4 p-8 pt-6">
+        <div className="flex-1 space-y-4 p-4 md:p-8 md:pt-6">
             <div className="flex items-center gap-4">
                 <Button variant="ghost" size="icon" onClick={() => navigate(`/finance/invoices/${id}`)}>
                     <ArrowLeft className="h-4 w-4" />
                 </Button>
-                <h2 className="text-3xl font-bold tracking-tight">Edit Invoice</h2>
+                <h2 className="text-xl md:text-3xl font-bold tracking-tight">Edit Invoice</h2>
             </div>
 
             <form onSubmit={handleSubmit}>
@@ -332,18 +334,18 @@ export default function EditInvoice() {
                             <CardContent className="space-y-4">
                                 <div className="flex justify-between">
                                     <span className="text-muted-foreground">Subtotal:</span>
-                                    <span className="font-medium">₹{subtotal.toFixed(2)}</span>
+                                    <span className="font-medium">{formatAmount(subtotal)}</span>
                                 </div>
                                 {applyGst && (
                                     <div className="flex justify-between">
                                         <span className="text-muted-foreground">GST ({taxRate}%):</span>
-                                        <span className="font-medium">₹{tax.toFixed(2)}</span>
+                                        <span className="font-medium">{formatAmount(tax)}</span>
                                     </div>
                                 )}
                                 <div className="h-px bg-border" />
                                 <div className="flex justify-between text-lg font-bold">
                                     <span>Total:</span>
-                                    <span>₹{total.toFixed(2)}</span>
+                                    <span>{formatAmount(total)}</span>
                                 </div>
 
                                 <div className="pt-4 space-y-2">

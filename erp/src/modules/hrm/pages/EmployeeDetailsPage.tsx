@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Mail, Phone, MapPin, Building, Calendar, DollarSign, User, Pencil } from "lucide-react";
+import { ArrowLeft, Mail, Phone, Building, Calendar, DollarSign, User, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -43,7 +43,7 @@ export default function EmployeeDetailsPage() {
     };
 
     if (loading) {
-        return <div className="flex-1 p-8 flex justify-center items-center">Loading...</div>;
+        return <div className="flex-1 p-4 md:p-8 flex justify-center items-center">Loading...</div>;
     }
 
     if (id === 'new') {
@@ -63,7 +63,7 @@ export default function EmployeeDetailsPage() {
     }
 
     if (!employee) {
-        return <div className="flex-1 p-8 flex justify-center items-center">Employee not found</div>;
+        return <div className="flex-1 p-4 md:p-8 flex justify-center items-center">Employee not found</div>;
     }
 
     const getStatusBadge = (status: string) => {
@@ -90,13 +90,13 @@ export default function EmployeeDetailsPage() {
     };
 
     return (
-        <div className="flex-1 space-y-4 p-8 pt-6">
+        <div className="flex-1 space-y-4 p-4 md:p-8 md:pt-6">
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-2">
                     <Button variant="ghost" size="icon" onClick={() => navigate('/hrm/employees')}>
                         <ArrowLeft className="h-4 w-4" />
                     </Button>
-                    <h2 className="text-3xl font-bold tracking-tight">Employee Profile</h2>
+                    <h2 className="text-xl md:text-3xl font-bold tracking-tight">Employee Profile</h2>
                 </div>
                 <Button onClick={() => setIsEditing(true)}>
                     <Pencil className="mr-2 h-4 w-4" />

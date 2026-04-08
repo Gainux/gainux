@@ -20,11 +20,17 @@ const mapToSystemUser = (data: any): SystemUser => ({
 });
 
 export const userService = {
-    async getUsers() {
-        const { data, error } = await supabase
+    async getUsers(orgId?: string) {
+        let query = supabase
             .from('profiles')
             .select('*')
             .order('created_at', { ascending: false });
+
+        if (orgId) {
+            query = query.eq('org_id', orgId);
+        }
+
+        const { data, error } = await query;
 
         if (error) throw error;
         return data.map(mapToSystemUser);
@@ -108,7 +114,8 @@ export const userService = {
                 email,
                 full_name: user.full_name,
                 role: user.role || 'user',
-                status: user.status || 'active'
+                status: user.status || 'active',
+                org_id: user.org_id // Ensure org_id is passed
             })
             .select()
             .single();
@@ -119,6 +126,24 @@ export const userService = {
             throw error;
         }
 
+        return mapToSystemUser(data);
+    },
+
+    async updateUser(id: string, updates: Partial<SystemUser>) {
+        // Filter out undefined values
+        const cleanUpdates: any = {};
+        if (updates.full_name !== undefined) cleanUpdates.full_name = updates.full_name;
+        if (updates.role !== undefined) cleanUpdates.role = updates.role;
+        if (updates.status !== undefined) cleanUpdates.status = updates.status;
+
+        const { data, error } = await supabase
+            .from('profiles')
+            .update(cleanUpdates)
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) throw error;
         return mapToSystemUser(data);
     },
 

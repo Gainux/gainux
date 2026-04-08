@@ -8,10 +8,12 @@ import { Label } from '@/components/ui/label';
 import { Filter } from 'lucide-react';
 import { taxService } from '../services/taxService';
 import { toast } from 'sonner';
+import { useCurrency } from '@/hooks/useCurrency';
 
 export default function TaxReportPage() {
     const { profile } = useAuth();
-    const [loading, setLoading] = useState(true);
+    const { formatAmount } = useCurrency();
+    const [, setLoading] = useState(true);
     const [report, setReport] = useState({
         totalSales: 0,
         totalTaxCollected: 0,
@@ -36,7 +38,7 @@ export default function TaxReportPage() {
     const fetchReport = async () => {
         try {
             setLoading(true);
-            const data = await taxService.getTaxReport(profile!.org_id, startDate, endDate);
+            const data = await taxService.getTaxReport(profile?.org_id || "", startDate, endDate);
             setReport(data);
         } catch (error) {
             console.error('Failed to load tax report', error);
@@ -47,10 +49,10 @@ export default function TaxReportPage() {
     };
 
     return (
-        <div className="flex-1 space-y-4 p-8 pt-6">
+        <div className="flex-1 space-y-4 p-4 md:p-8 md:pt-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight">Tax Liability Report</h2>
+                    <h2 className="text-xl md:text-3xl font-bold tracking-tight">Tax Liability Report</h2>
                     <p className="text-muted-foreground">Overview of tax collected vs paid.</p>
                 </div>
                 {/* Date Filter */}
@@ -87,10 +89,10 @@ export default function TaxReportPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-green-600">
-                            ₹{report.totalTaxCollected.toFixed(2)}
+                            {formatAmount(report.totalTaxCollected)}
                         </div>
                         <p className="text-xs text-muted-foreground">
-                            on Sales of ₹{report.totalSales.toFixed(2)}
+                            on Sales of {formatAmount(report.totalSales)}
                         </p>
                     </CardContent>
                 </Card>
@@ -102,10 +104,10 @@ export default function TaxReportPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-blue-600">
-                            ₹{report.totalTaxPaid.toFixed(2)}
+                            {formatAmount(report.totalTaxPaid)}
                         </div>
                         <p className="text-xs text-muted-foreground">
-                            on Purchases of ₹{report.totalPurchases.toFixed(2)}
+                            on Purchases of {formatAmount(report.totalPurchases)}
                         </p>
                     </CardContent>
                 </Card>
@@ -117,7 +119,7 @@ export default function TaxReportPage() {
                     </CardHeader>
                     <CardContent>
                         <div className={`text-2xl font-bold ${report.netTaxPayable >= 0 ? 'text-red-600' : 'text-green-600'}`}>
-                            ₹{Math.abs(report.netTaxPayable).toFixed(2)}
+                            {formatAmount(Math.abs(report.netTaxPayable))}
                         </div>
                         <p className="text-xs text-muted-foreground">
                             {report.netTaxPayable >= 0 ? "You owe to Govt" : "Credit (Receivable)"}

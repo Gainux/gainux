@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, ArrowLeft, Building, Calendar, Edit, Globe, Phone, MapPin } from "lucide-react";
+import { Loader2, ArrowLeft, Building, Edit, Globe, Phone, MapPin } from "lucide-react";
 import {
     Dialog,
     DialogContent,
@@ -98,7 +98,7 @@ export default function CustomerDetailsPage() {
     }
 
     return (
-        <div className="flex-1 space-y-4 p-8 pt-6">
+        <div className="flex-1 space-y-4 p-4 md:p-8 md:pt-6">
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
@@ -106,7 +106,7 @@ export default function CustomerDetailsPage() {
                         <ArrowLeft className="h-4 w-4" />
                     </Button>
                     <div>
-                        <h2 className="text-3xl font-bold tracking-tight">{company.name}</h2>
+                        <h2 className="text-xl md:text-3xl font-bold tracking-tight">{company.name}</h2>
                         <div className="flex items-center text-muted-foreground mt-1">
                             <Building className="mr-1 h-4 w-4" />
                             <span className="mr-4">{company.industry || 'Industry N/A'}</span>
@@ -162,7 +162,7 @@ export default function CustomerDetailsPage() {
                                 {company.website && (
                                     <div className="flex items-center">
                                         <Globe className="mr-2 h-4 w-4 text-muted-foreground" />
-                                        <a href={company.website} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">
+                                        <a href={company.website.startsWith('http') ? company.website : `https://${company.website}`} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">
                                             {company.website}
                                         </a>
                                     </div>

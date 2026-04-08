@@ -13,7 +13,7 @@ export default function AttendanceWidget({ employeeId = DEMO_EMPLOYEE_ID }: { em
     const handleCheckIn = async () => {
         try {
             setLoading(true);
-            await attendanceService.clockIn(employeeId);
+            await attendanceService.checkIn(employeeId, "org-id-placeholder", new Date().toISOString().split('T')[0]);
             setStatus('checked-in');
         } catch (error) {
             console.error(error);
@@ -26,7 +26,7 @@ export default function AttendanceWidget({ employeeId = DEMO_EMPLOYEE_ID }: { em
     const handleCheckOut = async () => {
         try {
             setLoading(true);
-            await attendanceService.clockOut(employeeId);
+            await attendanceService.checkOut(employeeId, new Date().toISOString().split('T')[0]);
             setStatus('checked-out');
         } catch (error) {
             console.error(error);
@@ -44,7 +44,7 @@ export default function AttendanceWidget({ employeeId = DEMO_EMPLOYEE_ID }: { em
             </CardHeader>
             <CardContent>
                 <div className="flex flex-col gap-4">
-                    <div className="text-2xl font-bold">
+                    <div className="text-lg md:text-2xl font-bold">
                         {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </div>
                     <div className="flex gap-2">

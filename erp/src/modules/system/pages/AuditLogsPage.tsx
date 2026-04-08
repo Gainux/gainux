@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { auditService } from "../services/auditService";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Loader2, FileCheck, Search, RefreshCw, AlertCircle } from "lucide-react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Loader2, Search, RefreshCw, AlertCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -74,10 +74,10 @@ export default function AuditLogsPage() {
     }
 
     return (
-        <div className="space-y-6 p-6 pb-8">
+        <div className="space-y-6 p-4 md:p-6 pb-8">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Audit Logs</h1>
+                    <h1 className="text-xl md:text-3xl font-bold tracking-tight">Audit Logs</h1>
                     <p className="text-muted-foreground mt-1">
                         Track system activity and security events.
                     </p>
@@ -105,7 +105,7 @@ export default function AuditLogsPage() {
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <div className="rounded-md border">
+                    <div className="rounded-md border overflow-x-auto">
                         <Table>
                             <TableHeader>
                                 <TableRow className="bg-muted/50 hover:bg-muted/50">

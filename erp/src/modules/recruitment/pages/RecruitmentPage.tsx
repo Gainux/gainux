@@ -5,9 +5,9 @@ import PipelineBoard from "./PipelineBoard";
 
 export default function RecruitmentPage() {
     return (
-        <div className="flex-1 space-y-4 p-8 pt-6">
+        <div className="flex-1 space-y-4 p-4 md:p-8 md:pt-6">
             <div className="flex items-center justify-between space-y-2">
-                <h2 className="text-3xl font-bold tracking-tight">Recruitment</h2>
+                <h2 className="text-xl md:text-3xl font-bold tracking-tight">Recruitment</h2>
             </div>
             <Tabs defaultValue="jobs" className="space-y-4">
                 <TabsList>

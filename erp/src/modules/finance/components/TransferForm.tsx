@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -55,7 +55,7 @@ export default function TransferForm({
     const { profile } = useAuth();
     const [submitting, setSubmitting] = useState(false);
 
-    const form = useForm<z.infer<typeof formSchema>>({
+    const form = useForm<any>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             fromAccountId: "",
@@ -105,7 +105,7 @@ export default function TransferForm({
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
                             <FormField
-                                control={form.control}
+                                control={form.control as any}
                                 name="fromAccountId"
                                 render={({ field }) => (
                                     <FormItem>
@@ -129,7 +129,7 @@ export default function TransferForm({
                                 )}
                             />
                             <FormField
-                                control={form.control}
+                                control={form.control as any}
                                 name="toAccountId"
                                 render={({ field }) => (
                                     <FormItem>
@@ -156,7 +156,7 @@ export default function TransferForm({
 
                         <div className="grid grid-cols-2 gap-4">
                             <FormField
-                                control={form.control}
+                                control={form.control as any}
                                 name="amount"
                                 render={({ field }) => (
                                     <FormItem>
@@ -174,7 +174,7 @@ export default function TransferForm({
                                 )}
                             />
                             <FormField
-                                control={form.control}
+                                control={form.control as any}
                                 name="date"
                                 render={({ field }) => (
                                     <FormItem>
@@ -189,7 +189,7 @@ export default function TransferForm({
                         </div>
 
                         <FormField
-                            control={form.control}
+                            control={form.control as any}
                             name="description"
                             render={({ field }) => (
                                 <FormItem>

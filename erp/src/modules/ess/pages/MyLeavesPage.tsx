@@ -135,7 +135,7 @@ export default function MyLeavesPage() {
     }
 
     return (
-        <div className="flex-1 p-8 pt-6 space-y-6">
+        <div className="flex-1 p-4 md:p-8 md:pt-6 space-y-6">
             {!employeeId && !loading && (
                 <div className="bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200 p-4 rounded-md flex items-center gap-2 border border-yellow-200 dark:border-yellow-800">
                     <Clock className="h-5 w-5" />
@@ -146,7 +146,7 @@ export default function MyLeavesPage() {
             )}
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight">My Leaves</h2>
+                    <h2 className="text-xl md:text-3xl font-bold tracking-tight">My Leaves</h2>
                     <p className="text-muted-foreground">View your leave balances and request history.</p>
                 </div>
                 <Dialog open={isApplyOpen} onOpenChange={setIsApplyOpen}>
@@ -211,7 +211,7 @@ export default function MyLeavesPage() {
                                 <CalendarIcon className="h-4 w-4 text-muted-foreground" />
                             </CardHeader>
                             <CardContent>
-                                <div className="text-2xl font-bold">{balance ? balance.daysRemaining : type.daysAllowedPerYear}</div>
+                                <div className="text-lg md:text-2xl font-bold">{balance ? balance.daysRemaining : type.daysAllowedPerYear}</div>
                                 <p className="text-xs text-muted-foreground">
                                     Available out of {type.daysAllowedPerYear} days
                                 </p>

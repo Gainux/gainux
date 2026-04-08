@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, ArrowDownLeft, ArrowUpRight, Plus, Minus } from "lucide-react";
+import { ArrowLeft, Plus, Minus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -14,7 +14,7 @@ import {
 import { bankService } from "../services/bankService";
 import { useAuth } from "@/context/AuthContext";
 import { formatCurrency, cn } from "@/lib/utils";
-import type { BankAccount, JournalEntry } from "../types";
+import type { BankAccount } from "../types";
 import { format } from "date-fns";
 import { TransactionForm } from "../components/TransactionForm";
 
@@ -51,7 +51,7 @@ export default function BankDetails() {
         try {
             setLoading(true);
             // 1. Get Account Details
-            const accounts = await bankService.getBankAccounts(profile!.org_id);
+            const accounts = await bankService.getBankAccounts(profile?.org_id || "");
             const currentAccount = accounts.find(a => a.id === id);
 
             if (!currentAccount) {
@@ -62,7 +62,7 @@ export default function BankDetails() {
 
             // 2. Get Transactions
             if (currentAccount.glAccountId) {
-                const txns = await bankService.getBankTransactions(profile!.org_id, currentAccount.glAccountId);
+                const txns = await bankService.getBankTransactions(profile?.org_id || "", currentAccount.glAccountId);
                 // Cast the type or ensure usage matches
                 setTransactions(txns as BankTransaction[]);
             }
@@ -83,7 +83,7 @@ export default function BankDetails() {
     if (!account) return <div className="p-8" > Account not found </div>;
 
     return (
-        <div className="flex-1 space-y-4 p-8 pt-6" >
+        <div className="flex-1 space-y-4 p-4 md:p-8 md:pt-6" >
             <div className="flex items-center space-x-2 mb-4" >
                 <Button variant="ghost" size="sm" onClick={() => navigate('/finance/banking')
                 }>
@@ -93,7 +93,7 @@ export default function BankDetails() {
 
             < div className="flex items-center justify-between" >
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight" > {account.bankName} - {account.accountName} </h2>
+                    <h2 className="text-xl md:text-3xl font-bold tracking-tight" > {account.bankName} - {account.accountName} </h2>
                     < p className="text-muted-foreground" > {account.currency} •••• {account.accountNumber?.slice(-4)} </p>
                 </div>
                 < div className="flex space-x-2" >
@@ -118,7 +118,7 @@ export default function BankDetails() {
                         <CardTitle className="text-sm font-medium" > Current Balance </CardTitle>
                     </CardHeader>
                     < CardContent >
-                        <div className="text-2xl font-bold" > {formatCurrency(account.balance, account.currency)} </div>
+                        <div className="text-lg md:text-2xl font-bold" > {formatCurrency(account.balance, account.currency)} </div>
                     </CardContent>
                 </Card>
                 {/* Add more stats later if needed */}

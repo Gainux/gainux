@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Plus, Shield, Pencil, Trash2, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
 import {
     Table,
     TableBody,
@@ -19,7 +19,6 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -66,8 +65,8 @@ export default function TaxRates() {
         try {
             setLoading(true);
             const [ratesData, accountsData] = await Promise.all([
-                taxService.getTaxRates(profile!.org_id),
-                financeService.getAccounts(profile!.org_id)
+                taxService.getTaxRates(profile?.org_id || ""),
+                financeService.getAccounts(profile?.org_id || "")
             ]);
             setRates(ratesData);
             setAccounts(accountsData);
@@ -156,10 +155,10 @@ export default function TaxRates() {
     );
 
     return (
-        <div className="flex-1 space-y-4 p-8 pt-6">
+        <div className="flex-1 space-y-4 p-4 md:p-8 md:pt-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight">Tax & Compliance</h2>
+                    <h2 className="text-xl md:text-3xl font-bold tracking-tight">Tax & Compliance</h2>
                     <p className="text-muted-foreground">Manage tax rates and compliance settings.</p>
                 </div>
                 <div className="flex gap-2">

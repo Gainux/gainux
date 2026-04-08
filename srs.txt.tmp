@@ -1,0 +1,70 @@
+# Software Requirements Specification (SRS) for Gainux
+
+## 1. Introduction
+
+### 1.1 Purpose
+This document specifies the software requirements for Gainux, a B2B SaaS lead referral platform. It defines the system's architecture, functional capabilities, business logic, and non-functional constraints required to successfully launch the Minimum Viable Product (MVP).
+
+### 1.2 Product Scope
+Gainux allows independent public users (Referrers) to submit high-quality leads for IT services (e.g., Web Development, Mobile Apps). The system provides a transparent tracking dashboard and a virtual wallet. Commissions (10-25%) are calculated dynamically and credited to the user's wallet manually by the Admin based on actual payments received from the client (milestone basis).
+
+## 2. User Roles & Descriptions
+
+| Role | Description | Key Capabilities |
+| :--- | :--- | :--- |
+| **Referrer (Public User)** | Individuals referring clients to Gainux. | Register, submit leads, track pipeline status, view wallet balance, add bank details, request withdrawals. |
+| **Sales Admin (Internal)** | Gainux team handling the leads. | View incoming leads, update lead statuses, add notes. |
+| **Super Admin (Founders)** | Full system control. | All Sales Admin rights, plus: approve withdrawals, manually trigger wallet credits based on received payments, manage users. |
+
+## 3. Core System Workflows (User Journeys)
+
+### 3.1 The Referral & Tracking Journey
+- **Submit**: User logs in, selects a service (e.g., E-commerce App), inputs the Prospect's details, budget, and checks the "Prospect Consent" box.
+- **Track**: The lead appears in the user's dashboard as *Submitted*. As Gainux works the lead, the status updates (e.g., *Contacted* $\rightarrow$ *Negotiation* $\rightarrow$ *Converted*).
+- **Earn (Milestone Logic)**: 
+  - Gainux closes the deal for ₹1,00,000 and collects a ₹50,000 advance.
+  - Super Admin manually registers the ₹50,000 receipt.
+  - Gainux calculates the commission (e.g., 20% of ₹50,000 = ₹10,000) and credits it to the user's virtual wallet.
+  - When the final ₹50,000 is paid by the client, the remaining ₹10,000 is credited.
+- **Withdraw**: User clicks "Withdraw." Super Admin processes the bank transfer (NEFT/IMPS/UPI) outside the app within 2-3 days, and marks the withdrawal as *Completed* in the system.
+
+## 4. Functional Requirements
+
+### 4.1 Authentication & Profile Management
+- **FR-1.1**: The system shall allow users to register via Email/Password and Google SSO.
+- **FR-1.2**: The system shall require OTP verification (Email or SMS) to activate the account (crucial for fraud prevention in India).
+- **FR-1.3**: The user profile shall capture KYC/Payment details: Full Name, Phone, Bank Account Number, IFSC Code, or UPI ID.
+
+### 4.2 Lead Engine & Submission
+- **FR-2.1**: The lead submission form must include the following mandatory fields: Prospect Name, Prospect Phone, Prospect Email, Service Category Dropdown, Estimated Budget, and Additional Notes.
+- **FR-2.2**: The form must include a mandatory checkbox: "I confirm that I have informed this prospect that Gainux will contact them regarding their project." (This satisfies the consent requirement discussed earlier).
+- **FR-2.3**: The system shall prevent duplicate leads (checking against existing prospect emails/phone numbers) to avoid commission disputes between two referrers.
+
+### 4.3 Referrer Dashboard & Transparency
+- **FR-3.1**: The dashboard shall display aggregate metrics: Total Leads Submitted, Total Deals Converted, Total Earned, Current Wallet Balance.
+- **FR-3.2**: The dashboard shall list all historical leads with a visual pipeline indicator for their current status.
+- **FR-3.3**: The system shall reflect manual status updates made by the Admin in real-time on the Referrer's dashboard.
+
+### 4.4 Virtual Wallet & Withdrawal System
+- **FR-4.1**: The system shall maintain a secure ledger for each user tracking all credit and debit transactions.
+- **FR-4.2**: Users shall be able to initiate a withdrawal request if their wallet balance is greater than a predefined minimum (e.g., ₹500).
+- **FR-4.3**: Upon requesting a withdrawal, the system shall lock those funds (Status: *Processing*) until the Admin approves and marks it as *Completed*.
+
+### 4.5 Admin Control Panel
+- **FR-5.1**: The Admin Panel shall feature a Kanban-style board (like Trello) or a List View for managing leads through different stages.
+- **FR-5.2**: The Super Admin shall have a "Credit Wallet" interface to manually input the Received Payment Amount from the client, which automatically calculates the X% commission and credits the specific referrer.
+- **FR-5.3**: The Admin shall have a "Payouts" queue to view pending withdrawal requests, export them to a CSV (for bulk bank transfers), and mark them as paid.
+
+## 5. Non-Functional Requirements
+
+### 5.1 Security & Data Privacy
+- **Compliance**: The system must comply with basic data protection standards (like India's DPDP Act) by securely storing prospect data and allowing users to delete their accounts.
+- **Data Encryption**: User passwords and bank details must be encrypted in the database.
+- **Role-Based Access Control (RBAC)**: Sales Admins must not have access to the Super Admin's financial/wallet crediting tools.
+
+### 5.2 Performance & Usability
+- **Mobile-First**: Because many users in India will access Gainux via smartphones, the UI/UX must be fully responsive and optimized for mobile browsers.
+- **Load Time**: The dashboard should load in under 2 seconds to ensure a smooth user experience.
+
+### 5.3 Legal & Policy Enforcement
+- **Terms of Service (ToS)**: The platform must mandate the acceptance of strict T&Cs before the first lead submission, explicitly stating that payouts are strictly tied to received funds and outline the 2-3 day withdrawal window.

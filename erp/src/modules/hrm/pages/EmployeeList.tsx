@@ -21,7 +21,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { employeeService } from "../services/employeeService";
 import { useAuth } from "@/context/AuthContext";
-import type { Employee, Department, Designation } from "../types";
+import type { Employee, Department } from "../types";
 import { toast } from "sonner";
 
 export default function EmployeeList() {
@@ -29,7 +29,7 @@ export default function EmployeeList() {
     const { profile } = useAuth();
     const [employees, setEmployees] = useState<Employee[]>([]);
     const [departments, setDepartments] = useState<Department[]>([]);
-    const [designations, setDesignations] = useState<Designation[]>([]);
+
     const [loading, setLoading] = useState(true);
 
     // Filters
@@ -48,15 +48,13 @@ export default function EmployeeList() {
 
         try {
             setLoading(true);
-            const [employeesData, departmentsData, designationsData] = await Promise.all([
+            const [employeesData, departmentsData] = await Promise.all([
                 employeeService.getEmployees(profile.org_id),
-                employeeService.getDepartments(profile.org_id),
-                employeeService.getDesignations(profile.org_id)
+                employeeService.getDepartments(profile.org_id)
             ]);
 
             setEmployees(employeesData);
             setDepartments(departmentsData);
-            setDesignations(designationsData);
         } catch (error) {
             console.error("Failed to load data", error);
             toast.error("Failed to load employees");
@@ -106,9 +104,9 @@ export default function EmployeeList() {
 
 
     return (
-        <div className="flex-1 space-y-4 p-8 pt-6">
+        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
             <div className="flex items-center justify-between space-y-2">
-                <h2 className="text-3xl font-bold tracking-tight">Employees</h2>
+                <h2 className="text-xl md:text-3xl font-bold tracking-tight">Employees</h2>
                 <div className="flex items-center space-x-2">
                     <Button onClick={() => navigate('/hrm/employees/new')}>
                         <Plus className="mr-2 h-4 w-4" /> Add Employee
@@ -116,9 +114,9 @@ export default function EmployeeList() {
                 </div>
             </div>
 
-            <div className="flex items-center justify-between space-x-2 py-4">
-                <div className="flex flex-1 items-center space-x-2">
-                    <div className="relative w-[300px]">
+            <div className="flex flex-col md:flex-row items-center justify-between space-y-3 md:space-y-0 md:space-x-2 py-4">
+                <div className="flex flex-col md:flex-row flex-1 items-stretch md:items-center space-y-2 md:space-y-0 md:space-x-2 w-full">
+                    <div className="relative w-full md:w-[300px]">
                         <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
                             placeholder="Search by name, email, or code..."
@@ -127,7 +125,7 @@ export default function EmployeeList() {
                             className="pl-8"
                         />
                     </div>
-                    <div className="w-[200px]">
+                    <div className="w-full md:w-[200px]">
                         <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
                             <SelectTrigger>
                                 <SelectValue placeholder="Department" />
@@ -140,7 +138,7 @@ export default function EmployeeList() {
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="w-[200px]">
+                    <div className="w-full md:w-[200px]">
                         <Select value={statusFilter} onValueChange={setStatusFilter}>
                             <SelectTrigger>
                                 <SelectValue placeholder="Status" />
@@ -156,7 +154,7 @@ export default function EmployeeList() {
                 </div>
             </div>
 
-            <div className="rounded-md border">
+            <div className="rounded-md border overflow-x-auto">
                 <Table>
                     <TableHeader>
                         <TableRow>

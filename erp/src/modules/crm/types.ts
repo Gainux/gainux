@@ -1,6 +1,22 @@
 
 export type CRMStatus = 'new' | 'contacted' | 'qualified' | 'lost' | 'lead' | 'proposal' | 'negotiation' | 'won';
 
+export interface LeadCategory {
+    id: string;
+    orgId: string;
+    name: string;
+    color: string;
+    createdAt: string;
+}
+
+export interface LeadLocation {
+    id: string;
+    orgId: string;
+    categoryId: string;
+    name: string;
+    createdAt: string;
+}
+
 export interface Lead {
     id: string;
     orgId: string;
@@ -10,7 +26,7 @@ export interface Lead {
     phone?: string;
     companyName?: string;
     source?: string;
-    status: string; // 'new' | 'contacted' | 'qualified' | 'lost'
+    status: string; // 'do_cold_call' | 'collecting_requirements' | 'not_interested' | 'preparing_proposal' | 'waiting_for_proposal_response' | 'negotiating' | 'waiting_for_advance_amount' | 'work_ongoing' | 'do_completion_call' | 'waiting_for_full_payment'
     ownerId?: string;
     owner?: {
         id: string;
@@ -18,6 +34,17 @@ export interface Lead {
         lastName: string;
     };
     notes?: string;
+    categoryId?: string;
+    category?: LeadCategory;
+    locationId?: string;
+    location?: LeadLocation;
+
+    // Compatibility fields
+    name?: string;
+    title?: string;
+    company?: string;
+    lastContacted?: string;
+
     createdAt: string;
     updatedAt: string;
 }
@@ -30,7 +57,20 @@ export interface Company {
     website?: string;
     phone?: string;
     email?: string;
-    address?: string;
+    source?: string; // Track origin (e.g. converted from lead)
+    address?: string; // Kept for backward compat if needed, but city/state/zip prefered
+
+    // Detailed address fields
+    city?: string;
+    state?: string;
+    zip?: string;
+    country?: string;
+
+    // Metrics
+    status?: string | 'active' | 'inactive';
+    totalRevenue?: number; // Should be number, service might be using string or formatting it
+    lastOrderDate?: string;
+
     createdAt: string;
     updatedAt: string;
 }
@@ -49,13 +89,22 @@ export interface Contact {
     updatedAt: string;
 }
 
+export type Customer = Company;
+
+export interface Requirement {
+    id: string;
+    title: string; // Added title
+    description: string;
+    priority: 'low' | 'medium' | 'high';
+}
+
 export interface Deal {
     id: string;
     orgId: string;
     title: string;
     value: number;
     currency: string;
-    stage: string; // 'lead' | 'proposal' | 'negotiation' | 'won' | 'lost'
+    stage: string;
     probability: number;
     quantity?: number;
     expectedCloseDate?: string;
@@ -65,6 +114,7 @@ export interface Deal {
     company?: Company;
     contactId?: string;
     contact?: Contact;
+    customerId?: string;
     ownerId?: string;
     owner?: {
         id: string;
@@ -73,15 +123,15 @@ export interface Deal {
     };
     createdAt: string;
     updatedAt: string;
-    requirements?: any[];
+    requirements?: Requirement[];
 }
 
-export interface CRMActivity {
+export interface Activity {
     id: string;
     orgId: string;
-    type: string; // 'Call', 'Email', 'Meeting', 'Note'
+    type: string;
     subject?: string;
-    description?: string;
+    description?: string; // Used as content
     dueDate?: string;
     completed: boolean;
     dealId?: string;
@@ -93,8 +143,14 @@ export interface CRMActivity {
         firstName: string;
         lastName: string;
     };
-    createdAt: string;
+    createdAt: string; // Used as date
+
+    // Virtual fields for UI compatibility if needed, but prefer mapping in component
+    content?: string;
+    date?: string;
 }
+
+export type CRMActivity = Activity;
 
 export interface QuoteItem {
     description: string;
@@ -119,7 +175,55 @@ export interface Quote {
     totalAmount: number;
     currency: string;
     notes?: string;
+
+    // Comprehensive fields
+    scopeOfWork?: string;
+    paymentTerms?: string;
+    terms?: string;
+    taxRate?: number;
+
     items: QuoteItem[];
     createdAt: string;
     updatedAt: string;
 }
+
+export interface SalesOrderItem {
+    description: string;
+    quantity: number;
+    unitPrice: number;
+    total: number;
+}
+
+export interface SalesOrder {
+    id: string;
+    orgId: string;
+    orderNumber: string;
+    quoteId?: string;
+    quote?: Quote;
+    dealId?: string;
+    companyId?: string;
+    company?: Company;
+    status: 'draft' | 'confirmed' | 'delivered' | 'cancelled';
+    totalAmount: number;
+    currency: string;
+    orderDate: string;
+    deliveryDate?: string;
+    billingAddress?: string;
+    shippingAddress?: string;
+    updatedAt: string;
+}
+
+export interface ServiceCatalog {
+    id: string;
+    orgId: string;
+    name: string;
+    description?: string;
+    category?: string;
+    price: number;
+    duration?: number;
+    status: 'active' | 'inactive' | 'draft';
+    createdAt: string;
+    updatedAt: string;
+}
+
+

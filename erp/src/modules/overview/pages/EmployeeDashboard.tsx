@@ -8,8 +8,7 @@ import {
     CheckCircle2,
     Clock,
     Briefcase,
-    CalendarDays,
-    LayoutDashboard
+    CalendarDays
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
@@ -85,10 +84,10 @@ export default function EmployeeDashboard() {
     ];
 
     return (
-        <div className="flex-1 space-y-8 p-8 pt-6">
+        <div className="flex-1 space-y-8 p-4 md:p-8 md:pt-6">
             <div className="flex items-center justify-between space-y-2">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight">
+                    <h2 className="text-xl md:text-3xl font-bold tracking-tight">
                         Welcome back, {profile?.full_name?.split(' ')[0] || 'Employee'}! 👋
                     </h2>
                     <p className="text-muted-foreground">
@@ -115,7 +114,7 @@ export default function EmployeeDashboard() {
                             </div>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">{stat.value}</div>
+                            <div className="text-lg md:text-2xl font-bold">{stat.value}</div>
                             <p className="text-xs text-muted-foreground">
                                 {stat.description}
                             </p>

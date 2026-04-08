@@ -123,7 +123,7 @@ export default function BudgetDetails() {
     const totalBudgeted = Object.values(editingItems).reduce((sum, val) => sum + val, 0);
 
     return (
-        <div className="flex-1 space-y-6 p-8 pt-6">
+        <div className="flex-1 space-y-6 p-4 md:p-8 md:pt-6">
             <div className="flex items-center gap-4">
                 <Button variant="ghost" size="icon" onClick={() => navigate('/finance/budgeting')}>
                     <ArrowLeft className="h-4 w-4" />

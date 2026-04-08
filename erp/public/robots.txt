@@ -1,0 +1,16 @@
+User-agent: *
+Allow: /login
+Allow: /signup
+Allow: /forgot-password
+Allow: /careers/*
+Disallow: /crm/*
+Disallow: /hrm/*
+Disallow: /finance/*
+Disallow: /projects/*
+Disallow: /system/*
+Disallow: /analytics/*
+Disallow: /ess/*
+Disallow: /settings
+Disallow: /profile
+
+Sitemap: https://erp.gainux.com/sitemap.xml

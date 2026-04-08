@@ -13,15 +13,24 @@ export const customerService = {
     },
 
     async createCustomer(customer: Partial<Customer>) {
+        const { data: auth } = await supabase.auth.getUser();
+        const { data: userProfile } = await supabase
+            .from("profiles")
+            .select("org_id")
+            .eq("id", auth.user?.id)
+            .single();
+
+        if (!userProfile?.org_id) throw new Error("User organization not found");
+
         const { data, error } = await supabase
             .from("customers")
             .insert([
                 {
-                    name: customer.name,
-                    company: customer.company,
+                    org_id: userProfile.org_id,
+                    name: customer.name || '',
                     email: customer.email,
                     status: customer.status || 'active',
-                    total_revenue: customer.totalRevenue || '$0.00',
+                    total_revenue: customer.totalRevenue || 0,
                     last_order_date: customer.lastOrderDate,
                     phone: customer.phone,
                     address: customer.address,

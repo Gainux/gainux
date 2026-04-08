@@ -148,12 +148,12 @@ export default function ExpenseList() {
     };
 
     // Helper: Can user approve?
-    const canApprove = isAdmin || profile?.role === 'owner';
+    const canApprove = isAdmin || (profile?.role as any) === 'owner';
 
     return (
-        <div className="flex-1 space-y-4 p-8 pt-6">
+        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
             <div className="flex items-center justify-between space-y-2">
-                <h2 className="text-3xl font-bold tracking-tight">Expenses</h2>
+                <h2 className="text-xl md:text-3xl font-bold tracking-tight">Expenses</h2>
                 <div className="flex items-center space-x-2">
                     <Button onClick={handleCreate}>
                         <Plus className="mr-2 h-4 w-4" /> Add Expense
@@ -163,9 +163,9 @@ export default function ExpenseList() {
 
             <ExpenseStats metrics={metrics} loading={loading} />
 
-            <div className="flex items-center justify-between space-x-2 py-4">
-                <div className="flex flex-1 items-center space-x-2">
-                    <div className="w-[200px]">
+            <div className="flex flex-col md:flex-row items-center justify-between space-y-2 md:space-y-0 md:space-x-2 py-4">
+                <div className="flex flex-col md:flex-row flex-1 items-stretch md:items-center space-y-2 md:space-y-0 md:space-x-2 w-full">
+                    <div className="w-full md:w-[200px]">
                         <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                             <SelectTrigger>
                                 <SelectValue placeholder="Category" />
@@ -181,7 +181,7 @@ export default function ExpenseList() {
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="w-[200px]">
+                    <div className="w-full md:w-[200px]">
                         <Select value={statusFilter} onValueChange={setStatusFilter}>
                             <SelectTrigger>
                                 <SelectValue placeholder="Status" />
@@ -197,7 +197,7 @@ export default function ExpenseList() {
                 </div>
             </div>
 
-            <div className="rounded-md border">
+            <div className="rounded-md border overflow-x-auto">
                 <Table>
                     <TableHeader>
                         <TableRow>

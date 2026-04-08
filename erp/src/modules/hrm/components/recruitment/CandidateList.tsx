@@ -17,7 +17,7 @@ interface CandidateListProps {
     refresh: () => void;
 }
 
-export default function CandidateList({ candidates, refresh }: CandidateListProps) {
+export default function CandidateList({ candidates }: CandidateListProps) {
     if (candidates.length === 0) {
         return (
             <div className="text-center p-8 text-muted-foreground border-2 border-dashed rounded-lg">

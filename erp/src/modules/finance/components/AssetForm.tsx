@@ -38,7 +38,7 @@ export default function AssetForm({ open, onOpenChange, onSuccess }: AssetFormPr
     const { profile } = useAuth();
     const [loading, setLoading] = useState(false);
 
-    const form = useForm<AssetFormValues>({
+    const form = useForm<any>({
         resolver: zodResolver(assetSchema),
         defaultValues: {
             assetName: '',
@@ -86,7 +86,7 @@ export default function AssetForm({ open, onOpenChange, onSuccess }: AssetFormPr
                         <div className="space-y-2">
                             <Label htmlFor="assetName">Asset Name*</Label>
                             <Input id="assetName" {...form.register('assetName')} placeholder="e.g. MacBook Pro M3" />
-                            {form.formState.errors.assetName && <p className="text-sm text-red-500">{form.formState.errors.assetName.message}</p>}
+                            {form.formState.errors.assetName && <p className="text-sm text-red-500">{(form.formState.errors.assetName as any).message}</p>}
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="assetCode">Asset Code</Label>
@@ -103,13 +103,13 @@ export default function AssetForm({ open, onOpenChange, onSuccess }: AssetFormPr
                         <div className="space-y-2">
                             <Label htmlFor="purchaseDate">Purchase Date*</Label>
                             <Input type="date" id="purchaseDate" {...form.register('purchaseDate')} />
-                            {form.formState.errors.purchaseDate && <p className="text-sm text-red-500">{form.formState.errors.purchaseDate.message}</p>}
+                            {form.formState.errors.purchaseDate && <p className="text-sm text-red-500">{(form.formState.errors.purchaseDate as any).message}</p>}
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="purchaseCost">Purchase Cost*</Label>
                             <Input type="number" step="0.01" id="purchaseCost"
                                 {...form.register('purchaseCost', { valueAsNumber: true })} />
-                            {form.formState.errors.purchaseCost && <p className="text-sm text-red-500">{form.formState.errors.purchaseCost.message}</p>}
+                            {form.formState.errors.purchaseCost && <p className="text-sm text-red-500">{(form.formState.errors.purchaseCost as any).message}</p>}
                         </div>
                     </div>
 

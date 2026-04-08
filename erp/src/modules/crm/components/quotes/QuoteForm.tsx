@@ -11,6 +11,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Quote, QuoteItem, Company, Contact, Deal } from "@/modules/crm/types";
 import { crmService } from "@/modules/crm/services/crmService";
 import { Plus, Trash2 } from "lucide-react";
@@ -30,6 +31,10 @@ export function QuoteForm({ initialData, onSubmit, onCancel }: QuoteFormProps) {
     const [validUntil, setValidUntil] = useState(initialData?.validUntil || "");
     const [notes, setNotes] = useState(initialData?.notes || "");
     const [items, setItems] = useState<QuoteItem[]>(initialData?.items || []);
+    const [scopeOfWork, setScopeOfWork] = useState(initialData?.scopeOfWork || "");
+    const [paymentTerms, setPaymentTerms] = useState(initialData?.paymentTerms || "");
+    const [terms, setTerms] = useState(initialData?.terms || "");
+    const [taxRate, setTaxRate] = useState(initialData?.taxRate || 0);
 
     // Lists for dropdowns
     const [deals, setDeals] = useState<Deal[]>([]);
@@ -91,143 +96,206 @@ export function QuoteForm({ initialData, onSubmit, onCancel }: QuoteFormProps) {
             validUntil,
             notes,
             items,
-            totalAmount: calculateTotalAmount(),
-            currency: "USD", // Default
+            totalAmount: calculateTotalAmount(), // Note: Tax calculation should ideally happen here or in backend
+            currency: "USD",
+            scopeOfWork,
+            paymentTerms,
+            terms,
+            taxRate
         });
     };
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                    <Label htmlFor="deal">Deal (Optional)</Label>
-                    <Select value={dealId} onValueChange={setDealId}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select a deal" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {deals.map(deal => (
-                                <SelectItem key={deal.id} value={deal.id}>{deal.title}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="status">Status</Label>
-                    <Select value={status} onValueChange={(val: any) => setStatus(val)}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="draft">Draft</SelectItem>
-                            <SelectItem value="sent">Sent</SelectItem>
-                            <SelectItem value="accepted">Accepted</SelectItem>
-                            <SelectItem value="rejected">Rejected</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-            </div>
+            <Tabs defaultValue="details" className="w-full">
+                <TabsList className="grid w-full grid-cols-4">
+                    <TabsTrigger value="details">Details</TabsTrigger>
+                    <TabsTrigger value="items">Line Items</TabsTrigger>
+                    <TabsTrigger value="scope">Scope of Work</TabsTrigger>
+                    <TabsTrigger value="terms">Terms & Conditions</TabsTrigger>
+                </TabsList>
 
-            <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                    <Label htmlFor="company">Company</Label>
-                    <Select value={companyId} onValueChange={setCompanyId}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select company" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {companies.map(c => (
-                                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="contact">Contact</Label>
-                    <Select value={contactId} onValueChange={setContactId}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select contact" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {contacts.map(c => (
-                                <SelectItem key={c.id} value={c.id}>{c.firstName} {c.lastName}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-            </div>
+                <TabsContent value="details" className="space-y-4 pt-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="deal">Deal (Optional)</Label>
+                            <Select value={dealId} onValueChange={setDealId}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a deal" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {deals.map(deal => (
+                                        <SelectItem key={deal.id} value={deal.id}>{deal.title}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="status">Status</Label>
+                            <Select value={status} onValueChange={(val: any) => setStatus(val)}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select status" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="draft">Draft</SelectItem>
+                                    <SelectItem value="sent">Sent</SelectItem>
+                                    <SelectItem value="accepted">Accepted</SelectItem>
+                                    <SelectItem value="rejected">Rejected</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
 
-            <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                    <Label htmlFor="issueDate">Issue Date</Label>
-                    <Input type="date" value={issueDate} onChange={e => setIssueDate(e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="validUntil">Valid Until</Label>
-                    <Input type="date" value={validUntil} onChange={e => setValidUntil(e.target.value)} />
-                </div>
-            </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="company">Company</Label>
+                            <Select value={companyId} onValueChange={setCompanyId}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select company" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {companies.map(c => (
+                                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="contact">Contact</Label>
+                            <Select value={contactId} onValueChange={setContactId}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select contact" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {contacts.map(c => (
+                                        <SelectItem key={c.id} value={c.id}>{c.firstName} {c.lastName}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
 
-            <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                    <Label>Line Items</Label>
-                    <Button type="button" variant="outline" size="sm" onClick={handleAddItem}>
-                        <Plus className="h-4 w-4 mr-2" /> Add Item
-                    </Button>
-                </div>
-                {items.map((item, index) => (
-                    <div key={index} className="flex gap-2 items-end border p-2 rounded-md">
-                        <div className="flex-1 space-y-1">
-                            <Label className="text-xs">Description</Label>
-                            <Input
-                                value={item.description}
-                                onChange={e => handleItemChange(index, "description", e.target.value)}
-                                placeholder="Item description"
-                            />
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="issueDate">Issue Date</Label>
+                            <Input type="date" value={issueDate} onChange={e => setIssueDate(e.target.value)} />
                         </div>
-                        <div className="w-20 space-y-1">
-                            <Label className="text-xs">Qty</Label>
-                            <Input
-                                type="number"
-                                min="1"
-                                value={item.quantity}
-                                onChange={e => handleItemChange(index, "quantity", e.target.value)}
-                            />
+                        <div className="space-y-2">
+                            <Label htmlFor="validUntil">Valid Until</Label>
+                            <Input type="date" value={validUntil} onChange={e => setValidUntil(e.target.value)} />
                         </div>
-                        <div className="w-24 space-y-1">
-                            <Label className="text-xs">Price</Label>
-                            <Input
-                                type="number"
-                                min="0" step="0.01"
-                                value={item.unitPrice}
-                                onChange={e => handleItemChange(index, "unitPrice", e.target.value)}
-                            />
+                    </div>
+                </TabsContent>
+
+                <TabsContent value="items" className="space-y-4 pt-4">
+                    <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                            <Label>Line Items</Label>
+                            <Button type="button" variant="outline" size="sm" onClick={handleAddItem}>
+                                <Plus className="h-4 w-4 mr-2" /> Add Item
+                            </Button>
                         </div>
-                        <div className="w-24 space-y-1">
-                            <Label className="text-xs">Total</Label>
-                            <div className="h-10 flex items-center px-3 border rounded-md bg-muted text-sm">
-                                {item.total.toFixed(2)}
+                        {items.map((item, index) => (
+                            <div key={index} className="flex gap-2 items-end border p-2 rounded-md">
+                                <div className="flex-1 space-y-1">
+                                    <Label className="text-xs">Description</Label>
+                                    <Input
+                                        value={item.description}
+                                        onChange={e => handleItemChange(index, "description", e.target.value)}
+                                        placeholder="Item description"
+                                    />
+                                </div>
+                                <div className="w-20 space-y-1">
+                                    <Label className="text-xs">Qty</Label>
+                                    <Input
+                                        type="number"
+                                        min="1"
+                                        value={item.quantity}
+                                        onChange={e => handleItemChange(index, "quantity", e.target.value)}
+                                    />
+                                </div>
+                                <div className="w-24 space-y-1">
+                                    <Label className="text-xs">Price</Label>
+                                    <Input
+                                        type="number"
+                                        min="0" step="0.01"
+                                        value={item.unitPrice}
+                                        onChange={e => handleItemChange(index, "unitPrice", e.target.value)}
+                                    />
+                                </div>
+                                <div className="w-24 space-y-1">
+                                    <Label className="text-xs">Total</Label>
+                                    <div className="h-10 flex items-center px-3 border rounded-md bg-muted text-sm">
+                                        {item.total.toFixed(2)}
+                                    </div>
+                                </div>
+                                <Button type="button" variant="ghost" size="icon" onClick={() => handleRemoveItem(index)}>
+                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                            </div>
+                        ))}
+                        <div className="flex justify-end items-center gap-4 pt-4 border-t">
+                            <div className="flex items-center gap-2">
+                                <Label>Tax Rate (%)</Label>
+                                <Input
+                                    type="number"
+                                    className="w-20"
+                                    value={taxRate}
+                                    onChange={e => setTaxRate(Number(e.target.value))}
+                                />
+                            </div>
+                            <div className="text-lg font-bold">
+                                Total: ${calculateTotalAmount().toFixed(2)}
                             </div>
                         </div>
-                        <Button type="button" variant="ghost" size="icon" onClick={() => handleRemoveItem(index)}>
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
                     </div>
-                ))}
-                <div className="flex justify-end text-lg font-bold">
-                    Total: ${calculateTotalAmount().toFixed(2)}
-                </div>
-            </div>
+                </TabsContent>
 
-            <div className="space-y-2">
-                <Label htmlFor="notes">Notes</Label>
-                <Textarea
-                    id="notes"
-                    value={notes}
-                    onChange={e => setNotes(e.target.value)}
-                    placeholder="Additional notes..."
-                />
-            </div>
+                <TabsContent value="scope" className="space-y-4 pt-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="scope">Scope of Work</Label>
+                        <Textarea
+                            id="scope"
+                            className="min-h-[300px]"
+                            value={scopeOfWork}
+                            onChange={e => setScopeOfWork(e.target.value)}
+                            placeholder="Detailed description of the project scope, deliverables, and timeline..."
+                        />
+                    </div>
+                </TabsContent>
+
+                <TabsContent value="terms" className="space-y-4 pt-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="paymentTerms">Payment Terms</Label>
+                        <Textarea
+                            id="paymentTerms"
+                            className="min-h-[100px]"
+                            value={paymentTerms}
+                            onChange={e => setPaymentTerms(e.target.value)}
+                            placeholder="e.g. 50% Upfront, 50% on Delivery..."
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="terms">Terms & Conditions</Label>
+                        <Textarea
+                            id="terms"
+                            className="min-h-[150px]"
+                            value={terms}
+                            onChange={e => setTerms(e.target.value)}
+                            placeholder="Standard terms, licensing, IP rights, etc."
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="notes">Internal Notes</Label>
+                        <Textarea
+                            id="notes"
+                            value={notes}
+                            onChange={e => setNotes(e.target.value)}
+                            placeholder="Private notes for the team..."
+                        />
+                    </div>
+                </TabsContent>
+            </Tabs>
 
             <div className="flex justify-end space-x-2">
                 <Button variant="outline" type="button" onClick={onCancel}>

@@ -180,7 +180,7 @@ export const billService = {
                     {
                         org_id: orgId,
                         entry_date: bill.issueDate,
-                        description: `Bill #${bill.billNumber} - ${bill.vendor?.name}`,
+                        description: `Bill #${bill.billNumber}`,
                         reference: bill.billNumber,
                         status: 'posted'
                     },

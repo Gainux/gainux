@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Lock, Loader2 } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Loader2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function LoginPage() {
@@ -29,8 +29,6 @@ export default function LoginPage() {
             setError(error.message);
             setLoading(false);
         } else {
-            // Auth state listener in Context will handle navigation,
-            // but we can manually navigate to be safe/faster feedback
             navigate("/");
         }
     };
@@ -40,13 +38,11 @@ export default function LoginPage() {
             <Card className="w-full max-w-sm">
                 <CardHeader className="space-y-1">
                     <div className="flex justify-center mb-4">
-                        <div className="rounded-full bg-primary/10 p-3 text-primary">
-                            <Lock className="h-6 w-6" />
-                        </div>
+                        <img src="/logo.png" alt="Gainux ERP" className="h-10 w-auto" />
                     </div>
-                    <CardTitle className="text-2xl text-center">Login to Gainux ERP</CardTitle>
+                    <CardTitle className="text-2xl text-center">Welcome back</CardTitle>
                     <CardDescription className="text-center">
-                        Enter your email and password to access your account
+                        Enter your credentials to access your account
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -61,7 +57,7 @@ export default function LoginPage() {
                             <Input
                                 id="email"
                                 type="email"
-                                placeholder="admin@gainux.com"
+                                placeholder="name@company.com"
                                 required
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
@@ -69,7 +65,15 @@ export default function LoginPage() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="password">Password</Label>
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="password">Password</Label>
+                                <Link
+                                    to="/forgot-password"
+                                    className="text-sm font-medium text-primary hover:underline"
+                                >
+                                    Forgot password?
+                                </Link>
+                            </div>
                             <Input
                                 id="password"
                                 type="password"
@@ -84,6 +88,14 @@ export default function LoginPage() {
                         </Button>
                     </form>
                 </CardContent>
+                <CardFooter className="flex justify-center border-t p-4">
+                    <p className="text-sm text-muted-foreground">
+                        Don&apos;t have an account?{" "}
+                        <Link to="/signup" className="text-primary font-medium hover:underline">
+                            Sign up
+                        </Link>
+                    </p>
+                </CardFooter>
             </Card>
         </div>
     );

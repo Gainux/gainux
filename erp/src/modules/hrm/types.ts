@@ -27,14 +27,19 @@ export interface Employee {
     phone?: string;
     dateOfBirth?: string;
     dateOfJoining: string;
+    hireDate?: string; // Alias or specific field
     departmentId?: string;
     department?: Department;
     designationId?: string;
     designation?: Designation;
+    jobTitle?: string;
+    salary?: number;
+    address?: string;
+    emergencyContact?: string;
     managerId?: string;
     manager?: Employee;
     employmentType: 'full-time' | 'part-time' | 'contract' | 'intern';
-    status: 'active' | 'inactive' | 'terminated';
+    status: 'active' | 'inactive' | 'terminated' | 'on_leave';
     createdAt: string;
     updatedAt: string;
 }

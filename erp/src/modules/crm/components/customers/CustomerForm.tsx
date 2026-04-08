@@ -9,9 +9,10 @@ interface CustomerFormProps {
     initialData?: Company | null;
     onSubmit: (data: Partial<Company>) => void;
     onCancel: () => void;
+    loading?: boolean;
 }
 
-export function CustomerForm({ initialData, onSubmit, onCancel }: CustomerFormProps) {
+export function CustomerForm({ initialData, onSubmit, onCancel, loading }: CustomerFormProps) {
     const [name, setName] = useState(initialData?.name || "");
     const [email, setEmail] = useState(initialData?.email || "");
     const [phone, setPhone] = useState(initialData?.phone || "");
@@ -114,11 +115,11 @@ export function CustomerForm({ initialData, onSubmit, onCancel }: CustomerFormPr
             </div>
 
             <div className="flex justify-end space-x-2">
-                <Button variant="outline" type="button" onClick={onCancel}>
+                <Button variant="outline" type="button" onClick={onCancel} disabled={loading}>
                     Cancel
                 </Button>
-                <Button type="submit">
-                    {initialData ? "Save Changes" : "Create Company"}
+                <Button type="submit" disabled={loading}>
+                    {initialData ? "Save Changes" : "Create Customer"}
                 </Button>
             </div>
         </form >

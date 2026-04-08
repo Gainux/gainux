@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -115,7 +115,7 @@ export default function ChartOfAccounts() {
         <div className="space-y-6 animate-in fade-in duration-500">
             <div className="flex justify-between items-center">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight">Chart of Accounts</h2>
+                    <h2 className="text-xl md:text-3xl font-bold tracking-tight">Chart of Accounts</h2>
                     <p className="text-muted-foreground">Manage your general ledger accounts.</p>
                 </div>
                 <div className="flex gap-2">
